@@ -23,13 +23,18 @@ The session had one objective: run the gating Gmail scheduled-send technical spi
 - **"Pick date & time" custom path** — only the preset path was tested. Verify during §5.3 implementation (same recipe + form-field value entry). Tracked in the spike doc + project memory.
 - **Workspace vs. consumer differences** — tracked in `PRE_LAUNCH_CHECKLIST.md`, due before Web Store submission.
 
+## Late-session change: license + repo visibility
+
+After the spike wrap-up, Fenil decided to make the GitHub repo **public** (for portfolio visibility, linked from his resume). Because a public repo is inherently downloadable and the only way to legally restrict reuse is the license, the dev-time license was **changed from MIT to all-rights-reserved / proprietary** — public to read for evaluation, no reuse rights granted. This deliberately reverses the "MIT during v1 development" decision from session 1; the tradeoff was flagged and Fenil confirmed. `LICENSE`, `README.md`, `CLAUDE.md`, `PRE_LAUNCH_CHECKLIST.md`, and project memory were all updated for consistency. `notes/session-1-summary.md` still says MIT — left as-is, since it's a correct historical record of the session-1 decision. The eventual public-launch commercial model remains an open pre-launch decision.
+
 ## Commits this session
 
-Three commits, all pushed to GitHub (`origin/main`):
+Pushed to GitHub (`origin/main`):
 
 - `ac56b15` — Add scheduled-send API spike + Workspace compatibility checklist item
 - `7bed18c` — Spike verified: approach C (UI automation) confirmed end-to-end
-- (this file) — Session 2 summary
+- `907330a` — Session 2 summary
+- (final) — Switch dev license MIT → all-rights-reserved; repo going public
 
 ## Repo state at session end
 

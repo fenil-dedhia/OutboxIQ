@@ -26,4 +26,4 @@ The next milestone is to begin implementing the onboarding flow and the Schedule
 
 ## License
 
-MIT during development — see [`LICENSE`](./LICENSE). The license choice will be revisited before public launch; the long-term intent is a royalty-on-commercial-use model, but the exact licensing mechanism (custom license, dual-licensing, source-available, or a paid hosted layer on top of MIT) is a separate decision tracked in [`PRE_LAUNCH_CHECKLIST.md`](./PRE_LAUNCH_CHECKLIST.md).
+**All rights reserved.** This repository is public for portfolio and evaluation purposes only — see [`LICENSE`](./LICENSE). No reuse, copying, modification, or distribution is permitted without prior written permission. The eventual public-launch licensing model (open-source, royalty-on-commercial-use, dual-licensing, or source-available) is a separate decision tracked in [`PRE_LAUNCH_CHECKLIST.md`](./PRE_LAUNCH_CHECKLIST.md).

@@ -40,7 +40,7 @@ Already decided — do not re-litigate without explicit user input:
 - **Extension:** React + Vite, Manifest V3.
 - **Backend:** Node + Hono on Fly.io, EU region.
 - **Database:** Supabase, EU region.
-- **License:** MIT during v1 development (royalty-on-commercial-use intent is a pre-launch decision, not a now decision).
+- **License:** All-rights-reserved / proprietary during v1 development (changed from MIT on 2026-05-15 when the repo went public for portfolio visibility — public to read, no reuse rights granted). The eventual public-launch commercial model (open-source, royalty-on-commercial-use, dual-license, source-available) remains a pre-launch decision. Do not "restore" MIT assuming it's the locked default — the all-rights-reserved choice is deliberate.
 - **Telemetry:** zero. No analytics SDKs, no usage events, no opt-in hedge. Success metrics are qualitative for v1.
 - **Privacy/ToS docs:** drafting deferred; will live in `docs/` and be served from GitHub Pages.
 - **Brand assets:** placeholder "OQ" mark during dev; real brand work happens just before Web Store submission.
