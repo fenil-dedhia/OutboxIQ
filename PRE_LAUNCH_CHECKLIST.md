@@ -68,4 +68,18 @@ Google classifies the Gmail scopes OutboxIQ uses (`gmail.compose`, `gmail.modify
 
 ---
 
+## Compatibility & Verification
+
+### Google Workspace compatibility — Schedule Send
+
+Verify that OutboxIQ's UI-automated Schedule Send works on Google Workspace accounts, not only on consumer Gmail.
+
+- **Why this matters:** a large share of OutboxIQ's target users (knowledge workers, salespeople, recruiters, consultants) are on Workspace, often inside admin-controlled tenants. A failure mode where the extension silently breaks on Workspace would hit a meaningful slice of the user base.
+- **What to verify:** that Gmail's Schedule Send UI is present, functional, and DOM-driveable on Workspace accounts; that Workspace admins cannot disable scheduled sending in a way that breaks OutboxIQ without a clear error; that the `SCHEDULED` label and `messages.delete` cancellation pathway (per `research/scheduled-send-api-spike.md` Open Question 1) behave identically on Workspace.
+- **How to verify:** hands-on test on a Workspace account in a controlled domain. Re-test after any major Gmail UI update.
+- **Trigger:** before Chrome Web Store submission, and after any major Gmail UI change.
+- **Reference:** `research/scheduled-send-api-spike.md` Open Question 4.
+
+---
+
 *Items get added to this file as development surfaces new launch requirements. If you're reading this years from now and something feels missing — it probably is.*
