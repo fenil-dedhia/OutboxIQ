@@ -212,11 +212,13 @@ When a recipient is selected for optimization, the plugin executes the following
 
 **Step 3: Geocode the address.**
 - Use the Google Maps Geocoding API to convert the address to latitude and longitude coordinates.
-- Endpoint: `GET https://maps.googleapis.com/maps/api/geocode/json?address={address}&key={API_KEY}`
+- **This call is proxied through the OutboxIQ backend** (Section 7.3) so the paid Maps API key is never exposed in client code.
+- Underlying endpoint (called by the backend, not the extension): `GET https://maps.googleapis.com/maps/api/geocode/json?address={address}&key={API_KEY}`
 
 **Step 4: Resolve coordinates to timezone.**
 - Use the Google Maps Time Zone API with the coordinates from Step 3.
-- Endpoint: `GET https://maps.googleapis.com/maps/api/timezone/json?location={lat},{lng}&timestamp={epoch}&key={API_KEY}`
+- **This call is also proxied through the OutboxIQ backend** (Section 7.3). In practice, Steps 3 and 4 are handled together by a single backend endpoint (see Section 7.3.3).
+- Underlying endpoint (called by the backend, not the extension): `GET https://maps.googleapis.com/maps/api/timezone/json?location={lat},{lng}&timestamp={epoch}&key={API_KEY}`
 - The response includes `timeZoneId` (an IANA identifier like `America/Los_Angeles`).
 
 **Step 5: Google Workspace Directory fallback.**
@@ -421,7 +423,7 @@ Clicking "Undo" within the 7-second window cancels the scheduled email and reope
 #### 6.1.1 Principles
 
 - **Data minimization:** Collect only what is necessary to power a feature. No behavioral analytics, no email content scraping, no recipient profiling.
-- **Local-first storage:** All user preferences, working hours, timezone, recipient cache, and feature toggles are stored in the browser's local extension storage. Nothing is transmitted to any server unless absolutely required (Unschedule-on-Reply is the only exception).
+- **Local-first storage:** All user preferences, working hours, timezone, recipient cache, and feature toggles are stored in the browser's local extension storage. Nothing is transmitted to any server unless absolutely required. The two exceptions are Unschedule-on-Reply (Section 5.6) and the backend-proxied Google Maps API calls used for recipient timezone resolution (Section 5.4).
 - **Explicit consent:** Users must check a consent box during onboarding before any data is collected. Users must explicitly enable Unschedule-on-Reply before any data is sent to the backend.
 - **Right to access:** Users can export all their data as a JSON file from the Settings panel.
 - **Right to erasure:** Users can delete all their data (local and backend) from the Settings panel. The action is irreversible and is confirmed with a modal.
@@ -543,7 +545,13 @@ All local data is stored in the browser's extension storage. Suggested schema:
 
 #### 7.3.1 Purpose
 
-The backend exists solely to enable Unschedule-on-Reply. It is not used for any other feature.
+The backend serves **exactly two purposes**:
+
+1. **Unschedule-on-Reply relay.** Subscribes to Gmail push notifications via Google Cloud Pub/Sub, detects when a recipient replies to a thread that has a pending OutboxIQ-scheduled email, and cancels the scheduled send. See Section 5.6.
+
+2. **Maps API proxy for recipient timezone resolution.** Proxies Google Maps Geocoding and Google Maps Time Zone API calls on behalf of the extension. Centralizing these calls in the backend keeps the paid Maps API key out of client code, provides a single place to enforce rate limiting and caching, and gives a single audit point for cost control. See Section 5.4 (steps 3 and 4).
+
+The backend is not used for any other feature. In particular: no analytics, no telemetry, no user profile or social features, no content storage of any kind. Any future proposal to expand the backend's role must be reviewed against this scope boundary.
 
 #### 7.3.2 Hosting
 
@@ -557,6 +565,7 @@ The backend exists solely to enable Unschedule-on-Reply. It is not used for any 
 - `POST /unsubscribe` — Deregister a scheduled email (called when the user cancels or sends manually).
 - `POST /push/gmail` — Webhook endpoint that receives Gmail push notifications from Google Cloud Pub/Sub.
 - `WS /events` — WebSocket endpoint for the extension to receive real-time cancellation events.
+- `POST /timezone/resolve` — Proxies the Google Maps Geocoding and Time Zone APIs on behalf of the extension. Body includes recipient address components (city, region, postal code, etc.). Returns the resolved IANA timezone identifier. Used by Section 5.4 steps 3 and 4. Stateless: the backend does not store the request or the response.
 - `GET /export` — Returns all user data as JSON (right of access).
 - `DELETE /user` — Deletes all user data (right of erasure).
 
@@ -639,7 +648,7 @@ The OutboxIQ badge on scheduled emails is small, unobtrusive, and uses a single 
 
 ## 9. Success Metrics
 
-The following metrics will indicate v1 success. These are tracked through anonymized opt-in telemetry (if implemented) or qualitative user feedback. No personal data is collected.
+Success metrics for v1 are tracked **qualitatively** through user feedback from the developer and a small set of test users. **No telemetry is collected.** The targets below are aspirational benchmarks for what a successful v1 looks like — they are not measured by instrumented analytics.
 
 - **Activation rate:** Percentage of installs that complete onboarding within 7 days. Target: 70 percent or higher.
 - **Feature adoption:** Percentage of activated users who schedule at least one email per week. Target: 50 percent or higher.
