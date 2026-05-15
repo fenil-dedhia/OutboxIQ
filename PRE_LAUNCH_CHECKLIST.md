@@ -32,10 +32,21 @@ Google classifies the Gmail scopes OutboxIQ uses (`gmail.compose`, `gmail.modify
 
 ## Legal
 
-- **Privacy Policy** — drafted, reviewed, hosted at a stable public URL.
-- **Terms of Service** — drafted, reviewed, hosted at a stable public URL.
+- **Privacy Policy.** Draft is intentionally deferred until v1 is feature-complete — the exact data flows (Maps proxy specifics, refresh-token encryption scheme, backend storage shape) may still shift, and the policy must accurately describe what the software actually does. When drafted, host as `docs/privacy.md` on **GitHub Pages** from this same repository. The OAuth consent screen, the extension's onboarding flow, and the Settings panel will hard-code the resulting stable URL.
+- **Terms of Service.** Same deferral and same hosting plan: `docs/terms.md` on GitHub Pages.
 - **License review.** v1 ships under **MIT** during development (see `LICENSE` at repo root). The long-term intent is a **royalty-on-commercial-use** model — free for personal/non-commercial use, paid for commercial use. MIT does not encode that. Before public launch, pick the actual mechanism: custom license, dual-licensing (e.g., MIT + commercial), source-available license (Elastic v2, BUSL), or a paid hosted SaaS layer on top of MIT. Decision should be made with awareness of contributor expectations and any contributions accepted under MIT to date.
 - Privacy Policy and Terms of Service are linked from the extension's onboarding flow and the Settings panel, per PRD §5.1.3 and §5.8.2.
+
+---
+
+## Brand & Design
+
+- **Brand identity finalized.** Logo, color palette, typography direction. v1 development uses **placeholder icons** (a colored square with "OQ" text or similar minimal mark). PRD §8.1 ("native feel over branded feel") means OutboxIQ's in-Gmail surface intentionally does not lean on brand — brand mainly shows up in the Chrome Web Store listing, the OAuth consent screen, and the onboarding flow.
+- **Extension icons (16, 48, 128 PNG).** Production-quality artwork, replacing the placeholders in `extension/public/icons/`.
+- **Scheduled-email badge artwork.** The small indicator on OutboxIQ-scheduled emails in Gmail's Scheduled label (PRD §5.7.2). Final, polished version.
+- **OAuth consent screen logo.** 120×120 minimum, follows Google's OAuth branding requirements.
+- **Chrome Web Store listing assets.** Promotional images (440×280 small tile, 920×680 marquee), screenshots (1280×800 or 640×400, up to 5), short description, detailed description, support email.
+- **Trigger:** before Chrome Web Store submission. Fenil intends to commission or design these assets — does not need to happen during feature development.
 
 ---
 
