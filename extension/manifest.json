@@ -1,0 +1,6 @@
+{
+  "manifest_version": 3,
+  "name": "OutboxIQ",
+  "version": "0.0.1",
+  "description": "Enhances Gmail's Schedule Send with intelligent, data-backed send-time recommendations."
+}

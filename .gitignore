@@ -1,0 +1,53 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+dist/
+build/
+out/
+*.crx
+*.pem
+*.zip
+
+# Environment files
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+.env.test
+# Do NOT ignore .env.example — it's a template and should be committed
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Test coverage
+coverage/
+*.lcov
+.nyc_output
+
+# Editor / OS files
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo
+
+# Misc
+.cache/
+.parcel-cache/
+.turbo/
+
+# Claude Code local settings (personal; team-shared settings.json may be committed)
+.claude/settings.local.json
