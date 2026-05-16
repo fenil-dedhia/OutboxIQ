@@ -137,6 +137,18 @@ legend {
   gap: 10px;
   align-items: flex-start;
   line-height: 1.5;
+  margin-top: 20px;
+}
+
+/* Privacy Policy link: body-prominent, not muted — it sits on a legally
+   meaningful consent gate (PRD §8.5/§8.8, GDPR transparency). */
+.oq-consent-link {
+  margin: 8px 0 0;
+}
+
+.oq-consent-link a {
+  color: var(--oq-accent);
+  font-weight: 400;
 }
 
 .oq-error {
