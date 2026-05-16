@@ -4,101 +4,100 @@
 
 ## What we did
 
-Objective: PRD §5.2 compose integration + §5.3 enhanced modal. Approved
-plan was: probe first, then §5.2 (pause), then §5.3 shell + presets;
-custom-path wiring only if a hands-on probe came back clean. Firm
-deliverable (under-promised): **§5.2 + §5.3 shell + presets sending real
-scheduled emails.** That firm deliverable is complete.
+Objective: PRD §5.2 compose integration + §5.3 enhanced modal. Plan was
+under-promised (firm = §5.2 + §5.3 shell + presets; custom path a
+probe-gated stretch). Mid-session, after a clean probe, the owner expanded
+scope: wire the custom path **and** add a "Last scheduled time" row. All of
+that landed.
 
-1. **Pick date & time probe** (`research/pick-date-time-probe.md`,
-   `d603a64`, extended in `491417b`). Self-contained DevTools probe +
-   how-to-run, extending the spike's verified preset-path recipe to the
-   unverified custom path. One hands-on Gmail session now also covers the
-   §5.2 relabel-target dump and an `anchorCheck()` for the three compose
-   contexts. **Not yet run by a human** — it is the gate for custom-path
-   work and is the main outstanding item.
+1. **Probe written, iterated, and run** (`research/pick-date-time-probe.md`
+   + `.js`, single-source split for non-technical copy-paste). First hands-on
+   run found the recipe clicked the wrong element (`elementFromPoint`
+   resolved to Google's top bar — a different DOM subtree). Fixed with an
+   **`innerTarget` guard** (`01c9b16`): only trust the hit-test if it lands
+   inside the target, else dispatch on the element itself. Re-run: **✅
+   custom "Pick date & time" picker opens.** Full verified DOM recorded in
+   the probe's Result log (canonical reference).
 
-2. **PRD §5.2** (`83dc4be`). `gmail-recipe.ts` — the single-point-of-
-   failure module owning every Gmail selector + the synthetic-event
-   recipe, header pointing at the spike + probe docs. `compose-
-   integration.ts` — MutationObserver relabel to "Schedule Send (powered
-   by OutboxIQ)" (best-effort) + capture-phase interception (mousedown
-   blocks native early, click commits the open — no leaky guard), tightly
-   scoped so unrelated clicks are untouched; modal-failure replays the
-   activation to Gmail (§5.2.3 never-block). Wired only **after**
-   onboarding. 16 unit tests.
+2. **PRD §5.2** (`83dc4be`, relabel tightened in `727c3ea`). Relabel +
+   capture-phase interception; relabel now replaces only the confirmed text
+   node (preserves Gmail's spacer img). 16 unit tests.
 
-3. **PRD §5.3 shell + Quick Options** (`c473e1e`). Pure, fully-tested
-   `presets.ts` (§5.3.3, mirrors Gmail semantics, 3-tuple return) +
-   `timezone-format.ts` (§5.3.2 subtitle). React modal in a **Shadow
-   DOM** (decision #2) — §5.3.1 layout, §5.3.2 header/subtitle, §5.3.3
-   Quick Options producing **real native scheduled sends** by driving
-   Gmail's preset rows via the recipe with our interception suppressed.
-   §5.3.4 custom path = honest handoff to Gmail's own picker (no
-   dead-input UX trap). §5.3.6 = documented no-op hook for §5.5.
-   8 new pure tests (24 total green).
+3. **PRD §5.3** (`c473e1e`, then `508f240`):
+   - §5.3.1/§5.3.2/§5.3.3 modal in Shadow DOM, pure tested preset +
+     timezone-label logic.
+   - **§5.3.4 custom path WIRED** (`scheduleAt`) via the probe-verified
+     chain: dialog → `.Az.AM` → 2 inputs → confirm.
+   - **"Last scheduled time"** row (PRD §5.3.3 amendment) — stored locally
+     (schema **v2** `lastScheduled`, additive), not scraped from Gmail.
+   - Preset-row match rewritten to match by **date+time content**, robust
+     to Gmail's extra "Last scheduled time" row; **no positional
+     fallback** (throw → native handoff; never mis-schedule silently).
+   - `gmail-format.ts` pure module (+tests) for the probe-confirmed
+     Gmail input/display/rowKey formats.
 
-4. **PRD §5.3.5 doc-sync** (`89a61f5`). Corrected the stale "Schedule
-   button submits via the Gmail API (`messages.send` + `scheduledTime`)"
-   text — no such API exists (spike). Mechanism now described as the
-   spike-verified UI automation; user-facing UX left intact; noted the
-   API is still used for the §5.6 cancel path.
+4. **Doc-syncs**: PRD §5.3.5 mechanism corrected to UI-automation
+   (`89a61f5`); PRD §5.3.3 + §7.2 amendments (`3fea35d`); CLAUDE.md status
+   + gotchas (recipe single-point-of-failure, React-in-Shadow-DOM,
+   content-script-bundles-React).
+
+Final state: typecheck/lint clean, **33 tests pass**, production build OK,
+sw-loader chunk correct.
 
 ## Decisions / deviations
 
-- Decisions taken with the owner up front: §5.3.5 deferred **whole** to
-  next session (OAuth + People API + Maps proxy + UI together — no
-  UI-only stub, it's a UX trap either way); Shadow DOM over scoped CSS;
-  mirror Gmail preset semantics; under-promise the scope.
-- §5.3.4 rendered as an explicit "open Gmail's picker" handoff rather
-  than fillable-but-ignored date/time inputs — same anti-UX-trap
-  principle the owner applied to §5.3.5, applied consistently.
-- Preset→native-row selection is best-effort (text match on the clock
-  time, positional fallback) and **probe-confirmable**, the same
-  accepted pattern as the §5.2 relabel (owner approved "tighten
-  post-probe").
+- Owner mid-session: **add "Last scheduled time"** (mirror Gmail, §8.1)
+  rather than the PRD's strict 3 presets — PRD §5.3.3 amended with a dated
+  note. Sourced from **local storage of what OutboxIQ scheduled** (not
+  scraping Gmail) — local-first; tradeoff: reflects last *OutboxIQ* time,
+  may differ from Gmail's global memory. Documented.
+- §5.3.4 rendered as a real native date/time picker (now functional);
+  earlier dead-input handoff replaced.
+- Preset/relabel/custom-path selectors confirmed against the probe; the
+  obfuscated-class anchors (confirm button) carry the accepted permanent
+  DOM-fragility cost (spike trade-off).
 
-## Not yet done (deferred, tracked)
+## Not yet done (deferred / tracked)
 
-- **Run the probe** (hands-on, Gmail) — gates: custom-path wiring,
-  tightening the §5.2 relabel, confirming preset-row mapping across
-  day-variants/locales, and the three compose-context anchors
-  (new / inline-reply / pop-out).
-- **§5.3.4 custom-path wiring** — stretch, gated on a clean probe + a
-  check-in. Currently a native handoff.
+- **END-TO-END UNVERIFIED.** No `live()` or manual run has confirmed a
+  real email actually gets scheduled — navigation/structure proven, the
+  final commit click is not. **This is the top next-session item.**
+- `anchorCheck()` in **inline-reply** and **pop-out** compose still not
+  run (new-compose proven). §5.2 not fully signed off until done.
 - **§5.3.5 Optimize-for-recipient + §5.3.7 fallback** — whole, next
   session (needs OAuth + People API + Maps proxy backend).
-- Onboarding form-widget tests — still the separate test-hardening
-  session from Session 3.
 - §5.5 runtime working-hours check (the §5.3.6 hook is in place).
+- Onboarding form-widget tests — still the separate hardening session.
 
-## Honest gaps flagged (see debrief)
+## Honest gaps flagged
 
-- No React error boundary around the modal: a render-time throw is
-  async in React 18 and would NOT trip the native-fallback try/catch —
-  a §5.2.3 robustness hole. Surfaced, not fixed (scope).
-- Content script now bundles ~190 kB React on every Gmail page (lazy
-  load later).
-- Multi-simultaneous-compose: scheduling uses a global `document`
-  query, could mis-target with two compose windows open. MVP edge.
-- "Tab open from before onboarding completed" doesn't pick up §5.2
-  until next Gmail load (no live re-check).
+- No React error boundary around the modal: a render-time throw is async
+  in React 18 and would NOT trip the native-fallback try/catch — a
+  §5.2.3 hole. **Recommend doing this before more modal work.**
+- Content script bundles ~190 kB React on every Gmail page (lazy-load
+  later).
+- Multi-simultaneous-compose: scheduling uses a global `document` query;
+  two open composes could mis-target. MVP edge.
+- "Tab open from before onboarding completed" needs a Gmail reload to
+  pick up §5.2 (no live re-check).
+- Custom-path confirm button matched by text ("Schedule send",
+  locale-dependent) with a structural fallback — flagged.
 
 ## Repo state at session end
 
-- `main` ahead of `origin/main` by this session's commits (probe ×2,
-  §5.2, §5.3, PRD doc-sync, this summary). **Not pushed** — Fenil
-  pushes / authorises.
-- Everything green: typecheck, lint, format, 24 tests, production
-  build, sw-loader chunk correct.
+- `main` well ahead of `origin/main` (probe ×N, §5.2, §5.3, custom path,
+  Last scheduled, PRD/docs). **Not pushed** — Fenil pushes / authorises.
+- Everything green locally.
 
 ## Next session starts with
 
-1. Fenil runs `research/pick-date-time-probe.md` (`discover()` +
-   `anchorCheck()` ×3 contexts; optional `live()` on a throwaway).
-2. With probe results: tighten the §5.2 relabel + preset-row mapping;
-   if the custom path is clean, wire §5.3.4 (with a check-in first).
-3. Then §5.3.5 + §5.3.7 as a dedicated OAuth/People-API/Maps-proxy
+1. **End-to-end smoke test**: load `extension/dist/` unpacked, actually
+   schedule via the real OutboxIQ modal (preset, custom, last-scheduled),
+   confirm a message lands in Gmail's Scheduled label and "Last scheduled
+   time" appears next open. (Or `live()` on a throwaway.)
+2. `anchorCheck()` in inline-reply + pop-out → sign off §5.2.
+3. Consider the React error-boundary hardening.
+4. Then §5.3.5 + §5.3.7 as a dedicated OAuth / People API / Maps-proxy
    session.
 
 Read `CLAUDE.md` and this summary first.
