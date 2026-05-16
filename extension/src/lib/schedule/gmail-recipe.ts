@@ -89,11 +89,29 @@ function centerOf(el: Element): { cx: number; cy: number } {
   return { cx: r.left + r.width / 2, cy: r.top + r.height / 2 };
 }
 
-/** The topmost (innermost) rendered node at the element's centre — the spike's
- * required dispatch target, not the [role=menuitem] wrapper. */
+/**
+ * The innermost rendered node at `el`'s centre — the spike's required
+ * dispatch target (not the [role=menuitem] wrapper).
+ *
+ * GUARD (Session 4 probe finding): only trust the hit-test if it lands
+ * inside `el`. The "Pick date & time" probe showed `elementFromPoint`
+ * returning an element in Google's top bar (`gb_*`) — a different DOM
+ * subtree entirely. Dispatching there means the event never bubbles to
+ * Gmail's delegated handler on the dialog, so the click silently no-ops.
+ * When the hit-test escapes `el`, dispatch on `el` itself instead.
+ */
 function innerTarget(el: Element): Element {
   const { cx, cy } = centerOf(el);
-  return document.elementFromPoint(cx, cy) ?? el;
+  const hit = document.elementFromPoint(cx, cy);
+  if (hit && (hit === el || el.contains(hit))) return hit;
+  if (dev() && hit) {
+    console.info(
+      `[OutboxIQ] recipe innerTarget: hit-test escaped target ` +
+        `(<${hit.tagName.toLowerCase()} class="${hit.className}">) — ` +
+        `dispatching on the element itself`,
+    );
+  }
+  return el;
 }
 
 function mkPointer(
