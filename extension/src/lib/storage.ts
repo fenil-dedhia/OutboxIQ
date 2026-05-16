@@ -44,6 +44,36 @@ export type WorkingHours = Record<Weekday, DayHours> & {
   absoluteLatest: string;
 };
 
+export interface WorkingHoursErrors {
+  /** Message per weekday; only present for an invalid *enabled* day. */
+  days: Partial<Record<Weekday, string>>;
+  /** Message for the absolute earliest/latest bounds, or null if valid. */
+  bounds: string | null;
+}
+
+// PRD §5.1 step 3 validation. Zero-padded "HH:MM" strings compare
+// lexicographically the same as chronologically, so plain `<` is correct.
+// Disabled days are not validated (their times don't matter).
+export function validateWorkingHours(wh: WorkingHours): WorkingHoursErrors {
+  const days: Partial<Record<Weekday, string>> = {};
+  for (const day of WEEKDAYS) {
+    const d = wh[day];
+    if (d.enabled && d.end < d.start) {
+      days[day] = "End time must be after start time.";
+    }
+  }
+  const bounds =
+    wh.absoluteLatest < wh.absoluteEarliest
+      ? "Latest send time must be after the earliest."
+      : null;
+  return { days, bounds };
+}
+
+export function isWorkingHoursValid(wh: WorkingHours): boolean {
+  const e = validateWorkingHours(wh);
+  return Object.keys(e.days).length === 0 && e.bounds === null;
+}
+
 export interface UserState {
   /** Empty until OAuth/identity is wired (just-in-time); not collected in §5.1. */
   email: string;

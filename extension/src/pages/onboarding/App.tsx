@@ -2,6 +2,7 @@ import { STEP_COUNT, useOnboarding } from "./useOnboarding";
 import { Welcome } from "./steps/Welcome";
 import { TimezoneStep } from "./steps/TimezoneStep";
 import { WorkingHoursStep } from "./steps/WorkingHoursStep";
+import { isWorkingHoursValid } from "../../lib/storage";
 
 // Focus the nearest open Gmail tab, then close this onboarding tab.
 // This is an extension page so it can use chrome.tabs directly; querying by
@@ -86,6 +87,8 @@ export function App() {
 
   const step = draft.stepIndex;
   const isLastStep = step === STEP_COUNT - 1;
+  // The last step is working hours; block Finish until inputs are valid (#2).
+  const canFinish = isWorkingHoursValid(draft.workingHours);
 
   // Consent is gated on step 0 (the Get Started button is disabled until the
   // box is ticked), so by the time Finish is reachable consent is guaranteed.
@@ -139,7 +142,12 @@ export function App() {
             Back
           </button>
           {isLastStep ? (
-            <button type="button" className="oq-primary" onClick={handleFinish}>
+            <button
+              type="button"
+              className="oq-primary"
+              onClick={handleFinish}
+              disabled={!canFinish}
+            >
               Finish Setup
             </button>
           ) : (

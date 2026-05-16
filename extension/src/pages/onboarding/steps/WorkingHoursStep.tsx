@@ -1,5 +1,6 @@
 import {
   WEEKDAYS,
+  validateWorkingHours,
   type Weekday,
   type WorkingHours,
 } from "../../../lib/storage";
@@ -28,6 +29,8 @@ export function WorkingHoursStep({ workingHours, onChange }: Props) {
     });
   }
 
+  const errors = validateWorkingHours(workingHours);
+
   return (
     <section className="oq-step" aria-labelledby="oq-wh-title">
       <h1 id="oq-wh-title">Set your working hours</h1>
@@ -35,35 +38,45 @@ export function WorkingHoursStep({ workingHours, onChange }: Props) {
         <legend>Working days and times</legend>
         {WEEKDAYS.map((day) => {
           const d = workingHours[day];
+          const dayError = errors.days[day];
           return (
-            <div className="oq-day-row" key={day}>
-              <label className="oq-day-toggle">
-                <input
-                  type="checkbox"
-                  checked={d.enabled}
-                  onChange={(e) => patchDay(day, { enabled: e.target.checked })}
-                />
-                <span>{DAY_LABEL[day]}</span>
-              </label>
-              <label>
-                <span className="oq-sr-only">{DAY_LABEL[day]} start</span>
-                <input
-                  type="time"
-                  value={d.start}
-                  disabled={!d.enabled}
-                  onChange={(e) => patchDay(day, { start: e.target.value })}
-                />
-              </label>
-              <span aria-hidden="true">&ndash;</span>
-              <label>
-                <span className="oq-sr-only">{DAY_LABEL[day]} end</span>
-                <input
-                  type="time"
-                  value={d.end}
-                  disabled={!d.enabled}
-                  onChange={(e) => patchDay(day, { end: e.target.value })}
-                />
-              </label>
+            <div key={day}>
+              <div className="oq-day-row">
+                <label className="oq-day-toggle">
+                  <input
+                    type="checkbox"
+                    checked={d.enabled}
+                    onChange={(e) =>
+                      patchDay(day, { enabled: e.target.checked })
+                    }
+                  />
+                  <span>{DAY_LABEL[day]}</span>
+                </label>
+                <label>
+                  <span className="oq-sr-only">{DAY_LABEL[day]} start</span>
+                  <input
+                    type="time"
+                    value={d.start}
+                    disabled={!d.enabled}
+                    onChange={(e) => patchDay(day, { start: e.target.value })}
+                  />
+                </label>
+                <span aria-hidden="true">&ndash;</span>
+                <label>
+                  <span className="oq-sr-only">{DAY_LABEL[day]} end</span>
+                  <input
+                    type="time"
+                    value={d.end}
+                    disabled={!d.enabled}
+                    onChange={(e) => patchDay(day, { end: e.target.value })}
+                  />
+                </label>
+              </div>
+              {dayError && (
+                <p className="oq-error" role="alert">
+                  {DAY_LABEL[day]}: {dayError}
+                </p>
+              )}
             </div>
           );
         })}
@@ -92,6 +105,12 @@ export function WorkingHoursStep({ workingHours, onChange }: Props) {
           />
         </label>
       </fieldset>
+
+      {errors.bounds && (
+        <p className="oq-error" role="alert">
+          {errors.bounds}
+        </p>
+      )}
     </section>
   );
 }

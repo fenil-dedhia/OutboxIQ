@@ -3,6 +3,7 @@ import {
   completeOnboarding,
   createDefaultDraft,
   getOnboardingDraft,
+  isWorkingHoursValid,
   saveOnboardingDraft,
   type OnboardingDraft,
 } from "../../lib/storage";
@@ -49,6 +50,10 @@ export function useOnboarding(): UseOnboarding {
 
   useEffect(() => {
     if (!hydrated.current) return;
+    // Don't persist invalid working hours (#2): while invalid, no draft
+    // change is written, so an interrupted edit resumes from the last valid
+    // state rather than a broken one.
+    if (!isWorkingHoursValid(draft.workingHours)) return;
     saveOnboardingDraft(draft).catch((err: unknown) => {
       // No user-facing UI yet; just don't leave an unhandled rejection.
       console.error("[OutboxIQ] failed to persist onboarding draft:", err);
