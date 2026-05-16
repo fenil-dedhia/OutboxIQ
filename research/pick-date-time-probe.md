@@ -162,3 +162,30 @@ clicking the final "Schedule send" actually produces a message in Gmail's
 Scheduled label. Needs a `live({confirm:true})` or a manual smoke test of
 the real extension. Everything up to (not including) that final click is
 now hands-on verified in all three contexts.
+
+### 2026-05-16 — end-to-end `live({confirm:true})` attempt — ⚠️ probe input-format bug (NOT a shipped-code defect)
+
+`live({ date:"2026-12-31", time:"9:00 AM", confirm:true })` ran the full
+chain and clicked confirm, but **no email scheduled**. Gmail's date input
+showed the raw ISO `2026-12-31` and rendered **"Invalid date"** (Gmail
+wants `Dec 31, 2026`), so its confirm was a no-op.
+
+- **Root cause:** the probe's `live()` set the inputs to the raw args
+  verbatim; the usage example string was ISO. **The shipped extension is
+  correct** — `formatForGmail` (unit-tested) already produces
+  `"Dec 31, 2026"` / `"9:00 AM"` and `scheduleAt` feeds those. The defect
+  was only in the diagnostic.
+- **Fix applied:** `live()` now converts the date/time to Gmail's format
+  (mirrors `formatForGmail`) before setting, with a log line showing the
+  conversion. Re-running it now genuinely exercises the real transform.
+- **Positive signals this run:** the `innerTarget` guard *engaged* on the
+  "Schedule send" menuitem (`hit-test escaped target <div.uW2Fw-bHm>`) and
+  the chain still completed — the guard proving itself under a real
+  escape. Confirm resolved to the inner `<span class="mUIrbf-anl">` of the
+  real button (correct).
+- The `aria-hidden` console warning is Gmail-internal (its own `div.dw`),
+  unrelated to OutboxIQ.
+
+**Status:** end-to-end still not positively observed, but the failure is
+fully explained and is *not* in shipped code. A clean re-run of the fixed
+`live()` (or a real-extension smoke test) remains the final check.

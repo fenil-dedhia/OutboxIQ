@@ -264,9 +264,40 @@
     el.dispatchEvent(new Event("change", { bubbles: true }));
   }
 
+  // Gmail's date input rejects ISO ("2026-12-31" → "Invalid date"); it wants
+  // "Dec 31, 2026". Convert here so the probe exercises the SAME transform
+  // the shipped extension does (extension/src/lib/schedule/gmail-format.ts
+  // formatForGmail). Accepts ISO date + "9:00 AM" (or "HH:MM" 24h) time.
+  function toGmailDate(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+    if (!m) return iso; // already Gmail-format? pass through
+    const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+    return new Intl.DateTimeFormat("en-US", {
+      timeZone: "UTC",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }).format(d);
+  }
+  function toGmailTime(t) {
+    if (/^\d{1,2}:\d{2}\s*(AM|PM)$/i.test(t)) return t; // already Gmail-format
+    const m = /^(\d{2}):(\d{2})$/.exec(t);
+    if (!m) return t;
+    const d = new Date(Date.UTC(2000, 0, 1, +m[1], +m[2]));
+    return new Intl.DateTimeFormat("en-US", {
+      timeZone: "UTC",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    }).format(d);
+  }
+
   async function live({ date, time, confirm = false } = {}) {
     console.warn(`[probe] live() — ${confirm ? "DESTRUCTIVE: will create a real scheduled email." : "sets values only, no confirm."}`);
     if (!date || !time) throw new Error('Pass { date, time }, e.g. { date: "2026-12-31", time: "9:00 AM" }');
+    const gmailDate = toGmailDate(date);
+    const gmailTime = toGmailTime(time);
+    console.log(`[probe] formatting for Gmail: date "${date}" → "${gmailDate}", time "${time}" → "${gmailTime}"`);
     await discover();
     const dlg = findScheduleDialog();
     const root = dlg ? dlg.dialog : document;
@@ -276,9 +307,9 @@
       console.warn("[probe] Expected >=2 inputs (date+time) — markup differs. Report the dump; do not guess which is which.");
       return;
     }
-    // Heuristic ordering: report it, let a human confirm against the dump.
-    setNativeValue(inputs[0], date);
-    setNativeValue(inputs[1], time);
+    // Probe-confirmed order: [date, time]. Values formatted as Gmail expects.
+    setNativeValue(inputs[0], gmailDate);
+    setNativeValue(inputs[1], gmailTime);
     console.log("[probe] values set. Visually confirm Gmail accepted them.");
     if (!confirm) { console.log("[probe] confirm:false — stopping before scheduling."); return; }
     const btn =
