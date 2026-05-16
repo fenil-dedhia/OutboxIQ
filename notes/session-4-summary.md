@@ -41,6 +41,31 @@ that landed.
    + gotchas (recipe single-point-of-failure, React-in-Shadow-DOM,
    content-script-bundles-React).
 
+5. **End-to-end verified, then real-extension smoke test passed.**
+   `live({confirm:true})` scheduled a real email at the exact time; then
+   Fenil loaded the unpacked extension and confirmed the full UX
+   (relabel, modal, presets, custom, Last scheduled time, clean close)
+   works.
+
+6. **Post-smoke UX refinements (owner-directed, in-session):**
+   - **Select-then-confirm modal** (`0745588`): picking an option only
+     selects it; a single primary "Schedule" button (disabled until a
+     choice) commits + closes. "Pick date & time" → **"Pick custom"**.
+     PRD §5.3.4 amended (`983e69f`).
+   - **Onboarding microcopy clarified**: the absolute-limits fieldset's
+     `"Absolute limits (any timezone)"` was genuinely confusing (Fenil
+     scheduled 03:33 with a 07:00 floor and asked why). Legend → **"Hard
+     limits (your local time)"**, working-hours legend gained a "soft
+     daily preference" helper, absolute-limits gained a hard-cap helper.
+     Text-only; faithful to PRD §5.1.3 (no amendment needed).
+   - Documented post-schedule Drafts-vs-Scheduled landing as **known
+     Gmail-native behavior, not a bug** (grep-verified zero nav code).
+
+**Lesson:** the hands-on smoke test earned its keep — it surfaced three
+real UX issues (no explicit confirm step, confusing absolute-limits
+copy, an apparent navigation bug that was actually Gmail-native) that
+unit tests/probes could never have caught. All addressed in-session.
+
 Final state: typecheck/lint clean, **33 tests pass**, production build OK,
 sw-loader chunk correct.
 
@@ -101,22 +126,31 @@ sw-loader chunk correct.
 
 ## Repo state at session end
 
-- `main` well ahead of `origin/main` (probe ×N, §5.2, §5.3, custom path,
-  Last scheduled, PRD/docs). **Not pushed** — Fenil pushes / authorises.
-- Everything green locally.
+- All work **committed and pushed**; `main` in sync with `origin/main`,
+  working tree clean.
+- Everything green (typecheck, lint, 33 tests, build, sw-loader).
+- §5.2 compose-context coverage complete; §5.3 end-to-end verified +
+  real-extension smoke-tested; select-then-confirm UX + microcopy
+  refinements landed.
 
-## Next session starts with
+## Session 5 starting sequence
 
-1. **End-to-end smoke test** (the one remaining verification): load
-   `extension/dist/` unpacked, actually schedule via the real OutboxIQ
-   modal (preset, custom, last-scheduled), confirm a message lands in
-   Gmail's Scheduled label and "Last scheduled time" appears next open.
-   (Or `live()` on a throwaway.)
-2. Consider the React error-boundary hardening.
-3. Then §5.3.5 + §5.3.7 as a dedicated OAuth / People API / Maps-proxy
-   session.
+1. **Full end-to-end smoke test, edge cases.** The core path is already
+   verified this session; cover the edges: multiple recipients, an
+   already-open Gmail tab from before onboarding, multiple simultaneous
+   compose windows, the §5.2.3 native-fallback path, "Last scheduled
+   time" round-trip across reloads.
+2. **React error boundary around the modal** — close the §5.2.3 hole
+   (a render-time throw is async in React 18 and bypasses the
+   native-fallback try/catch). Do this before more modal work.
+3. **§5.3.5 Optimize-for-recipient + §5.4** — the dedicated OAuth +
+   People API + Maps-proxy session (also unblocks §5.3.7). This is the
+   first work that touches the backend and OAuth scopes.
 
-(§5.2 compose-context coverage is now complete — all three contexts
-verified this session.)
+Deferred and still tracked (not Session 5 sequence, but on the list):
+§5.5 runtime working-hours / absolute-limits enforcement (the §5.3.6
+hook is in place; onboarding now collects these clearly but nothing
+enforces them yet — the microcopy is descriptive of design intent);
+onboarding form-widget tests (separate hardening session).
 
 Read `CLAUDE.md` and this summary first.

@@ -36,6 +36,10 @@ export function WorkingHoursStep({ workingHours, onChange }: Props) {
       <h1 id="oq-wh-title">Set your working hours</h1>
       <fieldset className="oq-days">
         <legend>Working days and times</legend>
+        <p className="oq-help">
+          When you&rsquo;d normally send &mdash; a soft daily preference, in
+          your local time.
+        </p>
         {WEEKDAYS.map((day) => {
           const d = workingHours[day];
           const dayError = errors.days[day];
@@ -83,7 +87,12 @@ export function WorkingHoursStep({ workingHours, onChange }: Props) {
       </fieldset>
 
       <fieldset className="oq-bounds">
-        <legend>Absolute limits (any timezone)</legend>
+        <legend>Hard limits (your local time)</legend>
+        <p className="oq-help">
+          A hard floor and ceiling in your own local time. OutboxIQ will never
+          schedule a send before the earliest or after the latest, even when
+          optimizing for a recipient&rsquo;s timezone.
+        </p>
         <label className="oq-field">
           <span>Earliest I&rsquo;d ever send an email</span>
           <input
