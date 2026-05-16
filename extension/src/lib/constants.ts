@@ -30,3 +30,8 @@ export const SCHEMA_VERSION = 1;
 // Path (relative to the extension root) of the standalone onboarding page,
 // as emitted by the CRXJS build. Used to open/locate the onboarding tab.
 export const ONBOARDING_PAGE_PATH = "src/pages/onboarding/index.html";
+
+// PRD §5.2.1: the native "Schedule send" dropdown item is relabelled to this.
+// Verbatim from the PRD — do not paraphrase (it is the one branded surface in
+// compose; §8.1 "native feel over branded feel" keeps it to exactly this).
+export const SCHEDULE_SEND_LABEL = "Schedule Send (powered by OutboxIQ)";
