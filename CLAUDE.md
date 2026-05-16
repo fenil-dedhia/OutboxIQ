@@ -66,9 +66,9 @@ Already decided — do not re-litigate without explicit user input:
 - **Privacy/ToS docs:** drafting deferred; will live in `docs/` and be served from GitHub Pages.
 - **Brand assets:** placeholder "OQ" mark during dev; real brand work happens just before Web Store submission.
 
-## Gating constraint: Gmail scheduled-send spike
+## Gating constraint: Gmail scheduled-send spike — CLEARED (2026-05-15)
 
-The Gmail API does not expose third-party scheduled sends directly. A **half-day technical spike** must produce `research/scheduled-send-api-spike.md` answering: (a) which approach works, (b) constraints, (c) accepted trade-offs, (d) open questions. **No Schedule Send feature code, backend Pub/Sub wiring, or recipient-cache code may begin until that spike is complete and reviewed.** The onboarding flow (PRD §5.1) is the safe starting point — it doesn't depend on the scheduling mechanism.
+The Gmail API does not expose third-party scheduled sends directly, so a half-day technical spike was required before any Schedule Send / Pub/Sub / recipient-cache code. **That spike is complete and verified** (`research/scheduled-send-api-spike.md`): Approach C (UI-automate Gmail's own Schedule Send) confirmed end-to-end, and the API cancel path (`messages.list?q=in:scheduled` → `messages.trash`) verified. Schedule Send, backend Pub/Sub, and recipient-cache work are now **unblocked**. Still open from the spike (not blocking, but do them at the right time): verify the "Pick date & time" custom path when §5.3 begins, and Workspace compatibility before public launch (tracked in `PRE_LAUNCH_CHECKLIST.md`). The onboarding flow (PRD §5.1), the spike-independent starting point, is now implemented — see Repository status.
 
 ## Google Cloud / OAuth
 

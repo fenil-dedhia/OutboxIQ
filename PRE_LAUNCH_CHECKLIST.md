@@ -55,6 +55,7 @@ Google classifies the Gmail scopes OutboxIQ uses (`gmail.compose`, `gmail.modify
 - Chrome Web Store developer account created and verified.
 - Store listing prepared: description, screenshots, promotional images, support links.
 - Submission and review. Extensions requesting sensitive permissions typically take 1–3 weeks to review.
+- Justify the `https://mail.google.com/*` host permission for review (it drives the install-time "read and change your data on mail.google.com" warning users see). Keep permissions minimal — currently `storage` + that one host permission only; no `tabs`, no `identity`/OAuth yet.
 
 ---
 
@@ -79,6 +80,20 @@ Verify that OutboxIQ's UI-automated Schedule Send works on Google Workspace acco
 - **How to verify:** hands-on test on a Workspace account in a controlled domain. Re-test after any major Gmail UI update.
 - **Trigger:** before Chrome Web Store submission, and after any major Gmail UI change.
 - **Reference:** `research/scheduled-send-api-spike.md` Open Question 4.
+
+---
+
+## Accessibility
+
+PRD §6.3 mandates WCAG AA: keyboard-navigable controls, labelled fields, AA contrast, ARIA roles/labels/live regions, and visible focus indicators. No dedicated accessibility pass has been run. The onboarding flow (the first shipped UI, PRD §5.1) has **known gaps** to fix before public launch:
+
+- **Step-change focus & announcements.** Advancing between onboarding steps does not move keyboard focus to the new step and there is no `aria-live` region announcing the change, so a keyboard/screen-reader user is left on a removed control. (PRD §6.3 live regions, §8.9 keyboard accessibility.)
+- **Consent control markup.** The consent `<label>` currently wraps the Privacy Policy `<a>`; nesting an interactive element inside a label is invalid and lets a link click also toggle consent. Restructure so the link is not inside the labelled control. (This touches the legally-meaningful consent gate — fix before any non-test users.)
+- **Contrast / focus indicators.** Spot-check muted text (`#5f6368` on white) and the disabled-button treatment against AA; confirm a visible focus ring on every custom control.
+- **Keyboard-only + screen-reader walkthrough** of the full onboarding flow (and every subsequent UI) before submission.
+
+- **Trigger:** before Chrome Web Store submission; re-run after any significant UI change.
+- **Reference:** PRD §6.3, §8.9.
 
 ---
 
