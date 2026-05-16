@@ -37,7 +37,7 @@ Read these before making non-trivial decisions — they encode constraints that 
 
 - `OutboxIQ_PRD.md` — full v1 spec. **§11 "Out of Scope: Do Not Build"** is unusually load-bearing: it explicitly forbids 20 plausible-sounding features (email tracking, AI rewriting, analytics dashboards, separate scheduled-emails view, multi-account, holiday awareness, Firefox support, telemetry, etc.). Treat it as a hard constraint, not a suggestion — do not infer or add features outside it.
 - `PRE_LAUNCH_CHECKLIST.md` — obligations deferred until public launch (CASA Tier 2, OAuth Production, Privacy/Terms drafting, brand work, Web Store submission). Anything you'd otherwise spend time on for "launch readiness" probably belongs here, not in feature code.
-- `notes/session-3-summary.md` — latest session state and what the next session should start with (earlier summaries: `session-1`, `session-2`).
+- `notes/session-4-summary.md` — latest session state and what the next session should start with (earlier summaries: `session-1`, `session-2`, `session-3`).
 
 ## Architecture
 
