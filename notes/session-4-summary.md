@@ -76,6 +76,15 @@ sw-loader chunk correct.
 - §5.5 runtime working-hours check (the §5.3.6 hook is in place).
 - Onboarding form-widget tests — still the separate hardening session.
 
+## Known Gmail-native behavior (NOT a bug — don't "fix")
+
+- After scheduling, where the user lands (Drafts vs Scheduled) is
+  Gmail's own async draft→scheduled transition + originating-view
+  dependent. OutboxIQ has **zero** navigation/view code in the
+  scheduling path (verified by grep). Forcing a redirect to Scheduled
+  would violate §8.1 "enhance, don't replace" + §11. Left as native by
+  design. (Surfaced by Fenil's smoke test 2026-05-16.)
+
 ## Honest gaps flagged
 
 - No React error boundary around the modal: a render-time throw is async
