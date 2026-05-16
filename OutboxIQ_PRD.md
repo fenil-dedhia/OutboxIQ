@@ -150,6 +150,19 @@ Three preset options matching Gmail's native pattern:
 
 These dates and times update dynamically based on the current day of the week.
 
+> **Amendment (2026-05-16, owner-directed):** when the user has scheduled at
+> least once via OutboxIQ, the modal also shows a **"Last scheduled time"**
+> row at the top (above the three presets), mirroring the equivalent row in
+> Gmail's own native dialog (PRD §8.1 native feel). This was not in the
+> original 3-preset spec; added so repeat users don't lose Gmail's
+> "same time as last time" affordance. Implementation detail: OutboxIQ
+> remembers the time **it** scheduled (stored locally per PRD §7.2 —
+> `lastScheduled`, schema v2), rather than scraping Gmail's own value; this
+> keeps it local-first and avoids extra Gmail interaction. It therefore
+> reflects the last OutboxIQ-scheduled time, which can differ from Gmail's
+> global memory (e.g., if the user also scheduled directly via Gmail).
+> Clicking it schedules at that exact time via the §5.3.4 custom path.
+
 #### 5.3.4 Pick Date & Time
 
 A standard date and time picker for custom scheduling. Selected time is always in the user's timezone, clearly labeled.
@@ -540,7 +553,9 @@ All local data is stored in the browser's extension storage. Suggested schema:
 }
 ```
 
-> **Implementation note:** the implemented `OutboxIQState` adds a top-level `schemaVersion` (currently `1`; `SCHEMA_VERSION` in `extension/src/lib/constants.ts`) and represents `consent` as **nullable** — it is `null` until the user completes onboarding (PRD §5.1), then set to the object shown above. The schema here describes the shape once consent exists.
+> **Implementation note:** the implemented `OutboxIQState` adds a top-level `schemaVersion` (currently **`2`**; `SCHEMA_VERSION` in `extension/src/lib/constants.ts`) and represents `consent` as **nullable** — it is `null` until the user completes onboarding (PRD §5.1), then set to the object shown above. The schema here describes the shape once consent exists.
+>
+> **Schema v2 (2026-05-16):** added a nullable top-level `lastScheduled` (`{ display, gmailDate, gmailTime } | null`) — supports the §5.3.3 "Last scheduled time" amendment. Purely additive; the v1→v2 "migration" is just `getState()`'s default-merge resolving an absent key to `null` (no explicit version branch yet, per the migration convention in `CLAUDE.md`). Stores only pre-formatted time strings — never email content (§7.3.4).
 
 ### 7.3 Backend Service
 
