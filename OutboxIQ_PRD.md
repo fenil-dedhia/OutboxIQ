@@ -167,6 +167,8 @@ These dates and times update dynamically based on the current day of the week.
 
 A standard date and time picker for custom scheduling. Selected time is always in the user's timezone, clearly labeled.
 
+> **Amendment (2026-05-16, owner-directed):** this section is labelled **"Pick custom"** in the UI (with the timezone abbreviation retained for the §5.3.4 "clearly labeled" requirement). Also, the modal's interaction model is **select-then-confirm**: choosing a Quick Option, the "Last scheduled time" row, or entering a custom date+time only *selects* it (visually highlighted; modal stays open). Nothing is scheduled until the user clicks the single primary **"Schedule"** button, which is disabled until a choice is made and which both schedules and closes the modal. This is consistent with §5.3.5's "Clicking 'Schedule' … submits" wording (it replaces an earlier click-a-row-fires-immediately behaviour).
+
 #### 5.3.5 OutboxIQ Optimize Section
 
 Below the standard options, a new section labeled "Optimize delivery for recipient" appears, containing:
