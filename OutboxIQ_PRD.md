@@ -538,6 +538,8 @@ All local data is stored in the browser's extension storage. Suggested schema:
 }
 ```
 
+> **Implementation note:** the implemented `OutboxIQState` adds a top-level `schemaVersion` (currently `1`; `SCHEMA_VERSION` in `extension/src/lib/constants.ts`) and represents `consent` as **nullable** — it is `null` until the user completes onboarding (PRD §5.1), then set to the object shown above. The schema here describes the shape once consent exists.
+
 ### 7.3 Backend Service
 
 #### 7.3.1 Purpose
