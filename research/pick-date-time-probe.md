@@ -132,7 +132,33 @@ end-to-end commit). Navigation/structure proven; the final write needs a
 `live({confirm:true})` or a manual smoke test.
 
 **Action items captured (for the post-pause implementation):**
-1. Wire §5.3.4 custom path: open dialog → `.Az.AM` → set the 2 inputs (native setter, formats above) → click the "Schedule send" confirm button.
-2. Tighten §5.2 relabel to replace only the text node (preserve the spacer img).
-3. Fix §5.3 preset-row matching to use the date+time substring.
-4. (Pending) `anchorCheck()` in inline-reply and pop-out compose; new-compose is already proven (discover ran there).
+1. Wire §5.3.4 custom path: open dialog → `.Az.AM` → set the 2 inputs (native setter, formats above) → click the "Schedule send" confirm button. ✅ DONE (`508f240`).
+2. Tighten §5.2 relabel to replace only the text node (preserve the spacer img). ✅ DONE (`727c3ea`).
+3. Fix §5.3 preset-row matching to use the date+time substring. ✅ DONE (`508f240`).
+4. `anchorCheck()` in inline-reply and pop-out compose. ✅ DONE — see below.
+
+### 2026-05-16 — compose-context coverage (Session 4) — ✅ ALL THREE PASS
+
+Ran the full `discover()` (a superset of `anchorCheck()` — it also drives
+the whole chain) in each context. **New-compose, inline-reply, and pop-out
+compose are byte-for-byte equivalent** for everything we anchor on:
+
+- `scheduledSend` menuitem: identical structure in all three; only the
+  Gmail-assigned `id` differs (`:ep` / `:js` / earlier `:ba`) —
+  **confirms `id` must never be an anchor** (we don't use it).
+- Chevron, dialog (found structurally via `.Az`), the three preset rows,
+  the `.Az.AM` "Pick date & time" hook, and the custom picker (2 inputs +
+  "Schedule send"/"Cancel" buttons): **identical across contexts.**
+- Custom input ids varied across runs (`c3/c4` → `c7/c8` → `c25/c26`) —
+  re-confirms ids are per-session dynamic and our **order-based** input
+  selection (not id) is correct.
+- All three reached **✅ CUSTOM PICKER OPENED**.
+
+No per-context differences touch any selector. §5.2 compose-context
+coverage is **complete**; nothing improvised.
+
+**The only remaining unverified item:** the true end-to-end commit — that
+clicking the final "Schedule send" actually produces a message in Gmail's
+Scheduled label. Needs a `live({confirm:true})` or a manual smoke test of
+the real extension. Everything up to (not including) that final click is
+now hands-on verified in all three contexts.

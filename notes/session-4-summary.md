@@ -62,8 +62,10 @@ sw-loader chunk correct.
 - **END-TO-END UNVERIFIED.** No `live()` or manual run has confirmed a
   real email actually gets scheduled — navigation/structure proven, the
   final commit click is not. **This is the top next-session item.**
-- `anchorCheck()` in **inline-reply** and **pop-out** compose still not
-  run (new-compose proven). §5.2 not fully signed off until done.
+- ~~`anchorCheck()` in inline-reply and pop-out~~ ✅ DONE — full
+  `discover()` ran clean in all three contexts (new / inline-reply /
+  pop-out); byte-for-byte equivalent for every anchor. §5.2
+  compose-context coverage **complete** (probe Result log).
 - **§5.3.5 Optimize-for-recipient + §5.3.7 fallback** — whole, next
   session (needs OAuth + People API + Maps proxy backend).
 - §5.5 runtime working-hours check (the §5.3.6 hook is in place).
@@ -91,13 +93,16 @@ sw-loader chunk correct.
 
 ## Next session starts with
 
-1. **End-to-end smoke test**: load `extension/dist/` unpacked, actually
-   schedule via the real OutboxIQ modal (preset, custom, last-scheduled),
-   confirm a message lands in Gmail's Scheduled label and "Last scheduled
-   time" appears next open. (Or `live()` on a throwaway.)
-2. `anchorCheck()` in inline-reply + pop-out → sign off §5.2.
-3. Consider the React error-boundary hardening.
-4. Then §5.3.5 + §5.3.7 as a dedicated OAuth / People API / Maps-proxy
+1. **End-to-end smoke test** (the one remaining verification): load
+   `extension/dist/` unpacked, actually schedule via the real OutboxIQ
+   modal (preset, custom, last-scheduled), confirm a message lands in
+   Gmail's Scheduled label and "Last scheduled time" appears next open.
+   (Or `live()` on a throwaway.)
+2. Consider the React error-boundary hardening.
+3. Then §5.3.5 + §5.3.7 as a dedicated OAuth / People API / Maps-proxy
    session.
+
+(§5.2 compose-context coverage is now complete — all three contexts
+verified this session.)
 
 Read `CLAUDE.md` and this summary first.
