@@ -59,9 +59,14 @@ sw-loader chunk correct.
 
 ## Not yet done (deferred / tracked)
 
-- **END-TO-END UNVERIFIED.** No `live()` or manual run has confirmed a
-  real email actually gets scheduled — navigation/structure proven, the
-  final commit click is not. **This is the top next-session item.**
+- ~~END-TO-END UNVERIFIED~~ ✅ **VERIFIED 2026-05-16.** `live({confirm:
+  true})` scheduled a real email at the exact target time (Gmail toast
+  "Send scheduled for Thu, Dec 31, 9:00 AM"; Scheduled folder = 1).
+  Format fix mirrors `formatForGmail`; `innerTarget` guard engaged and
+  recovered (3rd confirmation). One probe-only artifact (stray picker
+  from running `discover()` then `live()`, which re-runs `discover()`) —
+  cannot occur via the shipped modal. Residual: a real-extension smoke
+  test to eyeball the modal/dialog close UX (probe Result log).
 - ~~`anchorCheck()` in inline-reply and pop-out~~ ✅ DONE — full
   `discover()` ran clean in all three contexts (new / inline-reply /
   pop-out); byte-for-byte equivalent for every anchor. §5.2

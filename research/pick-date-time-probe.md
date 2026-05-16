@@ -1,7 +1,7 @@
 # "Pick date & time" Custom-Path Probe
 
 **Date:** 2026-05-16
-**Status:** ✅ Verified end-to-end on consumer Gmail (2026-05-16, Session 4). Custom "Pick date & time" path confirmed openable via the recipe (after the `innerTarget` guard fix). See Result log.
+**Status:** ✅✅ Verified end-to-end on consumer Gmail (2026-05-16, Session 4). The custom "Pick date & time" path **schedules a real email** via the recipe (Gmail toast "Send scheduled for Thu, Dec 31, 9:00 AM" + Scheduled-folder count). All three compose contexts pass. See Result log.
 **Depends on:** `research/scheduled-send-api-spike.md` — this probe extends the spike's verified preset-path recipe to the **custom "Pick date & time" path**, which the spike explicitly left unverified (Open Question 2 / OQ2 closing note).
 **Why this matters:** OutboxIQ almost never schedules at one of Gmail's three native presets — recipient-timezone optimization and working-hours rescheduling produce *arbitrary* timestamps. The custom path is therefore the **primary** scheduling path for this product, not an edge case. If the verified recipe does not drive the custom date/time fields, the entire §5.3 Schedule-button design changes. This probe de-risks that before any custom-path code is written.
 
@@ -189,3 +189,36 @@ wants `Dec 31, 2026`), so its confirm was a no-op.
 **Status:** end-to-end still not positively observed, but the failure is
 fully explained and is *not* in shipped code. A clean re-run of the fixed
 `live()` (or a real-extension smoke test) remains the final check.
+
+### 2026-05-16 — `live({confirm:true})` re-run after format fix — ✅ REAL EMAIL SCHEDULED (end-to-end PROVEN)
+
+`live({ date:"2026-12-31", time:"9:00 AM", confirm:true })`. Log:
+`formatting for Gmail: date "2026-12-31" → "Dec 31, 2026", time "9:00 AM"
+→ "9:00 AM"`. Gmail showed a valid date (no "Invalid date"), accepted
+confirm, and displayed its own toast **"Send scheduled for Thu, Dec 31,
+9:00 AM"** with the Scheduled folder showing **1**. **The full chain —
+open dialog → Pick date & time → set inputs → confirm → real native
+scheduled send — is verified end-to-end on consumer Gmail.**
+
+- The `innerTarget` guard engaged again on the scheduledSend menuitem
+  (`hit-test escaped target <div.uW2Fw-bHm>`) and the chain still
+  completed — third independent confirmation the guard is load-bearing
+  and correct.
+- Date/time format conversion (mirrors `formatForGmail`) confirmed
+  correct against live Gmail.
+
+**Observed artifact (probe-only, NOT a shipped defect):** a stray
+"Pick date & time" picker remained open showing the default date/time.
+Cause: the operator ran `discover()` *and then* `live()`, but `live()`
+itself calls `discover()` internally — so the chain navigated twice
+(manual `discover()` opened picker A and left it; `live()`'s internal
+`discover()` opened picker B, filled + confirmed it → the scheduled
+email). Picker A was the unconfirmed leftover. The shipped extension's
+`scheduleAt()` runs the chain **once** and the modal has a `busy`
+guard, so this cannot occur via the real OutboxIQ UI. (Probe left
+as-is; it's a throwaway diagnostic that has served its purpose.)
+
+**Only residual, for the real-extension smoke test:** visually confirm
+that scheduling through the OutboxIQ modal closes both Gmail's dialog
+and our modal and produces exactly one scheduled email (expected fine;
+not a known bug).
