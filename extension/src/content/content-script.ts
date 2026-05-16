@@ -50,5 +50,7 @@ async function maybeLaunchOnboarding(): Promise<void> {
   }
 }
 
-console.info("[OutboxIQ] content script loaded (scaffold)");
+if (import.meta.env.DEV) {
+  console.info("[OutboxIQ] content script loaded (scaffold)");
+}
 void maybeLaunchOnboarding();

@@ -13,7 +13,9 @@ import { ONBOARDING_PAGE_PATH } from "../lib/constants";
 import { isOnboardingComplete } from "../lib/storage";
 import { MSG_OPEN_ONBOARDING, type RuntimeMessage } from "../lib/messages";
 
-console.info("[OutboxIQ] service worker active");
+if (import.meta.env.DEV) {
+  console.info("[OutboxIQ] service worker active");
+}
 
 // In-memory guard so multiple Gmail tabs / retries don't stack onboarding
 // tabs. Module scope resets when the worker restarts, which is fine.
