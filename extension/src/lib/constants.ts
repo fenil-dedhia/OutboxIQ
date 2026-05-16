@@ -22,6 +22,11 @@ export const PRIVACY_POLICY_VERSION = "unpublished-pre-launch";
 export const STORAGE_KEY_STATE = "outboxiqState";
 export const STORAGE_KEY_ONBOARDING_DRAFT = "outboxiqOnboardingDraft";
 
+// Version of the persisted OutboxIQState shape (PRD §7.2). Bump when the
+// shape changes and add a migration in getState(); see CLAUDE.md. There is
+// intentionally no migration framework yet — this just lays the foundation.
+export const SCHEMA_VERSION = 1;
+
 // Path (relative to the extension root) of the standalone onboarding page,
 // as emitted by the CRXJS build. Used to open/locate the onboarding tab.
 export const ONBOARDING_PAGE_PATH = "src/pages/onboarding/index.html";

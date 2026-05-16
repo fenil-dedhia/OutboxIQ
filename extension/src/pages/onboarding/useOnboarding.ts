@@ -49,7 +49,10 @@ export function useOnboarding(): UseOnboarding {
 
   useEffect(() => {
     if (!hydrated.current) return;
-    void saveOnboardingDraft(draft);
+    saveOnboardingDraft(draft).catch((err: unknown) => {
+      // No user-facing UI yet; just don't leave an unhandled rejection.
+      console.error("[OutboxIQ] failed to persist onboarding draft:", err);
+    });
   }, [draft]);
 
   const update = useCallback((patch: Partial<OnboardingDraft>) => {

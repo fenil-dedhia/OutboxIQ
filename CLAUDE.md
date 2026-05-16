@@ -26,6 +26,7 @@ All commands run from `extension/` (the only component with tooling so far; `bac
 - The build prints a benign CRXJS-on-Vite-8 warning ("Both `rollupOptions` and `rolldownOptions` … will be ignored"). Content scripts still build and wire up correctly; it is cosmetic and internal to CRXJS.
 - `vitest.config.ts` is intentionally excluded from `tsconfig.json`'s `include` (a Vite 8 ↔ Vitest-nested-Vite types skew, not a code defect). Test code under `src/` is still fully type-checked.
 - **MV3 entry files must have distinct basenames.** Under Vite 8/Rolldown, CRXJS collapses two entries that share a basename (e.g. `src/background/index.ts` + `src/content/index.ts`) into one chunk, and the service worker silently ends up running the content script's code (no error; onboarding just never opens). The fix already applied: the entries are `src/background/service-worker.ts` and `src/content/content-script.ts`. Do not rename them back to `index.ts`. To sanity-check after a build: `dist/service-worker-loader.js` must import the `service-worker.ts-*` chunk, not the `content-script.ts-*` one.
+- **Local storage carries a `schemaVersion`.** The `outboxiqState` root (PRD §7.2) has a `schemaVersion` field (currently `1`, the `SCHEMA_VERSION` constant in `src/lib/constants.ts`). There is intentionally **no migration framework yet** — only the field. When a future change alters the §7.2 shape, bump `SCHEMA_VERSION` and branch on the stored value in `getState()` to migrate old records.
 
 ## Source-of-truth documents
 

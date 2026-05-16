@@ -2,7 +2,11 @@
 // This is the local-first state layer every other feature reads; onboarding
 // (PRD §5.1) is what first populates it. Nothing here is ever transmitted.
 
-import { STORAGE_KEY_STATE, STORAGE_KEY_ONBOARDING_DRAFT } from "./constants";
+import {
+  STORAGE_KEY_STATE,
+  STORAGE_KEY_ONBOARDING_DRAFT,
+  SCHEMA_VERSION,
+} from "./constants";
 
 export type TimezoneSource = "calendar_api" | "browser" | "manual";
 
@@ -72,6 +76,8 @@ export interface Consent {
 }
 
 export interface OutboxIQState {
+  /** Shape version of this record (PRD §7.2). See SCHEMA_VERSION. */
+  schemaVersion: number;
   user: UserState;
   workingHours: WorkingHours;
   featureToggles: FeatureToggles;
@@ -87,6 +93,7 @@ function defaultDay(enabled: boolean): DayHours {
 /** PRD §5.1/§7.2 defaults: Mon–Fri 09:00–17:00, 07:00/19:00 absolute bounds. */
 export function createDefaultState(): OutboxIQState {
   return {
+    schemaVersion: SCHEMA_VERSION,
     user: {
       email: "",
       timezone: detectBrowserTimezone(),
@@ -141,6 +148,7 @@ export async function getState(): Promise<OutboxIQState> {
   const defaults = createDefaultState();
   if (!stored) return defaults;
   return {
+    schemaVersion: stored.schemaVersion ?? defaults.schemaVersion,
     user: { ...defaults.user, ...stored.user },
     workingHours: { ...defaults.workingHours, ...stored.workingHours },
     featureToggles: { ...defaults.featureToggles, ...stored.featureToggles },
