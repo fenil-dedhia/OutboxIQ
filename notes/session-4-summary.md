@@ -135,22 +135,36 @@ sw-loader chunk correct.
 
 ## Session 5 starting sequence
 
-1. **Full end-to-end smoke test, edge cases.** The core path is already
-   verified this session; cover the edges: multiple recipients, an
-   already-open Gmail tab from before onboarding, multiple simultaneous
-   compose windows, the §5.2.3 native-fallback path, "Last scheduled
-   time" round-trip across reloads.
+**This ordering is a deliberate decision by the owner (Fenil), not a
+Claude Code recommendation — do not re-litigate it in future sessions.**
+
+1. **End-to-end smoke test of edge cases not covered this session** —
+   inline-reply compose, pop-out compose, and multi-compose scenarios,
+   exercised through the real loaded extension (probe-verified ≠
+   extension-verified). Also worth covering: §5.2.3 native-fallback
+   path, "Last scheduled time" round-trip across reloads.
 2. **React error boundary around the modal** — close the §5.2.3 hole
    (a render-time throw is async in React 18 and bypasses the
    native-fallback try/catch). Do this before more modal work.
-3. **§5.3.5 Optimize-for-recipient + §5.4** — the dedicated OAuth +
-   People API + Maps-proxy session (also unblocks §5.3.7). This is the
-   first work that touches the backend and OAuth scopes.
+3. **§5.5 working-hours runtime enforcement** — the actual §5.5 modal
+   flow + calculation logic that enforces the absolute limits and
+   working-hours preferences collected during onboarding. Turns the
+   §5.3.6 hook (currently a documented no-op) into a real check.
+4. **§5.3.5 + §5.4** — OAuth + People API + Maps proxy + the
+   "Optimize delivery for recipient" UI (also unblocks §5.3.7). First
+   work that touches the backend and OAuth scopes.
 
-Deferred and still tracked (not Session 5 sequence, but on the list):
-§5.5 runtime working-hours / absolute-limits enforcement (the §5.3.6
-hook is in place; onboarding now collects these clearly but nothing
-enforces them yet — the microcopy is descriptive of design intent);
-onboarding form-widget tests (separate hardening session).
+**Why §5.5 (3) is ahead of §5.3.5/§5.4 (4) — owner's reasoning:**
+tonight's smoke test surfaced that onboarding collects working hours +
+absolute limits but nothing enforces them yet, making those onboarding
+fields functionally inert (and the new microcopy describes intent the
+code doesn't honor). Closing that loop *before* adding more UI (§5.3.5)
+means the existing onboarding inputs start actually doing something and
+the §5.3.6 no-op hook becomes real, rather than layering new surface on
+top of an unenforced foundation.
+
+Deferred and still tracked (not in the Session 5 sequence): onboarding
+form-widget tests (separate hardening session); the smaller flagged
+gaps in "Honest gaps flagged" above.
 
 Read `CLAUDE.md` and this summary first.
