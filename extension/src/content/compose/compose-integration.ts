@@ -42,37 +42,49 @@ const RELABELLED_ATTR = "data-outboxiq-relabelled";
 const isDev = (): boolean => import.meta.env.DEV;
 
 // ---- §5.2.1 Relabel (defensive, best-effort) ------------------------------
-// The scheduledSend menuitem's internal structure is confirmed via
-// research/pick-date-time-probe.md (dumpRelabelTarget). Until that hands-on
-// dump lands we target the leaf element that owns the most visible text and
-// overwrite it. If the shape is unexpected we SKIP silently — a missing
+// Structure confirmed by research/pick-date-time-probe.md (Result log):
+//   div.J-N.yr[selector="scheduledSend"]
+//     └ div.J-N-Jz
+//         ├ img.v5.J-N-JX        (cleardot.gif spacer — MUST be preserved)
+//         └ #text "Schedule send"  ← the visible label is THIS text node
+//
+// So we replace the single longest visible TEXT NODE in place, never an
+// element's textContent (that would delete the spacer img and over-mutate
+// Gmail's DOM). If the shape is unexpected we SKIP silently — a missing
 // "powered by OutboxIQ" suffix is cosmetic; never let it break Gmail.
-// TODO(post-probe): tighten the leaf selection against the dumped structure.
 function relabelScheduleSendItem(menuItem: HTMLElement): void {
   if (menuItem.getAttribute(RELABELLED_ATTR) === "1") return;
   menuItem.setAttribute(RELABELLED_ATTR, "1");
 
-  let best: { el: Element; len: number } | null = null;
-  const walk = (n: Element): void => {
-    for (const child of Array.from(n.children)) {
-      const ownText = Array.from(child.childNodes)
-        .filter((x) => x.nodeType === Node.TEXT_NODE)
-        .map((x) => (x.textContent ?? "").trim())
-        .join("");
-      if (ownText && (!best || ownText.length > best.len)) {
-        best = { el: child, len: ownText.length };
+  const textNodes: Text[] = [];
+  const visit = (node: Node): void => {
+    for (const child of Array.from(node.childNodes)) {
+      if (child.nodeType === Node.TEXT_NODE) {
+        if ((child.textContent ?? "").trim().length > 0) {
+          textNodes.push(child as Text);
+        }
+      } else {
+        visit(child);
       }
-      walk(child);
     }
   };
-  walk(menuItem);
+  visit(menuItem);
 
-  if (best) {
-    (best as { el: Element }).el.textContent = SCHEDULE_SEND_LABEL;
+  const bestNode = textNodes.reduce<Text | null>(
+    (best, n) =>
+      (n.textContent ?? "").trim().length >
+      (best?.textContent ?? "").trim().length
+        ? n
+        : best,
+    null,
+  );
+
+  if (bestNode) {
+    bestNode.nodeValue = SCHEDULE_SEND_LABEL;
   } else if (isDev()) {
     console.warn(
-      "[OutboxIQ] §5.2 relabel: no text leaf in scheduledSend item — " +
-        "skipped (cosmetic; interception unaffected). Confirm via probe.",
+      "[OutboxIQ] §5.2 relabel: no text node in scheduledSend item — " +
+        "skipped (cosmetic; interception unaffected).",
     );
   }
 }
