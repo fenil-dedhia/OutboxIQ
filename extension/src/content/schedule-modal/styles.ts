@@ -31,13 +31,19 @@ h1 { font-size: 16px; font-weight: 500; margin: 0 0 4px; }
   color: #202124;
 }
 .preset:hover, .preset:focus-visible { background: #f1f3f4; outline: none; }
+.preset.selected {
+  background: #e8f0fe; box-shadow: inset 3px 0 0 #1a73e8;
+}
+.preset.selected span:first-child { color: #1a73e8; font-weight: 500; }
 .preset .when { color: #5f6368; font-size: 12px; }
+.preset.selected .when { color: #1a73e8; }
 .divider { border: 0; border-top: 1px solid #e0e0e0; margin: 12px 0; }
 .pick { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .pick input {
   font: inherit; padding: 6px 8px; border: 1px solid #dadce0;
   border-radius: 4px; color: #202124;
 }
+.pick.selected input { border-color: #1a73e8; box-shadow: 0 0 0 1px #1a73e8; }
 .note { font-size: 12px; color: #5f6368; margin: 8px 0 0; }
 .actions {
   display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;

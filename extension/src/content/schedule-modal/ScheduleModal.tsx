@@ -1,11 +1,15 @@
 // PRD §5.3 — Enhanced Schedule Send Modal.
 //
+// Interaction model (owner-directed refinement 2026-05-16): the modal is
+// select-then-confirm. Choosing a Quick Option / "Last scheduled time" /
+// entering a custom date+time only *selects* it; nothing is scheduled until
+// the user clicks the single primary "Schedule" button (disabled until a
+// choice is made). This matches §5.3.5's "Schedule button commits" wording.
+//
 // In scope: §5.3.1 layout, §5.3.2 header + timezone subtitle, §5.3.3 Quick
-// Options + a "Last scheduled time" row (PRD §5.3.3 amendment 2026-05-16,
-// mirrors Gmail), §5.3.4 functional custom date/time picker. All paths
-// produce real native scheduled sends by driving Gmail's own UI.
-// Deferred (owner-directed): §5.3.5 Optimize-for-recipient + §5.3.7.
-// §5.3.6 working-hours check is a documented no-op hook for §5.5.
+// Options + "Last scheduled time" row (§5.3.3 amendment), §5.3.4 custom
+// picker ("Pick custom"). Deferred (owner-directed): §5.3.5
+// Optimize-for-recipient + §5.3.7. §5.3.6 working-hours is a no-op hook.
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -16,6 +20,7 @@ import { formatTimezoneLabel } from "../../lib/schedule/timezone-format";
 import {
   formatForGmail,
   parsePickerInputs,
+  type WallTime,
 } from "../../lib/schedule/gmail-format";
 import {
   schedulePreset,
@@ -28,6 +33,12 @@ type Status =
   | { kind: "idle" }
   | { kind: "busy" }
   | { kind: "error"; message: string };
+
+// What the user has chosen but not yet committed.
+type Selection =
+  | { kind: "last" }
+  | { kind: "preset"; preset: SchedulePreset }
+  | { kind: "custom"; wall: WallTime };
 
 export interface ScheduleModalProps {
   /** The user's configured IANA timezone (PRD §7.2 user.timezone). */
@@ -47,6 +58,14 @@ function applyWorkingHoursCheck(): { proceed: boolean } {
   return { proceed: true }; // TODO(§5.5): working-hours reschedule modal
 }
 
+function lastToRemember(ls: LastScheduled): LastScheduled {
+  return {
+    display: ls.display,
+    gmailDate: ls.gmailDate,
+    gmailTime: ls.gmailTime,
+  };
+}
+
 export function ScheduleModal({
   timezone,
   lastScheduled,
@@ -56,6 +75,7 @@ export function ScheduleModal({
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
+  const [selection, setSelection] = useState<Selection | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
   const now = useMemo(() => new Date(), []);
@@ -74,19 +94,28 @@ export function ScheduleModal({
     return () => document.removeEventListener("keydown", onKey, true);
   }, [onClose]);
 
-  // Runs `action`, then persists `remember` as the new "Last scheduled
-  // time". Any failure hands off to Gmail's own scheduler so the user is
-  // never stranded (PRD §5.2.3).
+  // Editing the custom inputs picks "custom" when both are valid; if they
+  // become invalid and custom was the active choice, the selection clears.
+  function updateCustom(nextDate: string, nextTime: string): void {
+    setDate(nextDate);
+    setTime(nextTime);
+    const wall = parsePickerInputs(nextDate, nextTime);
+    if (wall) setSelection({ kind: "custom", wall });
+    else setSelection((s) => (s && s.kind === "custom" ? null : s));
+  }
+
+  // Commit `action`, then persist `remember`. Any failure hands off to
+  // Gmail's own scheduler so the user is never stranded (PRD §5.2.3).
   async function run(
     action: () => Promise<void>,
-    remember: LastScheduled | null,
+    remember: LastScheduled,
   ): Promise<void> {
     if (status.kind === "busy") return;
     if (!applyWorkingHoursCheck().proceed) return; // §5.3.6 / §5.5 seam
     setStatus({ kind: "busy" });
     try {
       await action();
-      if (remember) onScheduled(remember);
+      onScheduled(remember);
       onClose();
     } catch (err) {
       if (import.meta.env.DEV) {
@@ -105,21 +134,37 @@ export function ScheduleModal({
     }
   }
 
-  const busy = status.kind === "busy";
-  const parsed = parsePickerInputs(date, time);
-
-  function scheduleCustom(): void {
-    if (!parsed) return;
-    const f = formatForGmail(parsed);
-    void run(
-      () => scheduleAt({ gmailDate: f.gmailDate, gmailTime: f.gmailTime }),
-      {
+  // The single end-of-workflow commit (the primary "Schedule" button).
+  function commit(): void {
+    if (!selection) return;
+    if (selection.kind === "last") {
+      if (!lastScheduled) return;
+      const ls = lastScheduled;
+      void run(
+        () => scheduleAt({ gmailDate: ls.gmailDate, gmailTime: ls.gmailTime }),
+        lastToRemember(ls),
+      );
+    } else if (selection.kind === "preset") {
+      const p = selection.preset;
+      const f = formatForGmail(p.wall);
+      void run(() => schedulePreset(p), {
         display: f.display,
         gmailDate: f.gmailDate,
         gmailTime: f.gmailTime,
-      },
-    );
+      });
+    } else {
+      const f = formatForGmail(selection.wall);
+      void run(
+        () => scheduleAt({ gmailDate: f.gmailDate, gmailTime: f.gmailTime }),
+        { display: f.display, gmailDate: f.gmailDate, gmailTime: f.gmailTime },
+      );
+    }
   }
+
+  const busy = status.kind === "busy";
+  const presetSelected = (p: SchedulePreset): boolean =>
+    selection?.kind === "preset" && selection.preset.id === p.id;
+  const customSelected = selection?.kind === "custom";
 
   return (
     <div
@@ -143,18 +188,12 @@ export function ScheduleModal({
           <>
             <div className="section-label">Last scheduled time</div>
             <button
-              className="preset"
-              disabled={busy}
-              onClick={() =>
-                void run(
-                  () =>
-                    scheduleAt({
-                      gmailDate: lastScheduled.gmailDate,
-                      gmailTime: lastScheduled.gmailTime,
-                    }),
-                  lastScheduled,
-                )
+              className={
+                "preset" + (selection?.kind === "last" ? " selected" : "")
               }
+              aria-pressed={selection?.kind === "last"}
+              disabled={busy}
+              onClick={() => setSelection({ kind: "last" })}
             >
               <span>Last scheduled time</span>
               <span className="when">{lastScheduled.display}</span>
@@ -164,54 +203,37 @@ export function ScheduleModal({
         )}
 
         <div className="section-label">Quick options</div>
-        {presets.map((p: SchedulePreset) => {
-          const f = formatForGmail(p.wall);
-          return (
-            <button
-              key={p.id}
-              className="preset"
-              disabled={busy}
-              onClick={() =>
-                void run(() => schedulePreset(p), {
-                  display: f.display,
-                  gmailDate: f.gmailDate,
-                  gmailTime: f.gmailTime,
-                })
-              }
-            >
-              <span>{p.label}</span>
-              <span className="when">{p.display}</span>
-            </button>
-          );
-        })}
+        {presets.map((p: SchedulePreset) => (
+          <button
+            key={p.id}
+            className={"preset" + (presetSelected(p) ? " selected" : "")}
+            aria-pressed={presetSelected(p)}
+            disabled={busy}
+            onClick={() => setSelection({ kind: "preset", preset: p })}
+          >
+            <span>{p.label}</span>
+            <span className="when">{p.display}</span>
+          </button>
+        ))}
 
         <hr className="divider" />
 
-        <div className="section-label">
-          Pick date &amp; time ({tzLabel.abbr})
-        </div>
-        <div className="pick">
+        <div className="section-label">Pick custom ({tzLabel.abbr})</div>
+        <div className={"pick" + (customSelected ? " selected" : "")}>
           <input
             type="date"
             aria-label="Date"
             value={date}
             disabled={busy}
-            onChange={(e) => setDate(e.target.value)}
+            onChange={(e) => updateCustom(e.target.value, time)}
           />
           <input
             type="time"
             aria-label="Time"
             value={time}
             disabled={busy}
-            onChange={(e) => setTime(e.target.value)}
+            onChange={(e) => updateCustom(date, e.target.value)}
           />
-          <button
-            className="primary"
-            disabled={busy || !parsed}
-            onClick={scheduleCustom}
-          >
-            Schedule
-          </button>
         </div>
 
         {status.kind === "busy" && (
@@ -226,6 +248,13 @@ export function ScheduleModal({
         <div className="actions">
           <button className="text" onClick={onClose} disabled={busy}>
             Cancel
+          </button>
+          <button
+            className="primary"
+            disabled={busy || !selection}
+            onClick={commit}
+          >
+            Schedule
           </button>
         </div>
       </div>
