@@ -94,6 +94,23 @@ function matchedScheduleItem(e: Event): HTMLElement | null {
   return t.closest<HTMLElement>(SEL_SCHEDULE_MENUITEM);
 }
 
+/**
+ * Run `fn` with our own capture interceptor disabled. Used whenever OutboxIQ
+ * itself drives Gmail's native Schedule UI (the modal's scheduling actions,
+ * the §5.2.3 fallback) so the synthetic activation we generate is not
+ * re-intercepted into an infinite loop.
+ */
+export async function withInterceptionSuppressed<T>(
+  fn: () => Promise<T>,
+): Promise<T> {
+  suppressInterception = true;
+  try {
+    return await fn();
+  } finally {
+    suppressInterception = false;
+  }
+}
+
 /** Best-effort tidy: close Gmail's lingering popup menu. Not load-bearing. */
 function dismissGmailMenu(): void {
   try {
@@ -113,13 +130,12 @@ function dismissGmailMenu(): void {
  * Schedule Send still opens (PRD §5.2.3). Suppressed so we don't re-intercept
  * our own synthetic events. */
 async function fallbackToNative(menuItem: HTMLElement): Promise<void> {
-  suppressInterception = true;
   try {
-    await fireFull(menuItem, "§5.2.3 native fallback");
+    await withInterceptionSuppressed(() =>
+      fireFull(menuItem, "§5.2.3 native fallback"),
+    );
   } catch {
     /* nothing more we can safely do; native menu is still user-clickable */
-  } finally {
-    suppressInterception = false;
   }
 }
 

@@ -8,13 +8,13 @@
 // chrome.storage); only the tab-open is delegated to the worker. The send is
 // retried because a cold-started MV3 worker may not have its listener attached
 // for the very first message — that race caused the earlier "receiving end
-// does not exist" warning. §5.3 (the enhanced modal) replaces the temporary
-// placeholder seam below.
+// does not exist" warning.
 
-import { isOnboardingComplete } from "../lib/storage";
+import { getState, isOnboardingComplete } from "../lib/storage";
 import { MSG_OPEN_ONBOARDING } from "../lib/messages";
 import { installComposeIntegration } from "./compose/compose-integration";
-import { openSchedulePlaceholder } from "./schedule-modal/placeholder";
+import { openScheduleModal } from "./schedule-modal/mount";
+import { openNativeScheduleDialog } from "./schedule-modal/schedule-actions";
 
 const RETRY_DELAY_MS = 300;
 const MAX_ATTEMPTS = 4;
@@ -45,6 +45,28 @@ async function requestOnboardingLaunch(): Promise<void> {
   }
 }
 
+// §5.2 intercept → §5.3 modal. Sync (returns immediately); the async work
+// is self-contained with its own fallback so it never strands the user: if
+// reading state or mounting the modal fails, hand off to Gmail's own native
+// scheduler (PRD §5.2.3 / §6.7).
+function handleScheduleSend(): void {
+  void (async () => {
+    try {
+      const state = await getState();
+      openScheduleModal(state.user.timezone);
+    } catch (err) {
+      if (import.meta.env.DEV) {
+        console.warn("[OutboxIQ] §5.3 open failed → native:", err);
+      }
+      try {
+        await openNativeScheduleDialog();
+      } catch {
+        /* native menu is still user-clickable; nothing more to do */
+      }
+    }
+  })();
+}
+
 async function bootstrap(): Promise<void> {
   try {
     if (await isOnboardingComplete()) {
@@ -52,7 +74,7 @@ async function bootstrap(): Promise<void> {
       // entirely untouched. Note: a tab already open from before onboarding
       // completed picks this up on its next Gmail load (acceptable MVP; a
       // live re-check is deliberately not built — see session debrief).
-      installComposeIntegration({ onScheduleSend: openSchedulePlaceholder });
+      installComposeIntegration({ onScheduleSend: handleScheduleSend });
       return;
     }
     await requestOnboardingLaunch();
