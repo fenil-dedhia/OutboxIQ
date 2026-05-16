@@ -4,7 +4,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository status
 
-Pre-code scaffolding. The repo contains the PRD, READMEs, license, a pre-launch checklist, an MV3 manifest stub, and empty `src/` trees. **No feature code, no `package.json`, no build/lint/test commands exist yet.** When you add tooling, update this file with the resulting commands.
+Toolchain scaffolded; no feature code yet. The `extension/` build pipeline (TypeScript + React + Vite + `@crxjs/vite-plugin`, MV3) is set up and verified end-to-end — `npm run build` produces a loadable unpacked extension in `extension/dist/` with placeholder UI on all four MV3 surfaces (service worker, Gmail content script, onboarding page, settings/options page). **No feature code yet** — the onboarding flow (PRD §5.1) is the next thing to build. The `backend/` is still untouched (not needed until Unschedule-on-Reply / Maps proxy). The MV3 manifest is now generated from a typed `extension/manifest.config.ts` (the old 4-field `manifest.json` stub was superseded and removed). See the Commands section below.
+
+## Commands
+
+All commands run from `extension/` (the only component with tooling so far; `backend/` has none yet). Example: `npm --prefix extension run build`.
+
+- `npm install` — install dependencies (first-time setup).
+- `npm run dev` — Vite dev server with CRXJS hot-reload, for live development against Gmail.
+- `npm run build` — typecheck (`tsc --noEmit`) then production build to `extension/dist/` (the loadable unpacked extension).
+- `npm run typecheck` — type-check only, no build.
+- `npm run lint` — ESLint (typescript-eslint + react-hooks + react-refresh; Prettier-compatible).
+- `npm run format` / `npm run format:check` — Prettier (default config) write / check.
+- `npm run test` — Vitest (jsdom + React Testing Library), single run.
+- `npm run icons` — regenerate the throwaway placeholder dev icons (real brand work is in `PRE_LAUNCH_CHECKLIST.md`).
+
+**Load the unpacked extension:** Chrome → `chrome://extensions` → enable Developer mode → "Load unpacked" → select `extension/dist/`.
+
+**Non-obvious gotchas (encoded here so future sessions don't rediscover them):**
+- `npm audit` flags 2 high-severity advisories in **dev-only** transitive deps (`rollup` via `@crxjs/vite-plugin`). `npm audit --omit=dev` is clean — nothing vulnerable ships in the extension. Do **not** run `npm audit fix --force` (it breaks the build). This is the accepted CRXJS community-plugin tax (a locked, eyes-open trade-off — see Locked tech decisions).
+- The build prints a benign CRXJS-on-Vite-8 warning ("Both `rollupOptions` and `rolldownOptions` … will be ignored"). Content scripts still build and wire up correctly; it is cosmetic and internal to CRXJS.
+- `vitest.config.ts` is intentionally excluded from `tsconfig.json`'s `include` (a Vite 8 ↔ Vitest-nested-Vite types skew, not a code defect). Test code under `src/` is still fully type-checked.
 
 ## Source-of-truth documents
 
@@ -37,7 +57,7 @@ Do not add other endpoints, telemetry sinks, user-data storage, or "while we're 
 
 Already decided — do not re-litigate without explicit user input:
 
-- **Extension:** React + Vite, Manifest V3.
+- **Extension:** React + Vite, **TypeScript**, Manifest V3. Build tooling is **Vite + `@crxjs/vite-plugin`**, chosen for content-script hot-reload during development; we explicitly accept that CRXJS is a community plugin that may occasionally lag Vite releases. The TypeScript language layer and the CRXJS build tool were locked on 2026-05-15 — like the other items here, do not re-litigate the language or build-tool choice without explicit user input. (Rationale for TypeScript: the project owner is non-technical and relies on Claude Code for implementation, so compile-time error-catching and explicit code architecture matter more here than for a team that debugs runtime issues fluently.)
 - **Backend:** Node + Hono on Fly.io, EU region.
 - **Database:** Supabase, EU region.
 - **License:** All-rights-reserved / proprietary during v1 development (changed from MIT on 2026-05-15 when the repo went public for portfolio visibility — public to read, no reuse rights granted). The eventual public-launch commercial model (open-source, royalty-on-commercial-use, dual-license, source-available) remains a pre-launch decision. Do not "restore" MIT assuming it's the locked default — the all-rights-reserved choice is deliberate.
