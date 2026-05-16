@@ -14,6 +14,8 @@ This document is a **canonical recipe reference**, same role as the spike doc. W
 1. Does the spike's verified recipe (inner-content target via `elementFromPoint`, real `clientX/clientY`, full pointer→mouse→click sequence) also reach the **"Pick date & time"** control inside the Schedule send dialog?
 2. What is the DOM shape of the custom picker — the **date input**, the **time input**, and the **confirm button** — and what stable, ideally locale-independent selectors can we anchor to?
 3. Can those inputs accept **programmatic values** (native value setter + `input`/`change`), and does the confirm button, driven by the recipe, produce a **real native scheduled message**?
+4. **(§5.2 support)** What is the internal DOM shape of the `div[role="menuitem"][selector="scheduledSend"]` item — specifically *where the visible label text lives* — so the §5.2 relabel ("Schedule Send (powered by OutboxIQ)") targets the right node instead of guessing?
+5. **(§5.2 support)** Is the `selector="scheduledSend"` anchor present and reachable identically across the three compose contexts: **(a)** standard new-compose, **(b)** inline reply, **(c)** pop-out compose? Run `anchorCheck()` once in each.
 
 ---
 
@@ -35,6 +37,16 @@ OutboxIQProbe.discover()
 ```
 
 Run that first. It opens the chevron → "Schedule send" → clicks "Pick date & time", then prints a structured report of every candidate input/button in the picker. Copy the **entire console output** back to Claude.
+
+`discover()` also dumps the **`scheduledSend` menuitem's internal structure** (for the §5.2 relabel) right before it clicks it — look for the `MENU ITEM (relabel target)` section in the output.
+
+**For §5.2 compose-context coverage**, run this **once in each** of the three contexts — standard new-compose, inline reply, and pop-out compose (open the relevant compose UI first, then run):
+
+```text
+OutboxIQProbe.anchorCheck()
+```
+
+It is fully safe (opens the More-send-options menu, reports whether the `selector="scheduledSend"` anchor is present + visible, dumps its structure, and closes nothing destructive). Report the one-line verdict from each of the three contexts.
 
 Then, only if `discover()` cleanly reached the picker, optionally:
 
@@ -181,6 +193,29 @@ Report back: which anchors matched, the full picker dump, whether values stuck, 
     return rows;
   }
 
+  // §5.2 relabel target: show where the visible label text actually lives
+  // inside the scheduledSend menuitem, so the shipped relabel targets the
+  // right text node instead of guessing. We dump the leaf text nodes (the
+  // candidates whose textContent we'd overwrite) plus the raw outerHTML.
+  function dumpRelabelTarget(menuItem) {
+    const leaves = [];
+    const walk = (n) => {
+      for (const c of n.children) {
+        const ownText = [...c.childNodes]
+          .filter((x) => x.nodeType === 3)
+          .map((x) => x.textContent.trim())
+          .join("");
+        if (ownText) leaves.push({ ...describe(c), ownText });
+        walk(c);
+      }
+    };
+    walk(menuItem);
+    console.log("[probe] ===== MENU ITEM (relabel target) =====");
+    console.log("[probe] menuitem describe:", describe(menuItem));
+    console.log("[probe] leaf text-bearing nodes (relabel candidates):", leaves);
+    console.log("[probe] menuitem.outerHTML:\n", menuItem.outerHTML.slice(0, 1500));
+  }
+
   // ---- Navigation ----
 
   function findChevron() {
@@ -224,6 +259,7 @@ Report back: which anchors matched, the full picker dump, whether values stuck, 
 
     const menuItem = await waitFor(findScheduleMenuItem, { label: 'menuitem[selector="scheduledSend"]' });
     console.log("[probe] scheduledSend menuitem found (locale-independent anchor OK)");
+    dumpRelabelTarget(menuItem);
     await fireFull(menuItem, '"Schedule send" menuitem');
 
     const dlg = await waitFor(findScheduleDialog, { label: "schedule dialog" });
@@ -286,9 +322,36 @@ Report back: which anchors matched, the full picker dump, whether values stuck, 
     console.log("[probe] confirm fired. Check Gmail's Scheduled label for a real message, then cancel it.");
   }
 
-  window.OutboxIQProbe = { discover, live };
+  // §5.2 compose-context coverage. SAFE: opens the More-send-options menu,
+  // reports whether the locale-independent anchor is present + visible, dumps
+  // its structure, schedules nothing. Run once per compose context.
+  async function anchorCheck() {
+    console.log("[probe] anchorCheck() — SAFE: anchor presence only, no scheduling.");
+    const chevron = findChevron();
+    if (!chevron) {
+      console.warn('[probe] VERDICT: NO CHEVRON in this context (aria-label="More send options" not found — locale-dependent anchor; report this).');
+      return { ok: false, reason: "no-chevron" };
+    }
+    await firePlain(chevron, "chevron (More send options)");
+    let menuItem;
+    try {
+      menuItem = await waitFor(findScheduleMenuItem, { timeout: 3000, label: "scheduledSend" });
+    } catch {
+      console.warn('[probe] VERDICT: chevron OK but selector="scheduledSend" NOT found in this context — surface this, do not improvise.');
+      return { ok: false, reason: "no-anchor" };
+    }
+    const r = menuItem.getBoundingClientRect();
+    const visible = r.width > 0 && r.height > 0;
+    console.log(`[probe] VERDICT: anchor PRESENT, visible=${visible}, rect=`, r);
+    dumpRelabelTarget(menuItem);
+    console.log("[probe] anchorCheck() done — report the one-line VERDICT for this compose context.");
+    return { ok: true, visible };
+  }
+
+  window.OutboxIQProbe = { discover, anchorCheck, live };
   console.log("%c[probe] OutboxIQ pick-date-time probe loaded.", "font-weight:bold");
-  console.log('Run: OutboxIQProbe.discover()  (safe)');
+  console.log('Run: OutboxIQProbe.discover()  (safe — custom-path + relabel-target dump)');
+  console.log('Run: OutboxIQProbe.anchorCheck()  (safe — once per compose context: new / reply / pop-out)');
   console.log('Then: OutboxIQProbe.live({ date:"2026-12-31", time:"9:00 AM", confirm:false })  (sets values; confirm:true schedules for real)');
 })();
 ```
