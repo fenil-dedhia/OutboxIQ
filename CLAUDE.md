@@ -38,6 +38,7 @@ Read these before making non-trivial decisions — they encode constraints that 
 - `OutboxIQ_PRD.md` — full v1 spec. **§11 "Out of Scope: Do Not Build"** is unusually load-bearing: it explicitly forbids 20 plausible-sounding features (email tracking, AI rewriting, analytics dashboards, separate scheduled-emails view, multi-account, holiday awareness, Firefox support, telemetry, etc.). Treat it as a hard constraint, not a suggestion — do not infer or add features outside it.
 - `PRE_LAUNCH_CHECKLIST.md` — obligations deferred until public launch (CASA Tier 2, OAuth Production, Privacy/Terms drafting, brand work, Web Store submission). Anything you'd otherwise spend time on for "launch readiness" probably belongs here, not in feature code.
 - `notes/session-4-summary.md` — latest session state and what the next session should start with (earlier summaries: `session-1`, `session-2`, `session-3`).
+- `notes/owner-decisions-log.md` — running record of moments where owner/PM input materially changed the build's trajectory, with honest counterfactuals. Portfolio + coaching artifact; **must be maintained every session** (see "Working in this repo").
 
 ## Architecture
 
@@ -83,3 +84,4 @@ Fresh GCP project, **just-in-time setup** — wire up Cloud APIs only when a fea
 - The user (Fenil) is non-technical for implementation details. Narrate decisions in plain English, and confirm before destructive or hard-to-reverse actions.
 - When a feature touches privacy, OAuth scopes, data residency, or anything the PRD §11 list could conceivably bear on, re-read the relevant PRD section before writing code rather than working from memory.
 - If you add tooling (package manager, build, lint, test, deploy), record the resulting commands in this file in a new "Commands" section so future sessions don't have to rediscover them.
+- **Session close-out obligation.** At every session end, alongside updating the session summary, append to `notes/owner-decisions-log.md` either a new entry (using that file's fixed structure) for any moment where owner/PM input materially changed the build's trajectory, or the single line `Session N — no entries this session.` if none qualified. "No entries" is a legitimate and common outcome — do not manufacture entries to fill the log. The honesty rule in that file is binding: counterfactuals must be accurate not flattering, and owner judgment that was wrong or incomplete is logged too.
