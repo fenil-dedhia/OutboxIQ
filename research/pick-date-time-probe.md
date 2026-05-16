@@ -1,7 +1,7 @@
 # "Pick date & time" Custom-Path Probe
 
 **Date:** 2026-05-16
-**Status:** ⏳ Awaiting hands-on run (Session 4)
+**Status:** ✅ Verified end-to-end on consumer Gmail (2026-05-16, Session 4). Custom "Pick date & time" path confirmed openable via the recipe (after the `innerTarget` guard fix). See Result log.
 **Depends on:** `research/scheduled-send-api-spike.md` — this probe extends the spike's verified preset-path recipe to the **custom "Pick date & time" path**, which the spike explicitly left unverified (Open Question 2 / OQ2 closing note).
 **Why this matters:** OutboxIQ almost never schedules at one of Gmail's three native presets — recipient-timezone optimization and working-hours rescheduling produce *arbitrary* timestamps. The custom path is therefore the **primary** scheduling path for this product, not an edge case. If the verified recipe does not drive the custom date/time fields, the entire §5.3 Schedule-button design changes. This probe de-risks that before any custom-path code is written.
 
@@ -78,4 +78,61 @@ The script is **`research/pick-date-time-probe.js`** — the single source. It i
 
 ## Result log
 
-_(filled in after the hands-on run — append findings here, same as the spike doc's Verification section, so this stays the canonical custom-path reference)_
+### 2026-05-16 — consumer Gmail, Session 4 (Fenil hands-on, English UI) — ✅ CUSTOM PICKER OPENED
+
+**Headline:** the spike's recipe **did not** reach "Pick date & time" until the
+`innerTarget` guard fix. First run: `elementFromPoint(center)` for the
+"Pick date & time" row returned a Google top-bar element (`gb_Pd gb_Sd gb_4d`)
+— a different DOM subtree — so the dispatched click never bubbled to Gmail's
+delegated handler; the dialog stayed on the preset list. After the guard
+(commit `01c9b16`: only trust the hit-test if it is/inside the target, else
+dispatch on the element itself), the second run resolved the inner target to
+`<div class="Aj">` (inside the row) and the **custom date/time view opened**.
+
+**Verified navigation chain (all confirmed this run):**
+
+1. **Chevron** — `div[role="button"][aria-label="More send options"]`. Locale-DEPENDENT (aria-label). `firePlain` works.
+2. **"Schedule send" item** — `div[role="menuitem"][selector="scheduledSend"]`. Locale-INDEPENDENT. `fireFull` (full sequence) works. Its `id` is dynamic (`:ba`, `:ep` across runs) — never anchor on it.
+3. **Dialog** — found structurally by "contains `[role="menuitem"].Az`" (locale-independent); the `aria-label` path is the locale-dependent fallback.
+4. **"Pick date & time"** — **`[role="menuitem"].Az.AM`** — the `.AM` modifier distinguishes it from preset rows (`.Az` without `.AM`). **Locale-independent structural hook** — prefer this over text matching.
+
+**Custom picker structure (inside the same `[role="dialog"]`, after step 4):**
+
+- **Date input** — a plain `<input>`, value formatted `"May 16, 2026"` (≈ `MMM D, YYYY`). Dynamic id (`c3`).
+- **Time input** — a plain `<input>`, value formatted `"1:33 PM"` (≈ `h:mm A`). Dynamic id (`c4`).
+- Exactly **2 `<input>` elements** in the dialog, order **[date, time]** — anchor by "the dialog's inputs in order", not by id.
+- **Confirm button** — `<button>` text **"Schedule send"** (locale-dependent), classes `mUIrbf-I mUIrbf-I-ql-Uw eV8l8d`.
+- **Cancel button** — `<button>` text "Cancel", classes `mUIrbf-I mUIrbf-I-ql-Uw Rb6pkf` (shares `mUIrbf-I mUIrbf-I-ql-Uw` with Confirm; the trailing class differs — obfuscated, treat as fragile).
+- Also present: a full calendar grid (`<td>` day cells, `«`/`»` month nav, "Today"/"None" buttons). **Not needed** — setting the date `<input>`'s text value is sufficient; ignore the grid.
+
+**Relabel target (§5.2) — confirmed:**
+
+```
+div.J-N.yr[selector="scheduledSend"][role="menuitem"]   (dynamic id — do not anchor on it)
+  └ div.J-N-Jz
+      ├ img.v5.J-N-JX           (cleardot.gif spacer, alt="")
+      └ #text "Schedule send"   ← the visible label is THIS text node
+```
+
+The relabel must replace **only the text node**, not `div.J-N-Jz`'s
+`textContent` (that would delete the spacer `<img>`). Current shipped code
+sets `textContent` — **must be tightened** to target the trailing text node.
+
+**Preset rows (§5.3.3) — confirmed:**
+
+- Rows are `[role="menuitem"].Az` (the custom row is the only `.Az.AM`).
+- Visible text concatenates label + date + time, e.g. `"Tomorrow morningMay 17, 8:00 AM"`, `"Tomorrow afternoonMay 17, 1:00 PM"`, `"Monday morningMay 18, 8:00 AM"`.
+- Order: `[Tomorrow morning, Tomorrow afternoon, Monday morning, Pick date & time(.AM)]`.
+- Gmail's preset times **exactly matched** OutboxIQ's `computePresets` output for this date (Sat 2026-05-16). Validates §5.3.3 + decision #3 (mirror Gmail).
+- ⚠️ Both "Tomorrow morning" and "Monday morning" contain `"8:00 AM"` — match a row by the **date+time substring** (`"May 17, 8:00 AM"` vs `"May 18, 8:00 AM"`), not the clock time alone. The shipped `schedule-actions.ts` clock-only match is **buggy for the Monday preset — must be fixed.**
+
+**Still NOT verified (no `live()` run this session):** that setting the
+inputs + clicking Confirm actually produces a real scheduled message (the
+end-to-end commit). Navigation/structure proven; the final write needs a
+`live({confirm:true})` or a manual smoke test.
+
+**Action items captured (for the post-pause implementation):**
+1. Wire §5.3.4 custom path: open dialog → `.Az.AM` → set the 2 inputs (native setter, formats above) → click the "Schedule send" confirm button.
+2. Tighten §5.2 relabel to replace only the text node (preserve the spacer img).
+3. Fix §5.3 preset-row matching to use the date+time substring.
+4. (Pending) `anchorCheck()` in inline-reply and pop-out compose; new-compose is already proven (discover ran there).
