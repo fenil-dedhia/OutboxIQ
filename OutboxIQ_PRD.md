@@ -62,29 +62,18 @@ Collect the user's timezone, working hours, and explicit GDPR consent. Communica
 
 #### 5.1.2 Trigger
 
-The onboarding flow launches automatically the first time the user opens Gmail after installing the extension. It can also be relaunched manually from the Settings panel.
+The onboarding flow opens automatically on install, and again on browser startup if it was never completed. It also opens when the user opens Gmail without having completed onboarding, and can be opened on demand from the OutboxIQ toolbar icon. (A manual relaunch entry point also belongs in the Settings panel — §5.8 — once that panel exists.) A completed-onboarding check guards every trigger, so an onboarded user is never re-prompted.
 
 #### 5.1.3 Steps
 
-**Step 1: Welcome screen.**
-- Brief explanation: "OutboxIQ helps your emails land at the right moment, in your recipients' time, not yours."
-- Three feature bullets summarizing what the plugin does.
-- A single "Get Started" call-to-action.
+> **Restructure note (2026-05-15):** the original five steps were consolidated to three. The former Step 1 (welcome), Step 4 (transparency screen), and Step 5 (consent + finish) overlapped and are merged into a single Step 1; the verbatim transparency and consent copy is preserved unchanged. The timezone and working-hours steps are unchanged (renumbered).
 
-**Step 2: Timezone confirmation.**
-- The plugin attempts to read the user's timezone from the Google Calendar API endpoint `GET /calendar/v3/users/me/settings/timezone`.
-- The detected timezone is pre-filled with the label "Detected from your Google Calendar settings."
-- The user can confirm or override via a dropdown listing all IANA timezones.
-- Copy: "This is the timezone we'll use when you don't specify one explicitly. You can change it any time in Settings."
-
-**Step 3: Working hours.**
-- The plugin presents an interface for configuring working days and per-day start/end times.
-- Default values: Monday through Friday, 9:00 AM to 5:00 PM.
-- The user can toggle individual days on or off and customize times per day.
-- Two optional fields: "Earliest I'd ever send an email" (default 7:00 AM) and "Latest I'd ever send an email" (default 7:00 PM). These act as absolute floors and ceilings regardless of recipient timezone.
-
-**Step 4: Why we ask (transparency screen).**
-- A dedicated screen explaining the rationale, with the following copy:
+**Step 1: Welcome, transparency, and consent.**
+- Title: "Welcome to OutboxIQ Onboarding".
+- Brief explanation: "OutboxIQ helps your emails land at the right moment, in your recipients' time, not yours. To power our intelligent features, we'll require information about your timezone and working hours."
+- A "Why do we need this information?" section presenting the transparency copy below.
+- A required consent checkbox: "I understand how OutboxIQ uses my data and agree to the Privacy Policy." The "Privacy Policy" link opens the full policy in a new tab.
+- A "Get Started" button that is **disabled until the consent checkbox is checked**. This is the consent gate: the flow cannot advance — and therefore onboarding cannot complete — without explicit consent.
 
 > **Why does OutboxIQ need this information?**
 >
@@ -100,17 +89,25 @@ The onboarding flow launches automatically the first time the user opens Gmail a
 > - Avoid sending after-hours emails that hurt your professional brand.
 > - Cancel scheduled emails when someone replies, so you never send a stale message.
 
-**Step 5: Consent and finish.**
-- A required checkbox: "I understand how OutboxIQ uses my data and agree to the Privacy Policy."
-- A "Privacy Policy" link opens the full policy in a new tab.
-- A "Finish Setup" button completes onboarding.
+**Step 2: Timezone confirmation.**
+- The plugin attempts to read the user's timezone from the Google Calendar API endpoint `GET /calendar/v3/users/me/settings/timezone`. (Until OAuth/Calendar is wired in just-in-time, the browser timezone is used as the documented §6.7 fallback, labelled accordingly.)
+- The detected timezone is pre-filled with a label indicating its source ("Detected from your Google Calendar settings" or "Detected from your browser").
+- The user can confirm or override via a dropdown listing all IANA timezones.
+- Copy: "This is the timezone we'll use when you don't specify one explicitly. You can change it any time in Settings."
+
+**Step 3: Working hours.**
+- The plugin presents an interface for configuring working days and per-day start/end times.
+- Default values: Monday through Friday, 9:00 AM to 5:00 PM.
+- The user can toggle individual days on or off and customize times per day.
+- Two optional fields: "Earliest I'd ever send an email" (default 7:00 AM) and "Latest I'd ever send an email" (default 7:00 PM). These act as absolute floors and ceilings regardless of recipient timezone.
+- A "Finish Setup" button completes onboarding. On completion the user is returned to their nearest open Gmail tab (the onboarding tab simply closes if no Gmail tab is open).
 
 #### 5.1.4 Acceptance Criteria
 
-- The user cannot complete onboarding without explicit consent.
+- The user cannot complete onboarding without explicit consent. Enforced at Step 1: the "Get Started" button is disabled until the consent checkbox is checked, so the flow cannot proceed at all without consent.
 - All collected data is stored in the browser's local extension storage, not transmitted to any server.
 - Onboarding can be resumed mid-flow if interrupted.
-- After onboarding, the user lands in Gmail with the plugin fully active.
+- After onboarding, the user lands in Gmail with the plugin fully active; the success screen's "Return to Gmail" action focuses the nearest open Gmail tab.
 
 ---
 

@@ -21,15 +21,20 @@ export default defineManifest({
   },
   options_page: "src/pages/settings/index.html",
   background: {
-    service_worker: "src/background/index.ts",
+    service_worker: "src/background/service-worker.ts",
     type: "module",
   },
   content_scripts: [
     {
       matches: ["https://mail.google.com/*"],
-      js: ["src/content/index.ts"],
+      js: ["src/content/content-script.ts"],
       run_at: "document_idle",
     },
   ],
   permissions: ["storage"],
+  // Scoped to the one origin the extension already runs its content script
+  // in. Lets the onboarding page query/focus the user's Gmail tab on finish
+  // (PRD §5.1.4 "lands in Gmail"). Deliberately NOT the broad "tabs"
+  // permission, which would expose every tab's URL/title.
+  host_permissions: ["https://mail.google.com/*"],
 });

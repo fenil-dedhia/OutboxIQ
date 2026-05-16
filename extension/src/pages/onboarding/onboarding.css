@@ -1,0 +1,193 @@
+:root {
+  color-scheme: light;
+  --oq-fg: #1a1a1a;
+  --oq-muted: #5f6368;
+  --oq-accent: #1a73e8;
+  --oq-border: #dadce0;
+  --oq-error: #c5221f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  color: var(--oq-fg);
+  background: #f5f6f8;
+}
+
+.oq-shell {
+  max-width: 560px;
+  margin: 48px auto;
+  padding: 32px;
+  background: #fff;
+  border: 1px solid var(--oq-border);
+  border-radius: 12px;
+}
+
+.oq-progress {
+  height: 4px;
+  background: var(--oq-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.oq-progress-bar {
+  height: 100%;
+  background: var(--oq-accent);
+  transition: width 0.2s ease;
+}
+
+.oq-step-count {
+  margin: 8px 0 24px;
+  font-size: 13px;
+  color: var(--oq-muted);
+}
+
+.oq-step h1 {
+  font-size: 22px;
+  margin: 0 0 12px;
+}
+
+.oq-step h2 {
+  font-size: 15px;
+  margin: 20px 0 8px;
+}
+
+.oq-lede {
+  font-size: 16px;
+  color: var(--oq-muted);
+}
+
+.oq-bullets {
+  padding-left: 20px;
+  line-height: 1.6;
+}
+
+.oq-field {
+  display: block;
+  margin: 16px 0;
+}
+
+.oq-field > span {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+select,
+input[type="time"] {
+  font: inherit;
+  padding: 8px;
+  border: 1px solid var(--oq-border);
+  border-radius: 6px;
+}
+
+select {
+  width: 100%;
+  max-width: 320px;
+}
+
+.oq-detected {
+  font-size: 13px;
+  color: var(--oq-muted);
+  font-style: italic;
+}
+
+.oq-help {
+  font-size: 13px;
+  color: var(--oq-muted);
+}
+
+fieldset {
+  border: 1px solid var(--oq-border);
+  border-radius: 8px;
+  margin: 16px 0;
+}
+
+legend {
+  font-size: 13px;
+  color: var(--oq-muted);
+  padding: 0 6px;
+}
+
+.oq-day-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+}
+
+.oq-day-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 130px;
+}
+
+.oq-consent {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  line-height: 1.5;
+}
+
+.oq-error {
+  color: var(--oq-error);
+  font-size: 14px;
+}
+
+.oq-actions,
+.oq-nav {
+  display: flex;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.oq-nav {
+  justify-content: space-between;
+}
+
+button {
+  font: inherit;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.oq-primary {
+  background: var(--oq-accent);
+  color: #fff;
+}
+
+.oq-primary:disabled {
+  background: var(--oq-border);
+  color: var(--oq-muted);
+  cursor: not-allowed;
+}
+
+.oq-secondary {
+  background: #fff;
+  border-color: var(--oq-border);
+  color: var(--oq-fg);
+}
+
+.oq-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

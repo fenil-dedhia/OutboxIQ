@@ -1,0 +1,91 @@
+import { PRIVACY_POLICY_URL } from "../../../lib/constants";
+
+interface Props {
+  consentChecked: boolean;
+  onConsentChange: (checked: boolean) => void;
+  onGetStarted: () => void;
+}
+
+// Step 1 (restructured): welcome + the transparency content formerly in its
+// own "Why we ask" step + the consent gate formerly in the "Consent" step.
+// The transparency/consent copy is reproduced verbatim from PRD §5.1.3 — it
+// is privacy/consent-facing; do not paraphrase it.
+export function Welcome({
+  consentChecked,
+  onConsentChange,
+  onGetStarted,
+}: Props) {
+  return (
+    <section className="oq-step" aria-labelledby="oq-welcome-title">
+      <h1 id="oq-welcome-title">Welcome to OutboxIQ Onboarding</h1>
+      <p className="oq-lede">
+        OutboxIQ helps your emails land at the right moment, in your
+        recipients&rsquo; time, not yours. To power our intelligent features,
+        we&rsquo;ll require information about your timezone and working hours.
+      </p>
+
+      <h2>Why do we need this information?</h2>
+      <p>
+        Google&rsquo;s APIs don&rsquo;t expose your working hours to third-party
+        plugins, and we can&rsquo;t always determine a recipient&rsquo;s
+        timezone automatically. To power our smart scheduling features, we need
+        to ask you directly.
+      </p>
+
+      <h2>Your data, your control:</h2>
+      <ul className="oq-bullets">
+        <li>
+          This information is stored locally on your device, not on our servers.
+        </li>
+        <li>We never share your data with third parties.</li>
+        <li>
+          You can edit, export, or delete everything in Settings at any time.
+        </li>
+      </ul>
+
+      <h2>What you get in return:</h2>
+      <ul className="oq-bullets">
+        <li>
+          Send emails at the optimal moment for each recipient, automatically.
+        </li>
+        <li>
+          Avoid sending after-hours emails that hurt your professional brand.
+        </li>
+        <li>
+          Cancel scheduled emails when someone replies, so you never send a
+          stale message.
+        </li>
+      </ul>
+
+      <label className="oq-consent">
+        <input
+          type="checkbox"
+          checked={consentChecked}
+          onChange={(e) => onConsentChange(e.target.checked)}
+        />
+        <span>
+          I understand how OutboxIQ uses my data and agree to the{" "}
+          <a
+            href={PRIVACY_POLICY_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Privacy Policy
+          </a>
+          .
+        </span>
+      </label>
+
+      <div className="oq-actions">
+        <button
+          type="button"
+          className="oq-primary"
+          onClick={onGetStarted}
+          disabled={!consentChecked}
+        >
+          Get Started
+        </button>
+      </div>
+    </section>
+  );
+}
