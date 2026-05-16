@@ -39,9 +39,21 @@
     const r = el.getBoundingClientRect();
     return { cx: r.left + r.width / 2, cy: r.top + r.height / 2, rect: r };
   }
+  // GUARD (Session 4 finding): only trust the hit-test if it lands inside
+  // `el`. discover() showed elementFromPoint returning a Google top-bar
+  // element (gb_*) — a different DOM subtree — so the dispatched click never
+  // reached Gmail's delegated handler. When the hit escapes `el`, dispatch
+  // on `el` itself. Mirrors extension/src/lib/schedule/gmail-recipe.ts.
   function innerTarget(el) {
     const { cx, cy } = centerOf(el);
-    return document.elementFromPoint(cx, cy) || el;
+    const hit = document.elementFromPoint(cx, cy);
+    if (hit && (hit === el || el.contains(hit))) return hit;
+    if (hit) {
+      console.log(
+        `[probe] innerTarget: hit-test escaped target (<${hit.tagName.toLowerCase()} class="${hit.className}">) — dispatching on the element itself`,
+      );
+    }
+    return el;
   }
 
   function mkPointer(type, cx, cy, bubbles) {
@@ -211,13 +223,34 @@
     }
     await fireFull(pdt.textMatch, '"Pick date & time"');
 
-    // After clicking, the dialog content swaps to the custom picker. Re-find
-    // the dialog (Gmail may re-render a fresh node) and dump it.
-    await sleep(250);
+    // After clicking, the dialog content should swap to the custom picker.
+    await sleep(300);
     const dlg2 = findScheduleDialog() || dlg;
-    dump(dlg2.dialog || dlg2, "PICKER (custom date/time view)");
+    const root2 = dlg2.dialog || dlg2;
+    dump(root2, "AFTER 'Pick date & time' click");
+
+    // Unambiguous verdict for the report: did the custom date/time view
+    // actually open? Preset view still shows the .Az preset rows; the custom
+    // view exposes date/time inputs and drops the presets.
+    const stillPresets = root2.querySelectorAll(
+      '[role="menuitem"].Az:not(.AM)',
+    ).length;
+    const pickerInputs = root2.querySelectorAll(
+      'input, [contenteditable="true"], [role="spinbutton"]',
+    ).length;
+    if (pickerInputs >= 1 && stillPresets === 0) {
+      console.log(
+        "%c[probe] PICK-DATE VERDICT: ✅ CUSTOM PICKER OPENED — report this line + the dump above.",
+        "font-weight:bold;color:green",
+      );
+    } else {
+      console.log(
+        `%c[probe] PICK-DATE VERDICT: ❌ STILL ON PRESET VIEW — custom path did NOT open (presets=${stillPresets}, inputs=${pickerInputs}). Report this line.`,
+        "font-weight:bold;color:#c5221f",
+      );
+    }
     console.log("[probe] discover() done. Copy ALL output above back to Claude.");
-    return { reached: "picker", pickDateTime: true };
+    return { reached: "picker", pickDateTime: pickerInputs >= 1 };
   }
 
   // Native value setter so React/Closure-controlled inputs actually register.
