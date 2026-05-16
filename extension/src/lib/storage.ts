@@ -105,6 +105,23 @@ export interface Consent {
   consentedAt: string;
 }
 
+/**
+ * The time the user last scheduled THROUGH OutboxIQ (PRD §5.3.3 amendment,
+ * 2026-05-16 — mirrors Gmail's native "Last scheduled time" row). We store
+ * what we scheduled rather than scraping Gmail's own value: local-first,
+ * no extra Gmail interaction, only a timestamp (no email content). The
+ * Gmail-input-format strings are stored pre-rendered so re-scheduling needs
+ * no timezone/DST recomputation.
+ */
+export interface LastScheduled {
+  /** Gmail-style human display, e.g. "Sun, May 17, 8:00 AM". */
+  display: string;
+  /** Pre-formatted for Gmail's custom date input, e.g. "May 17, 2026". */
+  gmailDate: string;
+  /** Pre-formatted for Gmail's custom time input, e.g. "8:00 AM". */
+  gmailTime: string;
+}
+
 export interface OutboxIQState {
   /** Shape version of this record (PRD §7.2). See SCHEMA_VERSION. */
   schemaVersion: number;
@@ -114,6 +131,8 @@ export interface OutboxIQState {
   recipientCache: RecipientCacheEntry[];
   /** Null until the user consents in onboarding (PRD §5.1 step 5). */
   consent: Consent | null;
+  /** Null until the user schedules at least once via OutboxIQ (§5.3.3). */
+  lastScheduled: LastScheduled | null;
 }
 
 function defaultDay(enabled: boolean): DayHours {
@@ -150,6 +169,7 @@ export function createDefaultState(): OutboxIQState {
     },
     recipientCache: [],
     consent: null,
+    lastScheduled: null,
   };
 }
 
@@ -184,11 +204,22 @@ export async function getState(): Promise<OutboxIQState> {
     featureToggles: { ...defaults.featureToggles, ...stored.featureToggles },
     recipientCache: stored.recipientCache ?? defaults.recipientCache,
     consent: stored.consent ?? defaults.consent,
+    // SCHEMA_VERSION 1→2 added `lastScheduled`. It is purely additive and
+    // nullable, so this default-merge IS the migration: an older v1 record
+    // simply lacks the key and resolves to null. No explicit version branch
+    // is needed yet (see CLAUDE.md migration convention).
+    lastScheduled: stored.lastScheduled ?? defaults.lastScheduled,
   };
 }
 
 export async function setState(state: OutboxIQState): Promise<void> {
   await rawSet(STORAGE_KEY_STATE, state);
+}
+
+/** Record the time just scheduled via OutboxIQ (PRD §5.3.3 amendment). */
+export async function setLastScheduled(value: LastScheduled): Promise<void> {
+  const state = await getState();
+  await setState({ ...state, lastScheduled: value });
 }
 
 export async function isOnboardingComplete(): Promise<boolean> {

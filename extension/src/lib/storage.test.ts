@@ -7,8 +7,9 @@ import {
   getState,
   isOnboardingComplete,
   saveOnboardingDraft,
+  setLastScheduled,
 } from "./storage";
-import { PRIVACY_POLICY_VERSION } from "./constants";
+import { PRIVACY_POLICY_VERSION, SCHEMA_VERSION } from "./constants";
 
 describe("storage defaults (PRD §7.2)", () => {
   it("defaults to Mon–Fri 09:00–17:00 with 07:00/19:00 absolute bounds", () => {
@@ -56,6 +57,38 @@ describe("completeOnboarding (PRD §5.1.4)", () => {
     // Draft is cleared so a finished flow can't be "resumed".
     const clearedDraft = await getOnboardingDraft();
     expect(clearedDraft.stepIndex).toBe(0);
+  });
+});
+
+describe("lastScheduled (PRD §5.3.3 amendment, schema v2)", () => {
+  it("defaults to null and stamps schema v2", () => {
+    const s = createDefaultState();
+    expect(s.lastScheduled).toBeNull();
+    expect(s.schemaVersion).toBe(SCHEMA_VERSION);
+    expect(SCHEMA_VERSION).toBe(2);
+  });
+
+  it("setLastScheduled persists and is read back by getState", async () => {
+    expect((await getState()).lastScheduled).toBeNull();
+    await setLastScheduled({
+      display: "Thu, May 21, 1:25 PM",
+      gmailDate: "May 21, 2026",
+      gmailTime: "1:25 PM",
+    });
+    expect((await getState()).lastScheduled).toEqual({
+      display: "Thu, May 21, 1:25 PM",
+      gmailDate: "May 21, 2026",
+      gmailTime: "1:25 PM",
+    });
+  });
+
+  it("an older v1 record (no lastScheduled key) migrates to null", async () => {
+    // Simulate a pre-v2 stored record lacking the field.
+    await chrome.storage.local.set({
+      outboxiqState: { schemaVersion: 1, user: { timezone: "UTC" } },
+    });
+    const s = await getState();
+    expect(s.lastScheduled).toBeNull(); // default-merge IS the migration
   });
 });
 

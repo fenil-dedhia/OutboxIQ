@@ -16,10 +16,17 @@ import { createRoot, type Root } from "react-dom/client";
 import { StrictMode } from "react";
 import { ScheduleModal } from "./ScheduleModal";
 import { MODAL_CSS } from "./styles";
+import type { LastScheduled } from "../../lib/storage";
 
 const HOST_ID = "outboxiq-schedule-modal-host";
 
-export function openScheduleModal(timezone: string): void {
+export interface OpenScheduleModalArgs {
+  timezone: string;
+  lastScheduled: LastScheduled | null;
+  onScheduled: (v: LastScheduled) => void;
+}
+
+export function openScheduleModal(args: OpenScheduleModalArgs): void {
   document.getElementById(HOST_ID)?.remove();
 
   const host = document.createElement("div");
@@ -43,7 +50,12 @@ export function openScheduleModal(timezone: string): void {
 
   root.render(
     <StrictMode>
-      <ScheduleModal timezone={timezone} onClose={close} />
+      <ScheduleModal
+        timezone={args.timezone}
+        lastScheduled={args.lastScheduled}
+        onScheduled={args.onScheduled}
+        onClose={close}
+      />
     </StrictMode>,
   );
 }

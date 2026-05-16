@@ -10,7 +10,11 @@
 // for the very first message — that race caused the earlier "receiving end
 // does not exist" warning.
 
-import { getState, isOnboardingComplete } from "../lib/storage";
+import {
+  getState,
+  isOnboardingComplete,
+  setLastScheduled,
+} from "../lib/storage";
 import { MSG_OPEN_ONBOARDING } from "../lib/messages";
 import { installComposeIntegration } from "./compose/compose-integration";
 import { openScheduleModal } from "./schedule-modal/mount";
@@ -53,7 +57,19 @@ function handleScheduleSend(): void {
   void (async () => {
     try {
       const state = await getState();
-      openScheduleModal(state.user.timezone);
+      openScheduleModal({
+        timezone: state.user.timezone,
+        lastScheduled: state.lastScheduled,
+        onScheduled: (v) => {
+          // Persist for the "Last scheduled time" row next open. Fire-and-
+          // forget with a catch so a storage failure can't break the flow.
+          void setLastScheduled(v).catch((e) => {
+            if (import.meta.env.DEV) {
+              console.warn("[OutboxIQ] persist lastScheduled failed:", e);
+            }
+          });
+        },
+      });
     } catch (err) {
       if (import.meta.env.DEV) {
         console.warn("[OutboxIQ] §5.3 open failed → native:", err);

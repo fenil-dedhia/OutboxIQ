@@ -25,7 +25,11 @@ export const STORAGE_KEY_ONBOARDING_DRAFT = "outboxiqOnboardingDraft";
 // Version of the persisted OutboxIQState shape (PRD §7.2). Bump when the
 // shape changes and add a migration in getState(); see CLAUDE.md. There is
 // intentionally no migration framework yet — this just lays the foundation.
-export const SCHEMA_VERSION = 1;
+//
+// v1→v2 (2026-05-16): added `lastScheduled` (PRD §5.3.3 amendment). Purely
+// additive + nullable, so getState()'s default-merge is the migration; no
+// explicit version branch needed yet.
+export const SCHEMA_VERSION = 2;
 
 // Path (relative to the extension root) of the standalone onboarding page,
 // as emitted by the CRXJS build. Used to open/locate the onboarding tab.

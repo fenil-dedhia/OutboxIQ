@@ -45,8 +45,15 @@ export const SEL_SCHEDULE_MENUITEM =
 /** The schedule dialog. Prefer structural detection (contains SEL_DIALOG_PRESET). */
 export const SEL_SCHEDULE_DIALOG = '[role="dialog"]';
 
-/** Locale-INDEPENDENT-ish. The preset rows inside the schedule dialog. */
+/** Locale-INDEPENDENT-ish. The preset rows inside the schedule dialog.
+ * NOTE: also matches the `.Az.AM` "Pick date & time" row and Gmail's
+ * "Last scheduled time" row — callers must select by CONTENT, not index. */
 export const SEL_DIALOG_PRESET = '[role="dialog"] [role="menuitem"].Az';
+
+/** Locale-INDEPENDENT. The "Pick date & time" row — the extra `.AM` class
+ * distinguishes it from the preset rows (Session 4 probe Result log). */
+export const SEL_DIALOG_PICK_DATETIME =
+  '[role="dialog"] [role="menuitem"].Az.AM';
 
 // --- Recipe primitives ------------------------------------------------------
 
@@ -191,4 +198,21 @@ export async function firePlain(el: Element, why: string): Promise<void> {
   }
   if (dev()) console.info(`[OutboxIQ] recipe firePlain → ${why}`);
   await sleep(120);
+}
+
+/**
+ * Set a value on a Gmail input the way a real user would, so Gmail's
+ * Closure-controlled field actually registers it: use the native prototype
+ * setter (React/Closure override the instance setter), then fire input +
+ * change. Confirmed necessary for the custom-path date/time inputs (probe).
+ */
+export function setNativeValue(el: HTMLInputElement, value: string): void {
+  const setter = Object.getOwnPropertyDescriptor(
+    window.HTMLInputElement.prototype,
+    "value",
+  )?.set;
+  if (setter) setter.call(el, value);
+  else el.value = value;
+  el.dispatchEvent(new Event("input", { bubbles: true }));
+  el.dispatchEvent(new Event("change", { bubbles: true }));
 }
