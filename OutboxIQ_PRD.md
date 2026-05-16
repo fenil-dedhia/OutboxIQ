@@ -627,7 +627,7 @@ One decision per screen. The onboarding flow breaks setup into separate steps ra
 
 ### 8.8 Trust Signals
 
-Privacy commitments are visible, not buried. The onboarding flow has a dedicated transparency screen. The Settings panel has a Privacy and Data section, not a single fine-print link. A small "Your data stays on your device" line appears near data inputs where appropriate.
+Privacy commitments are visible, not buried. The onboarding flow presents the privacy/transparency rationale prominently on its first screen, immediately above the consent gate (see §5.1.3). The Settings panel has a Privacy and Data section, not a single fine-print link. A small "Your data stays on your device" line appears near data inputs where appropriate.
 
 ### 8.9 Keyboard Accessibility
 

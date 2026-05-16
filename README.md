@@ -18,11 +18,12 @@ OutboxIQ is privacy-first, GDPR-compliant, and local-first by default. The only 
 
 The repository currently contains:
 
-- The PRD.
-- A minimal folder structure for the extension and backend.
-- No feature code yet.
+- The PRD and supporting design docs.
+- The extension build toolchain (TypeScript + React + Vite, Manifest V3).
+- The first feature: the first-run onboarding flow (PRD §5.1) — a typed local-storage state layer plus a three-step onboarding UI.
+- The EU relay backend is not started yet (it is only needed for Unschedule-on-Reply and the Maps proxy).
 
-The next milestone is to begin implementing the onboarding flow and the Schedule Send modal injection, in line with the PRD.
+The next milestone is the compose-window integration and the Schedule Send modal injection (PRD §5.2–§5.3), in line with the PRD.
 
 ## License
 
