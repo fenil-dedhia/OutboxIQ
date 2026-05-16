@@ -176,7 +176,9 @@ Below the standard options, a new section labeled "Optimize delivery for recipie
 - If the recipient's timezone could not be detected automatically, see Section 5.3.7.
 
 **Schedule button:**
-- Clicking "Schedule" computes the actual send time in UTC and submits the scheduled email via the Gmail API (`messages.send` with a `scheduledTime` parameter, or by inserting the message into Drafts and using the Gmail API's scheduled send mechanism, whichever is the supported approach at implementation time).
+- Clicking "Schedule" computes the actual intended send time and then commits it as a **real, native Gmail scheduled send**. The user-facing behaviour is unchanged from the rest of this section; only the mechanism is specified here.
+- **Mechanism (corrected 2026-05-16 — supersedes the original Gmail-API description):** the Gmail API does **not** expose any way to *create* a scheduled send (`messages.send`/`drafts.send` both send immediately; no `scheduledTime`/`sendAt` parameter exists). This was established and verified in `research/scheduled-send-api-spike.md` (the original text here predated that spike). OutboxIQ instead drives **Gmail's own native Schedule Send UI** via a verified DOM-automation recipe (the spike's "Verification" section is canonical; the live recipe lives in `extension/src/lib/schedule/gmail-recipe.ts`). Quick Options map onto Gmail's native preset rows; a custom time uses Gmail's native "Pick date & time" path. This is what preserves the native Scheduled label (§5.7) and keeps email content on-device (§7.3.4) with no backend-scope expansion — see the spike's recommendation for why this approach was chosen over the API/cron alternatives.
+- The Gmail API *is* still used for the **cancel** path (Unschedule-on-Reply, §5.6): `messages.list?q=in:scheduled` → `messages.trash` (also verified in the spike). Creation and cancellation use different mechanisms by necessity.
 
 #### 5.3.6 Working Hours Check
 
