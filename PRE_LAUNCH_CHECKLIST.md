@@ -21,8 +21,19 @@ Google classifies the Gmail scopes OutboxIQ uses (`gmail.compose`, `gmail.modify
 
 ### OAuth consent screen — Production status
 
-- Currently in **Testing mode**.
+- **Now concretely active (Session 7):** GCP project `outboxiq-dev`, OAuth
+  consent screen configured **External / Testing mode**, explicit test-user
+  allowlist, the 4 restricted/sensitive scopes requested, Web-application
+  OAuth client live. This item is therefore no longer abstract — the
+  Testing→Production gate (and the CASA Tier 2 item above) is the next real
+  OAuth milestone once v1 is feature-complete.
 - Switching to **Production** requires Google verification of the app's homepage, Privacy Policy URL, Terms of Service URL, and authorized domains.
+- The Privacy/ToS/authorized-domain fields were **deliberately left blank**
+  in Testing mode: Google requires an *owned* authorized domain even for
+  the Branding URL fields, so the raw-GitHub placeholder stubs cannot be
+  used there. Hosting the real docs on a rename-proof, owned/brand-neutral
+  URL is tracked under "Naming / rebrand readiness" below — settle it
+  together with the Production switch.
 
 ### App branding for OAuth consent screen
 
@@ -141,6 +152,50 @@ feel compelled to relitigate it (Entry 22 discipline):
   broadly the safety-net pattern applies, and the cost/benefit is now
   clearer). Revisit only post-launch, with real usage signal, as an
   explicit additive decision. (`notes/owner-decisions-log.md` Entry 27.)
+
+---
+
+## Naming / rebrand readiness
+
+The product brand name ("OutboxIQ") may change before launch. The
+rename-impact analysis (Session 7, owner-prompted) established that the
+**load-bearing technical identities are deliberately brand-independent and
+must stay frozen across any rebrand** — renaming them would buy nothing and
+break identity/data/tokens:
+
+- **Extension ID** (`dicnmcmhapcfceodecocnkaacjdpplnm`) — derived from the
+  manifest `key`, not the product `name`. Never regenerate on a rebrand.
+- **OAuth Client ID** + **redirect URI** — opaque / extension-ID-derived;
+  the consent-screen *App name* is editable display text (changing it does
+  not invalidate tokens or force re-consent).
+- **GCP project ID** (`outboxiq-dev`), and any future **Fly.io / Supabase**
+  resource names — internal infra, never user-visible; do not rename on a
+  rebrand (name new infra neutrally).
+- **Storage keys** (`outboxiqState`, `outboxiqOnboardingDraft` in
+  `extension/src/lib/constants.ts`) — opaque internal keys; renaming them
+  would orphan existing users' local data. Treat as permanently frozen,
+  brand-independent identifiers regardless of the product name.
+
+A rebrand is therefore: **display copy + brand assets + a deliberate PRD /
+locked-copy amendment** (the verbatim `"…powered by OutboxIQ"` label and
+the verbatim onboarding privacy copy are product-locked spec text — changed
+via PRD amendment, not a find/replace), and nothing more.
+
+**Launch-blocking item surfaced here:** the Privacy/ToS/Pages URLs are
+currently brand-named (`github.com/fenil-dedhia/OutboxIQ/…`), hard-coded in
+`constants.ts` **and** entered into the GCP OAuth consent screen. When the
+real legal docs are drafted (deferred, see "Legal" above), host them on a
+**rename-proof, brand-neutral or guaranteed-stable URL** so a later repo /
+product rename does not break the consent screen or the in-extension link.
+Pick this URL at the same time as the legal-doc hosting decision.
+
+A future *optional* code task (deliberately **not** done in Session 7 to
+keep it focused, owner-directed): centralise the brand display name into a
+single `PRODUCT_NAME` constant so incidental UI copy routes through it.
+Low-value-now / low-cost-later; tracked so it is not forgotten.
+
+- **Reference:** `notes/owner-decisions-log.md` (Session 7 entry);
+  `CLAUDE.md` "Locked tech decisions" (brand-independent identifiers).
 
 ---
 

@@ -162,3 +162,9 @@ re-paste the harness, then:
 
 If G1 is valid and G2/G3 unchanged → §5.5.1 fix confirmed, gate zero
 closed.
+
+**Run result (2026-05-17):** ✅ PASS. G1 — `absAfterLatest` now reschedules
+to a **future** time and produces a valid native scheduled send (no
+"Invalid time"). G2 (`whBeforeStart`) and G3 (`absBeforeEarliest`)
+unchanged — still snap to *today* and still work, confirming the fix is
+surgical. Gate zero closed; Session 7 proceeded to Phase 2.

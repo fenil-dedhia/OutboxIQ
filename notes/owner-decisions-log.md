@@ -807,6 +807,117 @@ that preceded the §5.3.5/§5.4 build. They qualify; Entries 26 and 27.
   the earlier call. An unargued downgrade reads as drift and gets
   relitigated; an argued one, placed where deferrals are tracked, holds.
 
+## Entry 28 — The Phase-1 smoke that caught a default-reachable bug, and the re-scope it forced
+
+- **Session:** 7
+- **Moment:** Phase 1 "gate zero" — the first hands-on run of the assembled
+  §5.5.1 regular-Send guard against live Gmail. 85 jsdom tests were green;
+  Session 6 had shipped §5.5.1 probe-gated. Tests A–F passed; **Test G**
+  (Send while past the absolute *latest* time) showed the modal's primary
+  "Reschedule to…" proposing a **past** time, which Gmail rejected
+  ("Invalid time").
+- **My input:** Ran the smoke faithfully and reported Test G's exact
+  failure with screenshots rather than rounding it to "mostly worked";
+  then made two calls — (a) re-scoped the session: *fix §5.5.1 now **and**
+  keep Phase 2, defer Phase 3* (chose this over the offered "fix-only" and
+  "document & defer the bug" options); (b) chose the snap-target product
+  decision — **"next working morning"** — which refines a *locked*
+  decision.
+- **What Claude Code would have done without it:** Honest split. The
+  smoke-first discipline is locked protocol (Entry 10) and Claude built
+  the harness and flagged Test G as non-trivial — the prompt's triage rule
+  would have caught it either way. But no automated test could surface
+  this: the unit asserts the locked same-day snap, which is "correct" per
+  spec — the *spec* was miscalibrated for §5.5.1's reuse (the Entry-21 /
+  Entry-25 pattern). It took the owner *using* the product on its own
+  default evening path and reporting the precise Gmail rejection. The
+  specific re-scope shape and the snap semantics were owner calls; Claude
+  surfaced options and a recommendation and did **not** pick.
+- **Outcome:** Surgical fix — a pure, time-aware `ensureFutureSnap()`
+  scoped to the one provably past-prone case (`after-latest`), applied by
+  both §5.5.1 and §5.3; `checkWorkingHours` unchanged/Date.now-free. +7
+  tests incl. an explicit Test-G regression (92 green); re-verified
+  hands-on (G1 valid future schedule; G2/G3 unchanged). PRD §5.5.3 +
+  CLAUDE.md amended (refine, not overturn). Commit `f673e5b`. Phase 3
+  deferred to Session 8.
+- **Artifact:** Commit `f673e5b`; `research/regular-send-smoke.{js,md}`;
+  PRD §5.5.3 + CLAUDE.md "Locked product decisions" amendments;
+  `notes/session-7-summary.md`.
+- **Lesson (for coaching):** A human using the product on its own default
+  path finds what green tests structurally cannot when the *spec itself*
+  is the thing miscalibrated. And when the bug sits on a locked decision,
+  the fix's semantics are an owner product call — surface options, don't
+  improvise them mid-build.
+
+## Entry 29 — Overriding the prompt's own OAuth-client instruction
+
+- **Session:** 7
+- **Moment:** Phase 2 GCP setup. The session prompt's step 4 explicitly
+  said: create a **"Chrome extension"** type OAuth client.
+- **My input:** When Claude surfaced that a "Chrome extension" client
+  (which drives `chrome.identity.getAuthToken`) structurally **cannot**
+  deliver the refresh tokens the deferred Phase 3 — and PRD §7.5 / the
+  backend — require, chose to create a **"Web application"** client
+  instead, knowingly deviating from the prompt's literal instruction, and
+  to do it *now* rather than defer client creation.
+- **What Claude Code would have done without it:** Honest in Claude's
+  favour on the catch: Claude applied "surface, don't act" to the
+  *prompt's own scope* (Entry 20) — flagged the conflict and recommended
+  the Web-application path with reasoning. But deviating from an explicit
+  written instruction requires owner authority; without the owner Claude
+  would not have unilaterally substituted a different client type, and the
+  honest default (follow the explicit step) would have produced a
+  credential torn out and redone in Phase 3. Claude's analysis; the
+  owner's decision to authorise correcting the prompt.
+- **Outcome:** Web-application OAuth client created (`outboxiq-dev`,
+  Testing mode), redirect URI built from a newly **pinned stable extension
+  ID** (manifest `key`), Client ID captured in a typed
+  `src/lib/oauth-config.ts` — the "where it lives" decision also surfaced
+  (public-by-design typed constant; **not** an env var, **not** the
+  manifest `oauth2` key). Consent screen + 4 scopes + 2 test users
+  verified hands-on for both accounts (`?code=`). Commit `dda59e0`. The
+  Phase 3 OAuth *flow* stays deferred to its own architecture review.
+- **Artifact:** Commit `dda59e0`; `extension/src/lib/oauth-config.ts`;
+  `extension/manifest.config.ts` (pinned `key`); `CLAUDE.md` "Google Cloud
+  / OAuth"; `notes/session-7-summary.md`.
+- **Lesson (for coaching):** A prompt instruction is not exempt from
+  "what is this actually for?" (Entry 26). When a literal step conflicts
+  with a deferred-but-known requirement, surface the conflict and get
+  explicit authority to deviate — don't follow it into rework, and don't
+  silently change it either.
+
+## Entry 30 — A rename question that hardened an implicit property into a guardrail
+
+- **Session:** 7
+- **Moment:** Mid-Phase-2, the owner proactively asked how a future
+  product **rename** would affect what was already built and configured,
+  and whether impact could be confined to copy/branding.
+- **My input:** The question itself — forcing an explicit
+  brand/identity-decoupling analysis *before* any rename pressure exists —
+  and then choosing "**log it, don't churn code now**" (a tracked
+  guardrail + a surfaced launch-blocker) over an immediate refactor.
+- **What Claude Code would have done without it:** A clean
+  owner-judgment-via-question entry (cf. Entry 26's question, Entry 22's
+  pre-emption). The decoupling was *already largely true by construction*
+  (extension ID from the manifest `key`, opaque Client ID, etc.) — Claude
+  produced that analysis in response. Without the question it stays an
+  implicit, undocumented property, and the brand-named, hard-coded
+  Privacy/ToS/Pages URLs sit as a latent launch trap nobody named until a
+  rebrand or launch made it expensive.
+- **Outcome:** `PRE_LAUNCH_CHECKLIST.md` "Naming / rebrand readiness" (incl.
+  a new launch-blocker: host the real legal docs on a rename-proof,
+  brand-neutral/owned URL) + a `CLAUDE.md` "Locked tech decisions"
+  brand-independent-identifiers bullet. **No code churn** — the owner's
+  restraint kept Session 7 focused; the `PRODUCT_NAME` centralisation is
+  logged as an explicitly-deferred optional task, not drift.
+- **Artifact:** `PRE_LAUNCH_CHECKLIST.md` "Naming / rebrand readiness";
+  `CLAUDE.md` "Locked tech decisions"; this entry.
+- **Lesson (for coaching):** The cheapest moment to harden an
+  architectural property is when someone asks whether it holds. One
+  forward-looking question turns an implicit, fragile assumption into a
+  written guardrail and surfaces the single place it leaks — long before
+  launch pressure makes it costly.
+
 ---
 
 *New entries are appended at every session close-out, alongside the session
