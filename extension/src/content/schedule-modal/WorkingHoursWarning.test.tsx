@@ -1,0 +1,84 @@
+import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { WorkingHoursWarning } from "./WorkingHoursWarning";
+import { checkWorkingHours } from "../../lib/schedule/working-hours";
+import { createDefaultState } from "../../lib/storage";
+import type { WorkingHoursVerdict } from "../../lib/schedule/working-hours";
+
+const WH = createDefaultState().workingHours; // Mon–Fri 9–17, abs 7–19
+const at = (day: number, hour: number) => ({
+  year: 2026,
+  month: 5,
+  day,
+  hour,
+  minute: 0,
+});
+
+describe("WorkingHoursWarning (PRD §5.5 soft-warning)", () => {
+  it("absolute before-earliest: names the floor, shows all three options", () => {
+    const verdict = checkWorkingHours(at(18, 3), WH); // Mon 03:00
+    const onSnap = vi.fn();
+    const onProceed = vi.fn();
+    render(
+      <WorkingHoursWarning
+        verdict={verdict}
+        tzAbbr="EDT"
+        busy={false}
+        onSnap={onSnap}
+        onProceed={onProceed}
+        onCancel={vi.fn()}
+      />,
+    );
+    // §8.4: timezone abbreviation adjacent to the times.
+    expect(
+      screen.getByText(/earliest you said you'd ever send/i),
+    ).toHaveTextContent("EDT");
+    fireEvent.click(screen.getByRole("button", { name: /reschedule to/i }));
+    fireEvent.click(screen.getByRole("button", { name: /anyway/i }));
+    expect(onSnap).toHaveBeenCalledTimes(1);
+    expect(onProceed).toHaveBeenCalledTimes(1);
+  });
+
+  it("working-hours non-working-day: phrases it as not a working day", () => {
+    const verdict = checkWorkingHours(at(23, 10), WH); // Sat 10:00
+    render(
+      <WorkingHoursWarning
+        verdict={verdict}
+        tzAbbr="EDT"
+        busy={false}
+        onSnap={vi.fn()}
+        onProceed={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+    expect(
+      screen.getByText(/isn't one of your working days/i),
+    ).toBeInTheDocument();
+  });
+
+  it("no Reschedule button when there is no snap (defensive)", () => {
+    const verdict: WorkingHoursVerdict = {
+      ok: false,
+      kind: "working-hours",
+      detail: "non-working-day",
+      requested: at(23, 10),
+      snap: null,
+    };
+    const onCancel = vi.fn();
+    render(
+      <WorkingHoursWarning
+        verdict={verdict}
+        tzAbbr="EDT"
+        busy={false}
+        onSnap={vi.fn()}
+        onProceed={vi.fn()}
+        onCancel={onCancel}
+      />,
+    );
+    expect(
+      screen.queryByRole("button", { name: /reschedule to/i }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /^cancel$/i }));
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+});

@@ -8,8 +8,10 @@
 //
 // In scope: §5.3.1 layout, §5.3.2 header + timezone subtitle, §5.3.3 Quick
 // Options + "Last scheduled time" row (§5.3.3 amendment), §5.3.4 custom
-// picker ("Pick custom"). Deferred (owner-directed): §5.3.5
-// Optimize-for-recipient + §5.3.7. §5.3.6 working-hours is a no-op hook.
+// picker ("Pick custom"), and the §5.3.6 → §5.5 working-hours check (now
+// real: the resolved wall time is gated through checkWorkingHours before
+// scheduling; a violation opens the soft-warning modal). Deferred
+// (owner-directed): §5.3.5 Optimize-for-recipient + §5.3.7.
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -20,14 +22,20 @@ import { formatTimezoneLabel } from "../../lib/schedule/timezone-format";
 import {
   formatForGmail,
   parsePickerInputs,
+  parseGmailDateTime,
   type WallTime,
 } from "../../lib/schedule/gmail-format";
+import {
+  checkWorkingHours,
+  type WorkingHoursVerdict,
+} from "../../lib/schedule/working-hours";
 import {
   schedulePreset,
   scheduleAt,
   openNativeScheduleDialog,
 } from "./schedule-actions";
-import type { LastScheduled } from "../../lib/storage";
+import { WorkingHoursWarning } from "./WorkingHoursWarning";
+import type { LastScheduled, WorkingHours } from "../../lib/storage";
 
 type Status =
   | { kind: "idle" }
@@ -43,6 +51,8 @@ type Selection =
 export interface ScheduleModalProps {
   /** The user's configured IANA timezone (PRD §7.2 user.timezone). */
   timezone: string;
+  /** The user's working hours + absolute limits (PRD §7.2). §5.5 input. */
+  workingHours: WorkingHours;
   /** Last time scheduled via OutboxIQ, or null (PRD §5.3.3 amendment). */
   lastScheduled: LastScheduled | null;
   /** Persist a freshly-scheduled time so it becomes "Last scheduled time". */
@@ -50,12 +60,15 @@ export interface ScheduleModalProps {
   onClose: () => void;
 }
 
-// §5.3.6 hook point. When §5.5 is built this will, if the computed time is
-// outside the user's working hours, surface the secondary modal before
-// scheduling. Explicit pass-through for now so the call site exists.
-// DO NOT inline this away — it marks where §5.5 attaches.
-function applyWorkingHoursCheck(): { proceed: boolean } {
-  return { proceed: true }; // TODO(§5.5): working-hours reschedule modal
+type ScheduleAction = () => Promise<void>;
+
+// A scheduling attempt held back by the §5.5 soft-warning modal: `proceed`
+// schedules the user's chosen time as-is; `snap` schedules the corrected
+// time (null only in the unreachable zero-days working-hours case).
+interface PendingWarning {
+  verdict: WorkingHoursVerdict;
+  proceed: { action: ScheduleAction; remember: LastScheduled };
+  snap: { action: ScheduleAction; remember: LastScheduled } | null;
 }
 
 function lastToRemember(ls: LastScheduled): LastScheduled {
@@ -68,6 +81,7 @@ function lastToRemember(ls: LastScheduled): LastScheduled {
 
 export function ScheduleModal({
   timezone,
+  workingHours,
   lastScheduled,
   onScheduled,
   onClose,
@@ -76,7 +90,12 @@ export function ScheduleModal({
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [selection, setSelection] = useState<Selection | null>(null);
+  const [warning, setWarning] = useState<PendingWarning | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  // Latest `warning` for the keydown handler without re-subscribing or a
+  // state-updater side effect (StrictMode-safe).
+  const warningRef = useRef<PendingWarning | null>(null);
+  warningRef.current = warning;
 
   const now = useMemo(() => new Date(), []);
   const presets = useMemo(() => computePresets(now, timezone), [now, timezone]);
@@ -87,8 +106,15 @@ export function ScheduleModal({
 
   useEffect(() => {
     cardRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
-      if (e.key === "Escape") onClose();
+      if (e.key !== "Escape") return;
+      // §8.9: Escape closes the §5.5 warning back to the modal (selection
+      // kept); only closes the whole modal when no warning is showing.
+      if (warningRef.current) setWarning(null);
+      else onClose();
     };
     document.addEventListener("keydown", onKey, true);
     return () => document.removeEventListener("keydown", onKey, true);
@@ -111,7 +137,6 @@ export function ScheduleModal({
     remember: LastScheduled,
   ): Promise<void> {
     if (status.kind === "busy") return;
-    if (!applyWorkingHoursCheck().proceed) return; // §5.3.6 / §5.5 seam
     setStatus({ kind: "busy" });
     try {
       await action();
@@ -134,37 +159,104 @@ export function ScheduleModal({
     }
   }
 
+  // §5.3.6 → §5.5 seam: gate a resolved wall time through the working-hours
+  // check before scheduling. ok → schedule now; violation → soft-warning
+  // modal (the user explicitly chooses proceed / reschedule / cancel).
+  function gate(
+    wall: WallTime,
+    action: ScheduleAction,
+    remember: LastScheduled,
+  ): void {
+    const verdict = checkWorkingHours(wall, workingHours);
+    if (verdict.ok) {
+      void run(action, remember);
+      return;
+    }
+    let snap: PendingWarning["snap"] = null;
+    if (verdict.snap) {
+      const f = formatForGmail(verdict.snap);
+      snap = {
+        action: () =>
+          scheduleAt({ gmailDate: f.gmailDate, gmailTime: f.gmailTime }),
+        remember: {
+          display: f.display,
+          gmailDate: f.gmailDate,
+          gmailTime: f.gmailTime,
+        },
+      };
+    }
+    setWarning({ verdict, proceed: { action, remember }, snap });
+  }
+
   // The single end-of-workflow commit (the primary "Schedule" button).
   function commit(): void {
     if (!selection) return;
     if (selection.kind === "last") {
       if (!lastScheduled) return;
       const ls = lastScheduled;
-      void run(
-        () => scheduleAt({ gmailDate: ls.gmailDate, gmailTime: ls.gmailTime }),
-        lastToRemember(ls),
-      );
+      const remember = lastToRemember(ls);
+      const action: ScheduleAction = () =>
+        scheduleAt({ gmailDate: ls.gmailDate, gmailTime: ls.gmailTime });
+      const wall = parseGmailDateTime(ls.gmailDate, ls.gmailTime);
+      // Stored strings that don't parse → we can't run the §5.5 check; fail
+      // open and schedule the user's explicit choice rather than block it
+      // (never strand the user — §5.2.3 spirit).
+      if (!wall) {
+        void run(action, remember);
+        return;
+      }
+      gate(wall, action, remember);
     } else if (selection.kind === "preset") {
       const p = selection.preset;
       const f = formatForGmail(p.wall);
-      void run(() => schedulePreset(p), {
+      gate(p.wall, () => schedulePreset(p), {
         display: f.display,
         gmailDate: f.gmailDate,
         gmailTime: f.gmailTime,
       });
     } else {
       const f = formatForGmail(selection.wall);
-      void run(
+      gate(
+        selection.wall,
         () => scheduleAt({ gmailDate: f.gmailDate, gmailTime: f.gmailTime }),
         { display: f.display, gmailDate: f.gmailDate, gmailTime: f.gmailTime },
       );
     }
   }
 
+  // §5.5 soft-warning resolutions.
+  function proceedAnyway(): void {
+    const w = warning;
+    if (!w) return;
+    setWarning(null);
+    void run(w.proceed.action, w.proceed.remember);
+  }
+  function takeSnap(): void {
+    const w = warning;
+    if (!w || !w.snap) return;
+    setWarning(null);
+    void run(w.snap.action, w.snap.remember);
+  }
+
   const busy = status.kind === "busy";
   const presetSelected = (p: SchedulePreset): boolean =>
     selection?.kind === "preset" && selection.preset.id === p.id;
   const customSelected = selection?.kind === "custom";
+
+  // §8.7 one decision per screen: the §5.5 warning replaces the schedule
+  // card (same Shadow-DOM backdrop) rather than stacking on top of it.
+  if (warning) {
+    return (
+      <WorkingHoursWarning
+        verdict={warning.verdict}
+        tzAbbr={tzLabel.abbr}
+        busy={busy}
+        onSnap={takeSnap}
+        onProceed={proceedAnyway}
+        onCancel={() => setWarning(null)}
+      />
+    );
+  }
 
   return (
     <div

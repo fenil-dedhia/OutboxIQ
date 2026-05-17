@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { formatForGmail, parsePickerInputs } from "./gmail-format";
+import {
+  formatForGmail,
+  parsePickerInputs,
+  parseGmailDateTime,
+} from "./gmail-format";
 
 describe("formatForGmail (probe-confirmed Gmail input formats)", () => {
   it("formats morning preset wall time", () => {
@@ -57,5 +61,27 @@ describe("parsePickerInputs (modal native inputs → wall time)", () => {
   it("rejects impossible component values", () => {
     expect(parsePickerInputs("2026-13-01", "09:05")).toBeNull();
     expect(parsePickerInputs("2026-12-31", "25:00")).toBeNull();
+  });
+});
+
+describe("parseGmailDateTime (inverse of formatForGmail, for the 'last' path)", () => {
+  it("round-trips formatForGmail across AM/PM/noon/midnight", () => {
+    for (const w of [
+      { year: 2026, month: 5, day: 17, hour: 8, minute: 0 },
+      { year: 2026, month: 5, day: 21, hour: 13, minute: 25 },
+      { year: 2026, month: 1, day: 1, hour: 0, minute: 0 }, // 12:00 AM
+      { year: 2026, month: 12, day: 31, hour: 12, minute: 30 }, // 12:30 PM
+      { year: 2026, month: 9, day: 9, hour: 23, minute: 59 },
+    ]) {
+      const f = formatForGmail(w);
+      expect(parseGmailDateTime(f.gmailDate, f.gmailTime)).toEqual(w);
+    }
+  });
+
+  it("returns null on malformed input", () => {
+    expect(parseGmailDateTime("", "")).toBeNull();
+    expect(parseGmailDateTime("May 17, 2026", "8 AM")).toBeNull();
+    expect(parseGmailDateTime("Foo 17, 2026", "8:00 AM")).toBeNull();
+    expect(parseGmailDateTime("2026-05-17", "08:00")).toBeNull();
   });
 });

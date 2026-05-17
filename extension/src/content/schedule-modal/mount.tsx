@@ -17,12 +17,13 @@ import { StrictMode } from "react";
 import { ScheduleModal } from "./ScheduleModal";
 import { ModalErrorBoundary } from "./ErrorBoundary";
 import { MODAL_CSS } from "./styles";
-import type { LastScheduled } from "../../lib/storage";
+import type { LastScheduled, WorkingHours } from "../../lib/storage";
 
 const HOST_ID = "outboxiq-schedule-modal-host";
 
 export interface OpenScheduleModalArgs {
   timezone: string;
+  workingHours: WorkingHours;
   lastScheduled: LastScheduled | null;
   onScheduled: (v: LastScheduled) => void;
   /** A render-time throw in the modal hands off to Gmail's native scheduler
@@ -65,6 +66,7 @@ export function openScheduleModal(args: OpenScheduleModalArgs): void {
       <ModalErrorBoundary onError={handleRenderError}>
         <ScheduleModal
           timezone={args.timezone}
+          workingHours={args.workingHours}
           lastScheduled={args.lastScheduled}
           onScheduled={args.onScheduled}
           onClose={close}

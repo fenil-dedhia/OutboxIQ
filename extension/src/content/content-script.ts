@@ -70,6 +70,7 @@ function handleScheduleSend(): void {
       const state = await getState();
       openScheduleModal({
         timezone: state.user.timezone,
+        workingHours: state.workingHours,
         lastScheduled: state.lastScheduled,
         onScheduled: (v) => {
           // Persist for the "Last scheduled time" row next open. Fire-and-

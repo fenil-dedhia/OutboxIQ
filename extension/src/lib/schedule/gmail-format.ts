@@ -59,6 +59,52 @@ export function formatForGmail(w: WallTime): GmailScheduleStrings {
   };
 }
 
+const MONTH_ABBR = [
+  "jan",
+  "feb",
+  "mar",
+  "apr",
+  "may",
+  "jun",
+  "jul",
+  "aug",
+  "sep",
+  "oct",
+  "nov",
+  "dec",
+];
+
+/**
+ * Inverse of `formatForGmail` for the stored "Last scheduled time" strings
+ * ("May 17, 2026" + "8:00 AM"). Deterministic — formatForGmail emits a fixed
+ * en-US format, so this parse is exact (no locale/Intl needed). Used so the
+ * §5.5 working-hours check can run on the "last scheduled" selection (which
+ * persists only these strings, not a WallTime). Returns null if malformed.
+ */
+export function parseGmailDateTime(
+  gmailDate: string,
+  gmailTime: string,
+): WallTime | null {
+  const dm = /^([A-Za-z]{3,9})\s+(\d{1,2}),\s*(\d{4})$/.exec(gmailDate.trim());
+  const tm = /^(\d{1,2}):(\d{2})\s*([AaPp][Mm])$/.exec(gmailTime.trim());
+  if (!dm || !tm) return null;
+  const monthStr = dm[1] ?? "";
+  const ampm = tm[3] ?? "";
+  const month = MONTH_ABBR.indexOf(monthStr.slice(0, 3).toLowerCase()) + 1;
+  if (month === 0) return null;
+  let hour = Number(tm[1]) % 12;
+  if (/p/i.test(ampm)) hour += 12;
+  const w: WallTime = {
+    year: Number(dm[3]),
+    month,
+    day: Number(dm[2]),
+    hour,
+    minute: Number(tm[2]),
+  };
+  if (w.day < 1 || w.day > 31 || w.hour > 23 || w.minute > 59) return null;
+  return w;
+}
+
 /**
  * Parse the modal's native `<input type="date">` (yyyy-mm-dd) and
  * `<input type="time">` (HH:MM, 24h) into wall components. Returns null on

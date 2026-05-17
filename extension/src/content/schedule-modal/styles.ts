@@ -61,4 +61,20 @@ button.primary:hover { background: #1b66c9; }
 button:disabled { opacity: .6; cursor: default; }
 .status { font-size: 12px; color: #5f6368; margin-top: 8px; }
 .status.error { color: #c5221f; }
+
+/* §5.5 soft-warning modal — same Gmail-native card, stacked actions so the
+   recommended (Reschedule) choice reads first without auto-acting (§5.5.2,
+   locked soft-warning pattern). */
+.warn-lead { font-size: 14px; margin: 0 0 10px; }
+.warn-why { font-size: 12px; color: #5f6368; margin: 0 0 16px; }
+.warn-actions { display: flex; flex-direction: column; gap: 8px; }
+.warn-actions button { width: 100%; text-align: center; }
+button.secondary {
+  font: inherit; background: #fff; color: #1a73e8;
+  border: 1px solid #dadce0; padding: 8px 16px; border-radius: 4px;
+  cursor: pointer; font-weight: 500;
+}
+button.secondary:hover, button.secondary:focus-visible {
+  background: #f8fafe; border-color: #1a73e8; outline: none;
+}
 `;
