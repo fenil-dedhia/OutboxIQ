@@ -1,5 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { installComposeIntegration } from "./compose-integration";
+import {
+  installComposeIntegration,
+  desiredScheduleLabel,
+} from "./compose-integration";
 import { SCHEDULE_SEND_LABEL } from "../../lib/constants";
 
 // PRD §5.2 coverage. These exercise the deterministic core — relabel, the
@@ -78,22 +81,49 @@ describe("§5.2.1 relabel", () => {
     expect(item.textContent).not.toBe(SCHEDULE_SEND_LABEL);
   });
 
-  it("relabels again once multi-compose resolves (skip didn't poison)", async () => {
+  // Smoke Bug 1 (Session 5.5): a label set while single must REVERT to
+  // native when a second compose opens — not freeze (the old one-way latch
+  // + skip-without-revert is what froze it).
+  it("reverts to native when a 2nd compose opens (reactive — Bug 1)", async () => {
+    document.body.appendChild(makeChevron()); // 1 compose
+    const item = makeScheduleMenuItem();
+    document.body.appendChild(item);
+    teardown = installComposeIntegration({ onScheduleSend: vi.fn() });
+    expect(item.textContent).toBe(SCHEDULE_SEND_LABEL); // single → OutboxIQ
+
+    document.body.appendChild(makeChevron()); // compose B opens → 2
+    await tick();
+    expect(item.textContent).toBe("Schedule send"); // SAME item reverted
+  });
+
+  // Smoke Bug 2 (Session 5.5): when the count drops back to 1 the surviving
+  // compose's label must revert to OutboxIQ — locale-safely (the captured
+  // original, not a hardcoded string).
+  it("restores OutboxIQ when compose count drops to 1 (reactive — Bug 2)", async () => {
     document.body.appendChild(makeChevron());
     const c2 = makeChevron();
     document.body.appendChild(c2); // 2 composes
-    const skipped = makeScheduleMenuItem();
-    document.body.appendChild(skipped);
+    const item = makeScheduleMenuItem();
+    document.body.appendChild(item);
     teardown = installComposeIntegration({ onScheduleSend: vi.fn() });
-    expect(skipped.textContent).toBe("Schedule send"); // skipped
+    expect(item.textContent).toBe("Schedule send"); // multi → native
 
-    // One compose closes → back to single. The Schedule menu is recreated
-    // on the next dropdown open, so a fresh menuitem appears.
-    c2.remove();
-    const fresh = makeScheduleMenuItem();
-    document.body.appendChild(fresh);
+    c2.remove(); // compose B closes → 1
     await tick();
-    expect(fresh.textContent).toBe(SCHEDULE_SEND_LABEL); // relabels normally
+    expect(item.textContent).toBe(SCHEDULE_SEND_LABEL); // SAME item restored
+  });
+
+  it("a non-count mutation does not flip the label (anti-flicker)", async () => {
+    document.body.appendChild(makeChevron());
+    const item = makeScheduleMenuItem();
+    document.body.appendChild(item);
+    teardown = installComposeIntegration({ onScheduleSend: vi.fn() });
+    expect(item.textContent).toBe(SCHEDULE_SEND_LABEL);
+
+    // Unrelated DOM churn (no chevron added/removed) must not re-label.
+    document.body.appendChild(document.createElement("div"));
+    await tick();
+    expect(item.textContent).toBe(SCHEDULE_SEND_LABEL); // unchanged
   });
 
   it("skips silently when the item has no text leaf (cosmetic, never throws)", () => {
@@ -214,5 +244,18 @@ describe("§5.2.2 interception", () => {
     const inner = item.querySelector("div div") as HTMLElement;
     inner.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     expect(onScheduleSend).not.toHaveBeenCalled();
+  });
+});
+
+describe("desiredScheduleLabel (pure decision)", () => {
+  it("single compose → the OutboxIQ brand label", () => {
+    expect(desiredScheduleLabel(false, "Schedule send")).toBe(
+      SCHEDULE_SEND_LABEL,
+    );
+  });
+  it("multi compose → Gmail's own original (locale-safe, passed in)", () => {
+    expect(desiredScheduleLabel(true, "Programmer une réponse")).toBe(
+      "Programmer une réponse",
+    );
   });
 });

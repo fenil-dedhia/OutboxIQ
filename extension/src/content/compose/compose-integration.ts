@@ -39,7 +39,12 @@ export interface ComposeIntegrationOptions {
   onScheduleSend: (ctx: ScheduleSendContext) => void;
 }
 
-const RELABELLED_ATTR = "data-outboxiq-relabelled";
+// Where we stash each menuitem's ORIGINAL visible text the first time we see
+// it, so the label can be reverted locale-safely (never hardcode "Schedule
+// send" — spike locale-risk rule). Replaces the old one-way "relabelled=1"
+// latch (Session 5.5 fix): the latch + skip-without-revert is exactly why
+// the label froze and disagreed across composes (smoke Bug 1 + Bug 2).
+const ORIG_LABEL_ATTR = "data-outboxiq-orig";
 const isDev = (): boolean => import.meta.env.DEV;
 
 // ---- §5.2.1 Relabel (defensive, best-effort) ------------------------------
@@ -49,25 +54,38 @@ const isDev = (): boolean => import.meta.env.DEV;
 //         ├ img.v5.J-N-JX        (cleardot.gif spacer — MUST be preserved)
 //         └ #text "Schedule send"  ← the visible label is THIS text node
 //
-// So we replace the single longest visible TEXT NODE in place, never an
-// element's textContent (that would delete the spacer img and over-mutate
-// Gmail's DOM). If the shape is unexpected we SKIP silently — a missing
-// "powered by OutboxIQ" suffix is cosmetic; never let it break Gmail.
-function relabelScheduleSendItem(menuItem: HTMLElement): void {
-  // Multi-compose (Session 5.5): the safety net hands Schedule Send off to
-  // native in this state, so the OutboxIQ label would be a lie ("powered by
-  // OutboxIQ" on an item that won't run OutboxIQ). Leave Gmail's native
-  // "Schedule send" text untouched. Crucially DON'T set RELABELLED_ATTR on
-  // skip — the Schedule menu is a popup Gmail recreates on every dropdown
-  // open, so when composes drop back to 1 the next (fresh) menuitem
-  // relabels normally. No resolve-listener/polling needed: the ephemeral
-  // menu re-evaluates this predicate every open. (Cosmetic + best-effort,
-  // like the rest of relabel — a brief stale label if multi-compose state
-  // flips mid-open is harmless; the interceptor re-checks independently.)
-  if (multipleComposeWindows()) return;
-  if (menuItem.getAttribute(RELABELLED_ATTR) === "1") return;
-  menuItem.setAttribute(RELABELLED_ATTR, "1");
+// We replace the single longest visible TEXT NODE in place, never an
+// element's textContent (that would delete the spacer img). Unexpected
+// shape → SKIP silently (a missing suffix is cosmetic; never break Gmail).
+//
+// THE LABEL IS REACTIVE TO COMPOSE COUNT. In multi-compose the safety net
+// hands Schedule Send to native, so the OutboxIQ label would be a lie —
+// the item must read Gmail's native text instead. This is driven by the
+// SAME predicate the safety net uses (multipleComposeWindows()), so the
+// visible label can never disagree with what a click actually does
+// (invariant — do not introduce a second source of truth). applied both
+// on menuitem insertion AND on every compose-count boundary cross (see the
+// observer in installComposeIntegration). The earlier Session 5.5 comment
+// here ("ephemeral menu re-evaluates every open, no listener needed") was
+// WRONG — falsified by the hands-on 4-state smoke test; the label is NOT
+// re-evaluated on compose open/close without the observer trigger below.
+//
+// NOTE: the jsdom tests exercise this decision/reactivity logic only. They
+// CANNOT prove the real Gmail selectors match or that Gmail emits the
+// childList mutations assumed here — that is the hands-on 4-state Chrome
+// test, which is the load-bearing verification. Green jsdom ≠ verified.
 
+/** Pure decision: the label this menuitem should show right now. Single
+ * compose → the OutboxIQ brand; multi-compose → Gmail's own original
+ * (safety net is active, so OutboxIQ won't run — don't claim it will). */
+export function desiredScheduleLabel(
+  multiCompose: boolean,
+  originalLabel: string,
+): string {
+  return multiCompose ? originalLabel : SCHEDULE_SEND_LABEL;
+}
+
+function longestTextNode(menuItem: HTMLElement): Text | null {
   const textNodes: Text[] = [];
   const visit = (node: Node): void => {
     for (const child of Array.from(node.childNodes)) {
@@ -81,8 +99,7 @@ function relabelScheduleSendItem(menuItem: HTMLElement): void {
     }
   };
   visit(menuItem);
-
-  const bestNode = textNodes.reduce<Text | null>(
+  return textNodes.reduce<Text | null>(
     (best, n) =>
       (n.textContent ?? "").trim().length >
       (best?.textContent ?? "").trim().length
@@ -90,15 +107,35 @@ function relabelScheduleSendItem(menuItem: HTMLElement): void {
         : best,
     null,
   );
+}
 
-  if (bestNode) {
-    bestNode.nodeValue = SCHEDULE_SEND_LABEL;
-  } else if (isDev()) {
-    console.warn(
-      "[OutboxIQ] §5.2 relabel: no text node in scheduledSend item — " +
-        "skipped (cosmetic; interception unaffected).",
-    );
+/**
+ * Apply the correct Schedule-send label for the CURRENT compose count.
+ * Idempotent and bidirectional: writes only when the text differs, so
+ * re-running it in a stable state is a no-op (this is the anti-flicker
+ * guard — the label changes exactly once, at a real 1↔≥2 transition, and
+ * only if it isn't already correct). Setting nodeValue does not retrigger
+ * the observer (it watches childList, not characterData) — no self-loop.
+ */
+function applyScheduleSendLabel(menuItem: HTMLElement): void {
+  const bestNode = longestTextNode(menuItem);
+  if (!bestNode) {
+    if (isDev()) {
+      console.warn(
+        "[OutboxIQ] §5.2 relabel: no text node in scheduledSend item — " +
+          "skipped (cosmetic; interception unaffected).",
+      );
+    }
+    return;
   }
+  // Capture the original (native) text exactly once, before any overwrite,
+  // so a revert restores Gmail's real string in any locale.
+  if (!menuItem.hasAttribute(ORIG_LABEL_ATTR)) {
+    menuItem.setAttribute(ORIG_LABEL_ATTR, bestNode.nodeValue ?? "");
+  }
+  const original = menuItem.getAttribute(ORIG_LABEL_ATTR) ?? "";
+  const desired = desiredScheduleLabel(multipleComposeWindows(), original);
+  if (bestNode.nodeValue !== desired) bestNode.nodeValue = desired;
 }
 
 // ---- §5.2.2 Interception ---------------------------------------------------
@@ -262,15 +299,23 @@ export function installComposeIntegration(
   // ever affected (§5.2.3).
   const events: Array<keyof DocumentEventMap> = ["mousedown", "click"];
 
-  const relabelAll = (): void => {
+  const applyLabelToAllMenuItems = (): void => {
     try {
       document
         .querySelectorAll<HTMLElement>(SEL_SCHEDULE_MENUITEM)
-        .forEach(relabelScheduleSendItem);
+        .forEach(applyScheduleSendLabel);
     } catch {
       /* relabel is best-effort; never throw into Gmail */
     }
   };
+
+  // The compose count when we last re-applied. The label only needs
+  // re-applying when this crosses the 1↔≥2 boundary (a compose opened or
+  // closed) — gating on the boundary is what stops per-mutation churn and
+  // flicker. The observer fires on compose open AND close (subtree add/
+  // remove), so this reuses the one existing watcher rather than adding a
+  // second observer or a poller.
+  let lastMulti = false;
 
   let observer: MutationObserver | null = null;
   try {
@@ -280,16 +325,27 @@ export function installComposeIntegration(
 
     observer = new MutationObserver((mutations) => {
       try {
+        // 1. Newly inserted menuitems get the correct CURRENT label
+        //    immediately (a freshly opened dropdown never flashes wrong).
         for (const m of mutations) {
           for (const node of Array.from(m.addedNodes)) {
             if (!(node instanceof HTMLElement)) continue;
             if (node.matches?.(SEL_SCHEDULE_MENUITEM)) {
-              relabelScheduleSendItem(node);
+              applyScheduleSendLabel(node);
             }
             node
               .querySelectorAll?.<HTMLElement>(SEL_SCHEDULE_MENUITEM)
-              .forEach(relabelScheduleSendItem);
+              .forEach(applyScheduleSendLabel);
           }
+        }
+        // 2. A compose opened/closed (childList add/remove anywhere) →
+        //    if the 1↔≥2 boundary actually flipped, re-apply to EVERY
+        //    present menuitem so all composes agree. Boundary-gated so
+        //    intra-state mutations are no-ops (anti-flicker).
+        const nowMulti = multipleComposeWindows();
+        if (nowMulti !== lastMulti) {
+          lastMulti = nowMulti;
+          applyLabelToAllMenuItems();
         }
       } catch {
         /* observer must never throw into Gmail */
@@ -297,7 +353,8 @@ export function installComposeIntegration(
     });
     observer.observe(document.body, { childList: true, subtree: true });
 
-    relabelAll(); // menu may already be open at install time
+    lastMulti = multipleComposeWindows();
+    applyLabelToAllMenuItems(); // menu may already be open at install time
   } catch (err) {
     if (isDev()) {
       console.warn("[OutboxIQ] §5.2 install failed (Gmail unaffected):", err);
