@@ -246,7 +246,56 @@ proves the "Send now anyway" + fail-toward-send path is realisable.
 
 ## Result log
 
-*(Empty — to be filled by Fenil's hands-on run, then summarised at the
-probe-gate checkpoint. Format mirrors `pick-date-time-probe.md`: date,
-context, headline, the verified facts per question, and any STILL-NOT-
-VERIFIED residuals.)*
+### 2026-05-16 — Session 6, Fenil hands-on (consumer Gmail, English, macOS) — IN PROGRESS
+
+**Discovery (Q1, Q3, Q5) — verified, clean:**
+
+- Send button found in **new-compose, two-compose, and inline-reply**
+  contexts (pop-out run still owed). In every run the two independent
+  heuristics **AGREE ✅** (chevron's sibling `[role="button"]` in the shared
+  `div.dC` group == the attribute match). Send is a `div[role="button"]`,
+  classes `T-I J-J5-Ji aoO v7 T-I-atl L3` (vs chevron `… hG …`; only the
+  obfuscated `aoO`/`hG` differ — too fragile to anchor on alone),
+  **no `jsaction`**, `aria-label`/`data-tooltip` = `"Send ‪(⌘Enter)‬"`
+  (locale-dependent, same accepted risk as the chevron anchor). Has a
+  `jslog` (logging, not an action hook). **Anchor decision: structural —
+  the non-chevron `[role="button"]` in the chevron's `div.dC` group**
+  (locale-tied only to the already-accepted chevron anchor), `aria-label`
+  ~ `/^Send/i` as a secondary cross-check.
+- **MULTI-COMPOSE VERDICT: ✅ DISTINCT.** Two composes → each Send button in
+  its own `table.aoP.*` subtree (`table#:8a` vs `table#:gx`). Send is
+  in-pane / compose-scoped — **not** the §5.2 detached-popup problem. Q5
+  resolved favourably.
+
+**Event timing (`watch()`, Q2/Q4) — capture fires first, but not proof:**
+
+- Mouse on Send: `CAPTURE mousedown defaultPrevented=false` →
+  `BUBBLE mousedown defaultPrevented=true`. Gmail reacts at **mousedown**,
+  in target/bubble, *after* our document-capture listener. `click`/`mouseup`
+  stayed `defaultPrevented=false`.
+- Keyboard: `CAPTURE keydown key="Enter" meta=true defaultPrevented=false`,
+  then **no bubble keydown** (Gmail consumed it after our capture listener).
+- ⇒ A capture-phase document listener *sees* both paths before Gmail acts.
+  Predicts (does not prove) suppression is possible.
+
+**Suppression (`armSuppress()`, Q4) — AMBIGUOUS (one-shot too blunt):**
+
+- B1 (button): probe ARMED (1 compose), `SUPPRESSED at: mousedown (capture)`
+  `defaultPrevented=true` — **yet the email sent.**
+- Not Interpretation A (it did arm + catch). Either **B** (capture-phase
+  fundamentally cannot stop Gmail's Send → design-invalidating) or **C**
+  (one-shot `armSuppress` killed only `mousedown` then *disarmed*; Gmail's
+  `T-I…L3` button finalises on a later event of the same gesture —
+  consistent with the spike's chevron "needs the full mouse sequence" —
+  which the disarmed probe let through). `watch()` leans C (Gmail acts in
+  bubble, which capture-stop *should* prevent) but a lean is not proof.
+- **Action taken:** added `armBlockGesture()` — blocks the **whole** gesture
+  (all pointer/mouse events on Send + ⌘/Ctrl+Enter) at capture for N
+  seconds, not one-shot. This is the B-vs-C disambiguator. Diagnostic-only
+  change (Entry-9 re-runnable-probe discipline; mirrors the pick-date-time
+  probe's mid-session `live()` fix). **No §5.5.1 implementation code
+  written — probe-gate held.**
+
+**Still owed:** pop-out `discover()`; `armBlockGesture()` (B vs C);
+keyboard suppression; `testReplay()` (Q4 replay path). Gate verdict pending
+`armBlockGesture()`.

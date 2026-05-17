@@ -422,6 +422,87 @@
     armed.forEach(({ type, fn }) => document.addEventListener(type, fn, true));
   }
 
+  // ---- Gesture-block test (disambiguates B vs C) ----
+  // armSuppress() is ONE-SHOT: it kills only the FIRST matching event then
+  // disarms. If Gmail finalises the send on a LATER event of the same click
+  // (mouseup/click — the spike found the chevron's local handler needs the
+  // full mouse sequence), the disarmed probe lets that through and the email
+  // sends even though mousedown was "suppressed". That ambiguity is exactly
+  // what was observed (SUPPRESSED at mousedown, yet email sent).
+  //
+  // This blocks the ENTIRE gesture — every pointer/mouse event whose target
+  // is the Send button, PLUS the ⌘/Ctrl+Enter keydown — at capture phase,
+  // for `seconds`, NOT one-shot, NOT disarming between events. It is the
+  // disambiguating test:
+  //   • email does NOT send → capture-phase CAN stop Gmail; armSuppress was
+  //     just too blunt. The §5.5.1 design holds; production must block the
+  //     whole gesture (mousedown+mouseup+click), as the §5.2 interceptor
+  //     already does for mousedown+click. → proceed to the replay test.
+  //   • email STILL sends   → capture-phase fundamentally cannot stop Gmail's
+  //     Send → design-invalidating → STOP, surface to Fenil, write NO §5.5.1
+  //     code (Entry-2 / probe-gate failure clause).
+  // Scoped to the Send button only, so the rest of Gmail is unaffected for
+  // the window (faithful to the §5.2.3 spirit even in the probe). Throwaway
+  // account: if this is the B case, the email sends.
+
+  let blockHandlers = null;
+  function unblock() {
+    if (!blockHandlers) { console.log("[sendprobe] not blocking."); return; }
+    blockHandlers.forEach(({ type, fn }) =>
+      document.removeEventListener(type, fn, true),
+    );
+    blockHandlers = null;
+    console.log("[sendprobe] gesture block REMOVED.");
+  }
+
+  function armBlockGesture({ seconds = 8 } = {}) {
+    unblock();
+    const chevrons = allChevrons();
+    if (chevrons.length !== 1) {
+      console.warn(`[sendprobe] armBlockGesture() expects exactly ONE compose (found ${chevrons.length}). One compose, fully filled, throwaway acct.`);
+      return;
+    }
+    const sendBtn = sendGroupFor(chevrons[0]).sendCandidates[0];
+    if (!sendBtn) {
+      console.warn("[sendprobe] Send button not found — run discover() and report; do NOT improvise.");
+      return;
+    }
+    console.log(`%c[sendprobe] armBlockGesture() — BLOCKING the full gesture on Send for ${seconds}s (NOT one-shot). If Gmail still sends, that is the design-invalidating result.`, "font-weight:bold;color:#c5221f");
+    console.log("[sendprobe] target Send button:", describe(sendBtn));
+    let kills = 0;
+    const handler = (e) => {
+      const onSend =
+        e.type !== "keydown" &&
+        (e.target === sendBtn || sendBtn.contains(e.target));
+      const isKbd =
+        e.type === "keydown" &&
+        e.key === "Enter" &&
+        (e.ctrlKey || e.metaKey);
+      if (!onSend && !isKbd) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      kills++;
+      console.log(
+        `%c[sendprobe] BLOCKED #${kills}: ${e.type}${isKbd ? " (⌘/Ctrl+Enter)" : " on Send"} (capture). defaultPrevented=${e.defaultPrevented}`,
+        "color:#c5221f;font-weight:bold",
+      );
+    };
+    const evs = [
+      "pointerdown", "mousedown", "pointerup", "mouseup", "click", "keydown",
+    ];
+    blockHandlers = evs.map((type) => ({ type, fn: handler }));
+    blockHandlers.forEach(({ type, fn }) =>
+      document.addEventListener(type, fn, true),
+    );
+    console.log(`%c[sendprobe] ARMED for ${seconds}s. Now click Send 2-3 times AND press ⌘/Ctrl+Enter. Watch for a 'Message sent' toast / the compose closing.`, "font-weight:bold");
+    setTimeout(() => {
+      if (blockHandlers) {
+        unblock();
+        console.log(`%c[sendprobe] block window ended. Events blocked: ${kills}. >>> REPORT: did ANY email send during the block? (Yes/No) + paste all BLOCKED lines.`, "font-weight:bold");
+      }
+    }, seconds * 1000);
+  }
+
   // ---- Replay test (DESTRUCTIVE) ----
   // Verifies the "Send now anyway" + fail-toward-send path: after we've
   // intercepted, can we re-drive Gmail's Send so the email actually goes?
@@ -443,11 +524,12 @@
     console.log("%c[sendprobe] >>> CONFIRM: did the email send (toast + compose closed)? If NOT and you used plain, re-run testReplay({full:true}). Report which one worked.", "font-weight:bold");
   }
 
-  window.OutboxIQSendProbe = { discover, watch, stop, armSuppress, disarm, testReplay };
+  window.OutboxIQSendProbe = { discover, watch, stop, armSuppress, disarm, armBlockGesture, unblock, testReplay };
   console.log("%c[sendprobe] OutboxIQ §5.5.1 Send-button probe loaded.", "font-weight:bold");
   console.log("Step 1 (SAFE): OutboxIQSendProbe.discover()        — locate Send button + scope (run with 1 compose, then 2)");
   console.log("Step 2 (SAFE): OutboxIQSendProbe.watch()           — observe the click & Ctrl/⌘+Enter event sequence (use empty-To)");
-  console.log("Step 3 (suppress test): OutboxIQSendProbe.armSuppress() — does capture-phase actually stop the Send?");
-  console.log("Step 4 (DESTRUCTIVE): OutboxIQSendProbe.testReplay()    — does replaying the Send actually send?");
-  console.log("Helpers: OutboxIQSendProbe.stop() / .disarm()");
+  console.log("Step 3 (suppress test): OutboxIQSendProbe.armSuppress()     — one-shot: does capture-phase stop the FIRST event?");
+  console.log("Step 3b (DISAMBIGUATE): OutboxIQSendProbe.armBlockGesture() — blocks the WHOLE gesture: B (can't stop) vs C (one-shot too blunt)");
+  console.log("Step 4 (DESTRUCTIVE): OutboxIQSendProbe.testReplay()        — does replaying the Send actually send?");
+  console.log("Helpers: OutboxIQSendProbe.stop() / .disarm() / .unblock()");
 })();
