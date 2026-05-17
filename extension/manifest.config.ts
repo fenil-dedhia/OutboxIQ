@@ -1,9 +1,15 @@
 import { defineManifest } from "@crxjs/vite-plugin";
 
-// Minimal, just-in-time MV3 manifest. Only what the onboarding flow (PRD §5.1)
-// needs is declared here. OAuth scopes (PRD §6.6), the `identity` permission,
-// and googleapis host permissions are deliberately NOT requested yet — they are
-// wired in just-in-time when the Calendar/Gmail features that need them begin.
+// MV3 manifest. Session 8 wired Free v1 OAuth (PRD §7.5 implicit grant) +
+// the timezone cascade, so `identity` and the googleapis host permissions
+// are now requested (no longer "just-in-time / not yet"). OAuth scopes live
+// in src/lib/oauth-config.ts, NOT the manifest `oauth2` key (that key only
+// drives the unused chrome.identity.getAuthToken path — see the
+// oauth-config.ts header for why we use a Web-app client + launchWebAuthFlow).
+//
+// Web-Store note (PRE_LAUNCH_CHECKLIST.md): adding `identity` + the
+// googleapis hosts widens the install-time permission prompt vs. the
+// onboarding-only baseline. Expected for this feature; tracked there.
 export default defineManifest({
   manifest_version: 3,
   name: "OutboxIQ",
@@ -39,10 +45,18 @@ export default defineManifest({
       run_at: "document_idle",
     },
   ],
-  permissions: ["storage"],
-  // Scoped to the one origin the extension already runs its content script
-  // in. Lets the onboarding page query/focus the user's Gmail tab on finish
-  // (PRD §5.1.4 "lands in Gmail"). Deliberately NOT the broad "tabs"
-  // permission, which would expose every tab's URL/title.
-  host_permissions: ["https://mail.google.com/*"],
+  // `identity` → chrome.identity.launchWebAuthFlow (Free v1 OAuth, PRD §7.5).
+  // Still NOT "tabs" (we never need every tab's URL/title).
+  permissions: ["storage", "identity"],
+  // mail.google.com: the content-script origin; also lets the onboarding
+  // page focus the user's Gmail tab on finish (PRD §5.1.4).
+  // googleapis.com: the Calendar / People API calls (PRD §7.4) the service
+  // worker makes with the OAuth access token. The OAuth redirect itself
+  // (https://<id>.chromiumapp.org/) is handled by chrome.identity and needs
+  // NO host permission. Scopes stay minimal (PRD §6.6) — these are origins,
+  // not data scopes.
+  host_permissions: [
+    "https://mail.google.com/*",
+    "https://www.googleapis.com/*",
+  ],
 });

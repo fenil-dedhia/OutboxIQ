@@ -40,6 +40,16 @@ export function installChromeMock(): void {
       remove: async () => undefined,
     },
     windows: { update: async () => ({}) },
+    // Minimal identity surface (Free v1 OAuth). getRedirectURL is the stable
+    // pinned value; launchWebAuthFlow rejects by default so a test must
+    // explicitly stub a success/denial for the case it exercises.
+    identity: {
+      getRedirectURL: () =>
+        "https://dicnmcmhapcfceodecocnkaacjdpplnm.chromiumapp.org/",
+      launchWebAuthFlow: async () => {
+        throw new Error("launchWebAuthFlow not stubbed in this test");
+      },
+    },
   };
   globalThis.chrome = chromeMock as unknown as typeof chrome;
 }

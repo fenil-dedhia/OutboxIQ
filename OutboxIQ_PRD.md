@@ -678,18 +678,16 @@ Clicking "Undo" within the 7-second window cancels the scheduled email and reope
 >   rotation**" is **Premium v1** (Free v1 has no backend and no refresh
 >   token; it uses `access_type=online`). It remains binding for the
 >   Premium v1 backend (§13.2/§13.3).
-> - "**All secrets … never in source code**" is **binding without
->   exception for the Premium v1 backend's Client Secret and encryption
->   keys** (§13.3 — env vars only). For **Free v1** the Web-application
->   Client Secret used in the extension-side `access_type=online` exchange
->   is, by Google's documented installed-app model, **not a confidential
->   secret** (it is inherently visible in any installed client; the grant
->   is protected by the extension-ID-bound redirect URI, not by secret
->   confidentiality). Shipping it in the extension's typed config is a
->   **deliberate, documented exception** to this bullet for that one
->   non-confidential value only — see §7.5. Every *actually*-confidential
->   secret (the backend Client Secret, per-user encryption keys, any API
->   keys) stays env-var-only, unchanged.
+> - "**All secrets … never in source code**" holds **with no exception in
+>   either tier** (updated by the Session-8 Entry-6 §7.5 amendment):
+>   **Free v1 ships no Client Secret at all** — the implicit grant
+>   (`response_type=token`) has none. (The earlier tier-split draft
+>   carved a "non-confidential installed-client secret" exception here;
+>   that applied only to the rejected code+secret approach and is
+>   **withdrawn** — there is no secret in the extension to except.) The
+>   Client ID is public-by-design (not a secret). The *only* Client
+>   Secret in the product — the **Premium v1 backend's** (§13.3) — and
+>   the per-user encryption keys stay **env-var-only**, binding.
 > - "OAuth tokens must never be exposed to the page or to
 >   web-accessible resources" is **unchanged and binding in both tiers**.
 
@@ -847,43 +845,55 @@ Each API has its own quota and pricing. The plugin must respect rate limits and 
 > stays correct *for Premium v1* and is *inoperative for Free v1*. It is
 > **not reopened, not rewritten, not a reversal** — it is scoped.
 >
-> #### Free v1 — `access_type=online`, no refresh token, no backend
+> #### Free v1 — implicit grant, `response_type=token`, no secret, no backend
+>
+> > **Entry-6 amendment (2026-05-17 — Session 8, owner-directed at the
+> > Entry-19 pre-implementation architecture review; refines, does NOT
+> > reverse, the tier-split §7.5 above; Premium §13.3 is untouched).** The
+> > tier-split draft of this subsection specified an authorization-code +
+> > **Client Secret** exchange performed in the extension. At the Session-8
+> > architecture review the owner chose the **OAuth 2.0 implicit grant**
+> > (`response_type=token`) instead — it is the standard installed-client
+> > online pattern, has fewer failure modes, and **ships zero confidential
+> > material**. Spec amended here to match the code (Entry-6 discipline);
+> > recorded in `notes/owner-decisions-log.md` (Session 8 entry).
 >
 > - The extension uses Google OAuth 2.0 with the scopes in §6.6, via the
 >   **Session-7 Web-application OAuth client** (Entry 29), kept for Free
 >   v1 — see "Why the Web-application client" below.
-> - The extension runs `chrome.identity.launchWebAuthFlow()`, which opens
->   Google's consent screen and lets the user **pick which Google account
->   to authorize**, then redirects to
->   `https://<extension-id>.chromiumapp.org/…` with a one-time
->   authorization code.
-> - The **extension itself** exchanges that code at Google's token
->   endpoint with Client ID + Client Secret **and `access_type=online`**.
->   Google returns an **access token only (≈1 h expiry); no refresh
->   token is issued.** There is **no backend and no server-side exchange**
->   in Free v1.
-> - The access token is stored in `chrome.storage.local` with its expiry
->   timestamp and used for the Calendar API (user timezone, §5.1.3) and
->   the People / Workspace Directory APIs (recipient timezone, §5.4).
-> - On expiry the extension re-runs `launchWebAuthFlow`; Chrome typically
->   re-issues silently if the user is still signed in and consent is
->   still valid (no refresh-token machinery needed). Schedule Send itself
->   needs no token — it drives Gmail's own UI (§5.3.5 mechanism).
+> - The extension runs `chrome.identity.launchWebAuthFlow()` against
+>   Google's authorization endpoint with **`response_type=token`** (the
+>   implicit grant). The user picks which Google account to authorize
+>   (`prompt=select_account` on the interactive attempt); Google redirects
+>   to `https://<extension-id>.chromiumapp.org/…` with the **access token
+>   in the URL fragment**.
+> - There is **no authorization code, no token-endpoint call, no Client
+>   Secret anywhere in the extension, no backend, no server-side
+>   exchange**. The implicit grant inherently issues an **access token
+>   only (≈1 h expiry) and *no refresh token*** — which *is* the Free v1
+>   contract, achieved structurally rather than by configuration.
+> - The access token is stored in `chrome.storage.local` (extension-
+>   private, not web-accessible — §6.5) with its expiry timestamp, and
+>   used for the Calendar API (user timezone, §5.1.3) and the People /
+>   Workspace Directory APIs (recipient timezone, §5.4). A CSRF `state`
+>   parameter is round-tripped and verified; a mismatch discards the
+>   response.
+> - On expiry the extension re-runs `launchWebAuthFlow` **silently**
+>   (`interactive:false`); Chrome re-issues with no UI if the Google
+>   session + consent still hold, else it escalates to the interactive
+>   screen. Schedule Send itself needs no token — it drives Gmail's own
+>   UI (§5.3.5 mechanism).
 > - Users revoke access at any time via Google account settings; with no
 >   stored refresh token, revocation simply causes the next token fetch
 >   to fail, degrading to the §6.7 fallbacks.
 >
-> **The Client Secret in Free v1 is *not* confidential — by Google's own
-> installed-app model — and this is a deliberate, documented exception to
-> §6.5's "secrets … never in source code".** For an extension OAuth flow
-> with online access the Client Secret is publicly visible to anyone
-> inspecting the extension; Google's security model binds the grant to
-> the **redirect URI / extension ID**, not to Client-Secret
-> confidentiality. This is the expected, Google-documented pattern for
-> installed clients. (§6.5 carries a matching tier note. The *Client
-> Secret that matters* — the one that must stay out of source — is the
-> **Premium v1 backend's**, used for the §13.3 server-side exchange;
-> §6.5's rule is binding there, unchanged.)
+> **Free v1 ships NO Client Secret at all** (the implicit grant has none),
+> so §6.5's "secrets … never in source code" holds for Free v1 **with no
+> exception** — the earlier tier-split caveat about a non-confidential
+> installed-client secret applied only to the rejected code+secret
+> approach and no longer applies. The *only* Client Secret in the product
+> is the **Premium v1 backend's** (§13.3 server-side exchange), which
+> stays a backend env var — §6.5 binding there, unchanged.
 >
 > **Why the Web-application client (not a Chrome-extension client) for
 > Free v1.** A Chrome-extension OAuth client drives

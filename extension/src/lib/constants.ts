@@ -18,9 +18,23 @@ export const PRIVACY_POLICY_URL =
 // the real policy ships with a version, bump this (one place).
 export const PRIVACY_POLICY_VERSION = "unpublished-pre-launch";
 
-// chrome.storage.local keys.
+// chrome.storage.local keys. These are opaque, brand-independent, PERMANENTLY
+// FROZEN identifiers (CLAUDE.md "Locked tech decisions" — renaming them would
+// orphan existing users' local data; a rebrand must not touch them).
 export const STORAGE_KEY_STATE = "outboxiqState";
 export const STORAGE_KEY_ONBOARDING_DRAFT = "outboxiqOnboardingDraft";
+
+// Free v1 OAuth: the cached short-lived ACCESS TOKEN only (PRD §7.5). Kept
+// DELIBERATELY SEPARATE from outboxiqState (the §7.2 settings/data blob) so
+// ephemeral auth material never entangles with user data or forces a
+// SCHEMA_VERSION bump. Frozen identifier, same rule as the keys above.
+//
+// PREMIUM_NOTES: Free v1 stores ONLY an access token here (implicit grant —
+// no refresh token is ever issued or stored, anywhere). Premium v1 does NOT
+// extend this key: its refresh token lives encrypted on the backend (PRD
+// §13.3 Option B), never in chrome.storage.local. Do not add refresh-token
+// fields here speculatively (YAGNI / tier-split discipline).
+export const STORAGE_KEY_AUTH = "outboxiqAuth";
 
 // Version of the persisted OutboxIQState shape (PRD §7.2). Bump when the
 // shape changes and add a migration in getState(); see CLAUDE.md. There is
