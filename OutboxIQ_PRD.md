@@ -304,6 +304,32 @@ This modal appears when:
 > (preset, custom, or "Last scheduled time"). This bullet remains spec; it
 > is simply not yet built. Tracked in `notes/session-5-summary.md`.
 
+> **Amendment (2026-05-16 — Session 6): the first trigger is now
+> IMPLEMENTED**, gated by a DOM probe verified hands-on against live Gmail
+> (`research/send-button-probe.{js,md}` — the Entry-2/Entry-23
+> spike-gating discipline; the probe is the canonical reference, re-run it
+> when Gmail breaks Send). Behaviour: a capture-phase, compose-scoped
+> interceptor watches the **whole Send gesture** (pointer/mouse events on
+> the Send button *and* ⌘/Ctrl+Enter) and only ever blocks it when the
+> §5.5 calc returns a **real violation** for the current time; an in-hours
+> Send is never touched (§5.2.3). It acts on the **FULL verdict —
+> working-hours OR absolute** (the locked split: an *immediate* off-hours
+> send is plausibly unintended, unlike a deliberate off-hours *schedule*,
+> which Schedule Send still warns on for absolute only). On a violation it
+> raises the **same locked soft-warning modal** with present-tense copy
+> ("It's 3:33 AM — before 7:00 AM…") and the three locked choices:
+> **Reschedule to [boundary]** (converts the immediate Send into a native
+> Schedule Send at the snapped time), **Send now anyway** (replays the
+> native Send), **Cancel** (compose untouched, nothing sent). Every
+> non-violation, ambiguous, or failure path **falls toward sending** (no
+> cached config, calc throw, modal mount/render throw → the email sends;
+> a 30s watchdog guarantees the guard can never permanently wedge Send).
+> **Multi-compose (≥2 composes) deliberately does NOT intercept** —
+> "Reschedule" reuses the Schedule recipe whose global chevron query
+> mis-targets multi-compose (the same launch-blocking §5.2 safety-net
+> case), so §5.5.1 falls through to native Send there; documented v1
+> interim, not a regression. Tracked in `notes/session-6-summary.md`.
+
 #### 5.5.2 Modal Content
 
 The modal mirrors the visual style of Gmail's native modals (rounded corners, white background, system fonts). The copy reads as follows:

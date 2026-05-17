@@ -713,6 +713,20 @@ recorded in `CLAUDE.md` so future sessions maintain it automatically.
   under *all* plausible models; robustness-under-uncertainty beats a
   better guess, because the next guess can be wrong too.
 
+## Session 6 — no entries this session.
+
+Session 6 executed the already-locked Entry-2 / Entry-23 probe-gating
+discipline (build the Send-button probe, clear the gate against live Gmail,
+then implement §5.5.1). No new owner judgment redirected the build. The
+owner's faithful hands-on probe runs — including reporting the alarming
+intermediate "it sent" rather than mislabelling it, which is exactly what
+let the gate catch the too-blunt one-shot diagnostic — were *execution of
+the locked protocol*, not a trajectory change. The `armSuppress`-too-blunt
+near-miss is a Claude-side process residual (recorded honestly in
+`notes/session-6-summary.md` §f), not an owner-decisions entry per this
+file's defined purpose. Recorded explicitly per the maintenance habit; not
+manufactured into an entry.
+
 ---
 
 *New entries are appended at every session close-out, alongside the session
