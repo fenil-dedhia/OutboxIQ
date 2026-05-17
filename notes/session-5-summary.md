@@ -52,8 +52,9 @@ Each chunk its own commit (no bundling):
    discipline.
 
 Final: typecheck/lint clean, **57 tests pass**, prod build OK, sw-loader
-chunk correct, tree clean. All committed locally; **push pending owner
-confirmation** (not pushed yet).
+chunk correct, tree clean. All committed **and pushed**; reconciled with
+an external one-line remote edit (`cf1fa84`) via a merge commit (not a
+rebase — preserves the commit-hash citations in this log).
 
 ## Decisions / deviations
 
@@ -150,8 +151,8 @@ confirmation** (not pushed yet).
 
 ## Repo state at session end
 
-- All work **committed locally**, tree clean; **push pending owner
-  confirmation** (`main` is ahead of `origin/main` until then).
+- All work **committed and pushed**; `main` == `origin/main`, tree clean
+  (reconciled with external commit `cf1fa84` via merge `caa325a`).
 - typecheck / lint / **57 tests** / build / sw-loader all green.
 - §5.5 (Schedule-send path) implemented; error boundary + multi-compose
   safety net in; PRD/CLAUDE.md synced; owner-decisions log current.
