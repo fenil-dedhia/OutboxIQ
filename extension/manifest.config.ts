@@ -8,6 +8,14 @@ export default defineManifest({
   manifest_version: 3,
   name: "OutboxIQ",
   version: "0.0.1",
+  // Pins a STABLE unpacked-extension ID (dicnmcmhapcfceodecocnkaacjdpplnm).
+  // Without this the dev ID changes every load, which would break the OAuth
+  // redirect URI (https://<id>.chromiumapp.org/) on every reload (Session 7
+  // Phase 2). This is the base64 DER public key; the matching private key is
+  // `extension-key.pem` at the repo root, *.pem-gitignored (the repo is
+  // public). Losing the .pem only matters if a signed .crx with this same
+  // identity is ever needed — unpacked dev only needs this `key` string.
+  key: "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4AZSr7n5Hi5rEDEQaIi+CCl5pVs6KYJCNMKtzzIN7hX1aIPufs7yBKhVp8f+6g1/PYJKVe3MO8XZpsOVLAVOVnba36ynTrBO8cCR6mg8f+LRWddE5qESuV3zNbY1RmAqERg2PVSQPfGZEU+qi8Y2hXjwfARWS0bYm1kZ6hPINypsqslh5qVdaS44fXm+qRltNU/fe3GR7XXI/PmW6u3qe0FGGuI6+P79PZ7lU26rQChfdzpyoP+H+29wzpPr648PMo4iXuSOhfMkZpb8Lm7lBPtDRxKLlwwCX20tXT7hGjoz8SjQSaexSRj5B8RmMCA6YevFwafr1qTkK9UYI97YGQIDAQAB",
   description:
     "Enhances Gmail's Schedule Send with intelligent, data-backed send-time recommendations.",
   icons: {
