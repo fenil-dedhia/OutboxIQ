@@ -1,22 +1,28 @@
-# OutboxIQ — Pre-Launch Checklist
+# OutboxIQ — Pre-Launch Checklist (Free v1)
 
-Items that must be completed **before** OutboxIQ can be made publicly available (e.g., listed on the Chrome Web Store, or made available to users beyond an explicitly-allowlisted test group). This file is intentionally a living document — items get added as decisions are made during development.
+Items that must be completed **before OutboxIQ Free v1 can be made publicly available** (e.g., listed on the Chrome Web Store, or made available to users beyond an explicitly-allowlisted test group). This file is intentionally a living document — items get added as decisions are made during development.
 
-> **Status:** v1 is in early development. None of the items below are blocking day-to-day feature work, but several have multi-week lead times, so they must be tracked.
+> **Status:** Free v1 is in active development. None of the items below are blocking day-to-day feature work, but several have multi-week lead times, so they must be tracked.
+
+> **Tier split (2026-05-17, owner-directed — `notes/owner-decisions-log.md` Entry 32).** OutboxIQ ships as two tiers of the same generation: **Free v1** (extension-only, no backend, the public-launch target — *this checklist*) and **Premium v1** (extension + backend, paid, built later — **`PREMIUM_LAUNCH_CHECKLIST.md`**). **This file now tracks Free v1 launch gates only.** Backend-dependent gates (CASA **Tier 2**, all Infrastructure, the online→offline OAuth switch, backend-processing legal language, Free→Premium migration, billing) moved to the Premium checklist. Two important non-obvious carry-overs that stay **here** because they still gate Free v1:
+> - **A CASA assessment is still Free-v1-blocking.** Only *Tier 2* moved. Free v1 keeps the **restricted** Gmail scopes (`gmail.compose`, `gmail.modify`), so it still needs *a* CASA assessment before public OAuth Production — plausibly **Tier 1** without a backend, tier-to-confirm. "No backend" ≠ "no assessment". (See "Google / OAuth" below.)
+> - **Premium v1 is a paid tier, not "v2".** The existing "v1 vs. v2 decisions" section is about *post-launch additive* directions (a later generation) — a distinct concept from the Premium tier. Don't conflate them.
 
 ---
 
 ## Google / OAuth
 
-### CASA security assessment (Tier 2) — required, deferred
+### CASA security assessment — required for Free v1, deferred (tier to confirm)
 
-Google classifies the Gmail scopes OutboxIQ uses (`gmail.compose`, `gmail.modify`) as **restricted scopes**. Any app requesting restricted scopes from users outside the test-user list must pass a **CASA Tier 2** security assessment, which is conducted by a Google-approved third-party auditor (e.g., Bishop Fox, NCC Group, Leviathan).
+> **Flagged refinement of the tier-split directive (2026-05-17 — Entry 32 close-out).** The directive said "CASA Tier 2 moves to Premium, no longer Free-v1-blocking." Half-true and corrected here: *Tier 2* moves to Premium, but **Free v1 still requires *a* CASA assessment** and that requirement is still **Free-v1-launch-blocking**. Reading the split as "Free v1 needs no security assessment" would blind-side the launch by weeks — surfaced rather than silently implemented.
 
-- **Why Tier 2 specifically:** OutboxIQ both (a) uses restricted scopes and (b) operates a backend (the Unschedule-on-Reply relay) that handles user data and OAuth refresh tokens. That combination places it in Tier 2, not Tier 1.
-- **Typical cost:** several thousand USD.
-- **Typical turnaround:** 4–8 weeks.
-- **Trigger to begin:** when v1 is feature-complete and we are ready to invite real users beyond the OAuth test-user allowlist.
-- **Until then:** we operate in **OAuth Testing mode** with a small set of explicitly-added test users. This is fully functional for development; it just can't be used by the general public.
+Google classifies the Gmail scopes OutboxIQ uses (`gmail.compose`, `gmail.modify`) as **restricted scopes**. **Any app requesting restricted scopes from users outside the test-user list must pass a CASA security assessment** (conducted by a Google-approved third-party auditor — e.g., Bishop Fox, NCC Group, Leviathan), **regardless of whether it has a backend**. Free v1 keeps these restricted scopes, so this gate applies to Free v1.
+
+- **Which tier (1 vs 2) — to confirm.** *Tier 2* is driven by the combination of restricted scopes **and** a backend handling user data + OAuth refresh tokens. **Free v1 has no backend and no refresh tokens** (`access_type=online`, access tokens only — PRD §7.5), so it is **plausibly Tier 1**, not Tier 2. **Confirming the exact tier against Google's current CASA documentation is itself a Free-v1 pre-launch task** — do not assume Tier 1; do not assume zero.
+- **Typical cost / turnaround:** Tier 1 is materially lighter than Tier 2's several-thousand-USD / 4–8-week profile, but is still **not instant** — budget lead time.
+- **Trigger to begin:** when Free v1 is feature-complete and we are ready to invite real users beyond the OAuth test-user allowlist.
+- **Until then:** we operate in **OAuth Testing mode** with a small set of explicitly-added test users. Fully functional for development; just not usable by the general public.
+- **Premium v1:** the full **CASA Tier 2** assessment (restricted scopes **+** backend) is tracked in `PREMIUM_LAUNCH_CHECKLIST.md` — that is where the Tier-2-specific cost/turnaround detail now lives.
 - **Reference:** https://support.google.com/cloud/answer/13465431
 
 ### OAuth consent screen — Production status
@@ -25,8 +31,16 @@ Google classifies the Gmail scopes OutboxIQ uses (`gmail.compose`, `gmail.modify
   consent screen configured **External / Testing mode**, explicit test-user
   allowlist, the 4 restricted/sensitive scopes requested, Web-application
   OAuth client live. This item is therefore no longer abstract — the
-  Testing→Production gate (and the CASA Tier 2 item above) is the next real
-  OAuth milestone once v1 is feature-complete.
+  Testing→Production gate (and the restricted-scope CASA item above) is the
+  next real OAuth milestone once **Free v1** is feature-complete.
+- **Free v1 OAuth model (tier split — Entry 32):** the Web-application
+  client is **retained for Free v1** and used with
+  **`access_type=online`** (access tokens only, no refresh token, no
+  backend; multi-Google-account UX is why the Web-app client over a
+  Chrome-extension client — PRD §7.5). The Testing→Production switch and
+  the restricted-scope CASA assessment are the only Free-v1 OAuth gates.
+  The online→**offline** switch (Premium Option-B, backend refresh tokens)
+  is a **Premium v1** gate — `PREMIUM_LAUNCH_CHECKLIST.md`.
 - Switching to **Production** requires Google verification of the app's homepage, Privacy Policy URL, Terms of Service URL, and authorized domains.
 - The Privacy/ToS/authorized-domain fields were **deliberately left blank**
   in Testing mode: Google requires an *owned* authorized domain even for
@@ -43,8 +57,9 @@ Google classifies the Gmail scopes OutboxIQ uses (`gmail.compose`, `gmail.modify
 
 ## Legal
 
-- **Privacy Policy.** Draft is intentionally deferred until v1 is feature-complete — the exact data flows (refresh-token encryption scheme, backend storage shape) may still shift, and the policy must accurately describe what the software actually does. (There is no Maps data flow: Google Maps was removed from product scope — see PRD §5.4.1 / §7.3.1.) When drafted, host as `docs/privacy.md` on **GitHub Pages** from this same repository. The OAuth consent screen, the extension's onboarding flow, and the Settings panel will hard-code the resulting stable URL.
-- **Terms of Service.** Same deferral and same hosting plan: `docs/terms.md` on GitHub Pages.
+- **Privacy Policy (Free v1 version).** Draft is intentionally deferred until Free v1 is feature-complete, and must accurately describe what Free v1 actually does: **local-first only — `chrome.storage.local`, no OutboxIQ server, no backend, no refresh token** (OAuth `access_type=online`, access tokens held transiently in the extension). There is **no backend data flow** to describe for Free v1, and **no Maps data flow** (Google Maps was removed from product scope — PRD §5.4.1 / §13.2). Per Entry 32 / PRD §6.1 amendment this is **correct legal framing for the data Free v1 touches, not a tiering of compliance** — Free v1 is fully GDPR-compliant on a naturally lighter posture. When drafted, host as `docs/privacy.md` on **GitHub Pages** from this same repository (rename-proof URL caveat under "Naming / rebrand readiness"). The OAuth consent screen, onboarding flow, and Settings panel hard-code the resulting stable URL.
+- **Terms of Service (Free v1 version).** Same deferral and hosting plan: `docs/terms.md` on GitHub Pages.
+- **Premium v1 legal addendum.** The heavier Privacy Policy / ToS language covering **backend processing** (per-user-encrypted refresh tokens, active scheduled-message records, EU data residency, the Unschedule-on-Reply data flow) is a **Premium v1** gate — tracked in `PREMIUM_LAUNCH_CHECKLIST.md`. It is an addition layered on the Free v1 docs, not a rewrite.
 - **License review.** During development the repo is **all-rights-reserved / proprietary** (see `LICENSE` at repo root) — public for portfolio/evaluation visibility, but no reuse rights granted (changed from MIT on 2026-05-15). The long-term intent is a **royalty-on-commercial-use** model — free for personal/non-commercial use, paid for commercial use. Before public launch, pick the actual mechanism: custom license, dual-licensing, source-available license (Elastic v2, BUSL), or a paid hosted SaaS layer. If the project ever accepts outside contributions, settle inbound contribution terms (CLA or explicit license grant) *before* accepting them — all-rights-reserved gives contributors no default basis to contribute, so this can't be left implicit.
 - Privacy Policy and Terms of Service are linked from the extension's onboarding flow and the Settings panel, per PRD §5.1.3 and §5.8.2.
 
@@ -70,23 +85,28 @@ Google classifies the Gmail scopes OutboxIQ uses (`gmail.compose`, `gmail.modify
 
 ---
 
-## Infrastructure
+## Infrastructure — moved to Premium v1
 
-> **Status shift (2026-05-17, OAuth-token-architecture decision — Entry 31):**
-> refresh tokens live **only** on the backend (server-side code exchange,
-> per-user encryption — PRD §7.5/§7.3 amendments). Consequence: a working
-> backend (Fly.io EU + Supabase EU + the per-user-key encryption scheme) is
-> now a **Session-8 prerequisite for OAuth to work end-to-end at all**, not
-> merely a deferred-launch concern. The *production-hardening* of these
-> items stays here (pre-launch); the *first working instance* is Session-8
-> build scope. The per-user-encryption-key item below is **confirmed
-> accurate and now central** (it is the audited CASA-Tier-2 surface).
-
-- Production Fly.io app deployed in confirmed EU region (Frankfurt or Amsterdam). *(A dev/staging instance is Session-8 build scope; this line is the production-hardened deployment.)*
-- Production Supabase project in EU region. *(Likewise — dev instance is Session 8.)*
-- Per-user encryption-key strategy for OAuth refresh tokens reviewed and documented. **Central to CASA Tier 2** (the audited surface is backend token storage; PRD §7.3.4).
-- Backup and disaster-recovery plan for the backend database documented.
-- Custom domain configured for the backend and listed in Google OAuth authorized domains.
+> **Moved (2026-05-17, owner-directed — tier split, Entry 32).** All
+> backend infrastructure (Fly.io EU app, Supabase EU project, per-user
+> encryption-key strategy, backup/DR, backend custom domain) is **Premium
+> v1 scope** and is tracked in **`PREMIUM_LAUNCH_CHECKLIST.md`**. **Free
+> v1 has no backend**, so none of it gates Free v1's launch. This
+> **supersedes the 2026-05-17/Entry-31 "Status shift" note** that made a
+> working backend a "Session-8 prerequisite for OAuth": that was correct
+> under the pre-tier-split assumption (Option B / refresh tokens on the
+> backend in the only tier). Under the tier split, **Free v1's Session 8
+> is extension-side `access_type=online` OAuth with no backend**, so the
+> prerequisite framing now belongs to the Premium v1 build, not Free v1.
+> Entry 31 is **not rewritten** — it remains accurate for Premium v1; the
+> per-user-key item is still **central to CASA Tier 2** (the Premium
+> audited surface — PRD §13.2.4).
+>
+> One distinction worth keeping straight: the **backend custom domain**
+> (Premium) is *separate* from the **owned domain Free v1 needs for the
+> consent-screen Privacy/ToS URLs** — the latter is a Free v1 concern
+> tracked under "Naming / rebrand readiness" below (no backend required
+> for it).
 
 ---
 
@@ -127,6 +147,17 @@ OutboxIQ's scheduling path cannot currently tell which compose window the user a
 Product directions deliberately scoped **out of v1**, recorded so they are not
 re-litigated mid-build and are revisited intentionally post-launch.
 
+> **"v2" ≠ "Premium v1" (2026-05-17 — tier split, Entry 32).** The
+> deferrals in this section are **post-launch *additive* directions — a
+> later generation** (network effects, the multi-compose full fix). That
+> is a **different concept** from **Premium v1**, which is a **paid tier
+> of the *same* generation** (extension + backend, PRD §13 /
+> `PREMIUM_LAUNCH_CHECKLIST.md`), built after Free v1 but *not* "v2".
+> Both items below remain **Free-v1-non-blocking and unaffected by the
+> tier split** — the multi-compose safety net is tier-orthogonal (it
+> guards the Schedule Send / regular-Send paths, which are Free v1). Do
+> not fold these into the Premium tier or vice versa.
+
 ### Network-effect features — deferred to v2 (decided Session 5.5)
 
 Working-hours sharing between OutboxIQ users, reply-time prediction, and
@@ -162,6 +193,52 @@ feel compelled to relitigate it (Entry 22 discipline):
   broadly the safety-net pattern applies, and the cost/benefit is now
   clearer). Revisit only post-launch, with real usage signal, as an
   explicit additive decision. (`notes/owner-decisions-log.md` Entry 27.)
+
+---
+
+## Pre-launch probes (run after Free v1 feature work, before naming/positioning is finalized)
+
+> **Added 2026-05-17 (owner-directed — tier split close-out, Entry 32,
+> sub-decision).** Two **informational** Gmail-API probes. They are
+> **NOT a commitment to build an inbox-organization feature** — they
+> validate whether such a feature *would be technically feasible without
+> backend infrastructure or restricted-scope OAuth*. The reasoning chain:
+> probe results inform whether inbox-organization is a technically clean
+> addition → which informs what the eventual **positioning and product
+> naming** should accommodate. Same shape and discipline as the
+> scheduled-send-API spike (Entry 2): the API is documented, but this
+> project's standing rule is to **verify against live Gmail behaviour
+> before designing on top of it**. The product-direction decision is made
+> **after** the probes complete — not before, and not by these probes.
+
+**Sequencing (do not reorder):** Free v1's agreed feature work
+completes → **these probes run** → naming / positioning is finalized →
+Free v1 pre-launch hardening (CASA, consent-screen Production, legal
+docs, brand, Web Store). The probes sit deliberately *after* feature
+work (they don't block it) and *before* naming (they inform it).
+
+1. **Gmail API filter-creation probe.** Verify that
+   `users.settings.filters.create` produces filters that behave
+   **identically** to filters a user creates by hand in Gmail's Settings
+   UI (matching, actions, ordering, interaction with categories/labels).
+   The API is well-documented, but design must rest on verified live
+   behaviour, not docs alone. ~Half-day probe session; same structure as
+   `research/scheduled-send-api-spike.md` (write a committed, re-runnable
+   probe — Entry 9 discipline).
+
+2. **Gmail inbox-settings API-limits probe.** Verify what can and cannot
+   be **programmatically** configured in Gmail's "Inbox" settings tab
+   (inbox type, category tabs, reading pane, etc.). The Gmail API covers
+   filters and labels comprehensively but does **not** appear to expose
+   inbox-type / category-tab settings — confirm this against the live
+   API. The result determines what an inbox-organization feature could
+   *promise* users vs. what must remain **manual-with-instructions**.
+   ~Half-day probe session.
+
+- **Trigger:** after Free v1's agreed feature work is complete, before
+  naming/positioning is finalized.
+- **Reference:** `notes/owner-decisions-log.md` Entry 32 (the
+  probe-additions sub-decision and its sequencing rationale).
 
 ---
 
