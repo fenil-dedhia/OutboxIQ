@@ -168,3 +168,14 @@ to a **future** time and produces a valid native scheduled send (no
 "Invalid time"). G2 (`whBeforeStart`) and G3 (`absBeforeEarliest`)
 unchanged — still snap to *today* and still work, confirming the fix is
 surgical. Gate zero closed; Session 7 proceeded to Phase 2.
+
+**§5.3 sibling re-verify (2026-05-17, post-close-out):** ✅ PASS. Same
+`absAfterLatest` config, but triggered via the **Schedule Send modal**
+(pick a later-today custom time → Schedule): the §5.5 warning fired with
+the "scheduled for…" copy, "Reschedule to…" proposed a **future** time
+(next morning, not a past time today), and it produced a valid native
+scheduled send (no "Invalid time"). This closes the Q1 honest residual —
+the §5.3 sibling fix is now hands-on verified, not reasoning-only. The
+harness drives §5.5.1; the §5.3 path is a manual procedure (steps in the
+Session-7 close-out exchange) — fold into the harness in a later session
+if a §5.3 regression asset is wanted.

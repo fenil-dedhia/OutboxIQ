@@ -208,6 +208,13 @@ signed `.crx` with this identity is ever needed.
     "will the §5.1.3 amendment be forgotten?" concern with a durable
     marker, not summary memory).
   - **Session 10** — Optimize-for-recipient UI in the §5.3 modal.
+- **Q1 residual resolved (2026-05-17):** the §5.3 sibling fix was
+  subsequently **hands-on verified** via the Schedule Send modal
+  (later-today pick → §5.5 warning fires → "Reschedule to…" proposes a
+  future time → valid native scheduled send, no "Invalid time"). The §d
+  "honest gaps" note that it was reasoning-only is left intact as the
+  accurate Session-7-end record; this supersedes it forward. Session 7
+  is fully closed.
 - **Implications surfaced in this lock (not in the owner's directive):**
   (1) a backend outage now also degrades client-only Calendar/People to
   their existing §6.7 fallbacks (browser tz / manual) — §7.5 amendment;
