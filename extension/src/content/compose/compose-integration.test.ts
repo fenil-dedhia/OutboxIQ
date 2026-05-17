@@ -68,6 +68,34 @@ describe("§5.2.1 relabel", () => {
     expect(item.textContent).toBe(SCHEDULE_SEND_LABEL);
   });
 
+  it("multi-compose: leaves Gmail's native text (no OutboxIQ relabel)", () => {
+    document.body.appendChild(makeChevron());
+    document.body.appendChild(makeChevron()); // 2 composes
+    const item = makeScheduleMenuItem();
+    document.body.appendChild(item);
+    teardown = installComposeIntegration({ onScheduleSend: vi.fn() });
+    expect(item.textContent).toBe("Schedule send"); // untouched
+    expect(item.textContent).not.toBe(SCHEDULE_SEND_LABEL);
+  });
+
+  it("relabels again once multi-compose resolves (skip didn't poison)", async () => {
+    document.body.appendChild(makeChevron());
+    const c2 = makeChevron();
+    document.body.appendChild(c2); // 2 composes
+    const skipped = makeScheduleMenuItem();
+    document.body.appendChild(skipped);
+    teardown = installComposeIntegration({ onScheduleSend: vi.fn() });
+    expect(skipped.textContent).toBe("Schedule send"); // skipped
+
+    // One compose closes → back to single. The Schedule menu is recreated
+    // on the next dropdown open, so a fresh menuitem appears.
+    c2.remove();
+    const fresh = makeScheduleMenuItem();
+    document.body.appendChild(fresh);
+    await tick();
+    expect(fresh.textContent).toBe(SCHEDULE_SEND_LABEL); // relabels normally
+  });
+
   it("skips silently when the item has no text leaf (cosmetic, never throws)", () => {
     const bare = document.createElement("div");
     bare.setAttribute("role", "menuitem");

@@ -54,6 +54,17 @@ const isDev = (): boolean => import.meta.env.DEV;
 // Gmail's DOM). If the shape is unexpected we SKIP silently — a missing
 // "powered by OutboxIQ" suffix is cosmetic; never let it break Gmail.
 function relabelScheduleSendItem(menuItem: HTMLElement): void {
+  // Multi-compose (Session 5.5): the safety net hands Schedule Send off to
+  // native in this state, so the OutboxIQ label would be a lie ("powered by
+  // OutboxIQ" on an item that won't run OutboxIQ). Leave Gmail's native
+  // "Schedule send" text untouched. Crucially DON'T set RELABELLED_ATTR on
+  // skip — the Schedule menu is a popup Gmail recreates on every dropdown
+  // open, so when composes drop back to 1 the next (fresh) menuitem
+  // relabels normally. No resolve-listener/polling needed: the ephemeral
+  // menu re-evaluates this predicate every open. (Cosmetic + best-effort,
+  // like the rest of relabel — a brief stale label if multi-compose state
+  // flips mid-open is harmless; the interceptor re-checks independently.)
+  if (multipleComposeWindows()) return;
   if (menuItem.getAttribute(RELABELLED_ATTR) === "1") return;
   menuItem.setAttribute(RELABELLED_ATTR, "1");
 
