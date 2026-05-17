@@ -672,6 +672,47 @@ recorded in `CLAUDE.md` so future sessions maintain it automatically.
   mental model. "Propagate to copy" also means *re-confirm*, not blindly
   rewrite: some copy survives the change correct.
 
+## Entry 25 — Assumption falsification is normal; design for robustness, don't re-guess
+
+- **Session:** 5 (the multi-compose relabel arc)
+- **Moment:** The original A1 relabel work (`0a0a5de`) shipped on a
+  *transient-menu* assumption — that Gmail recreates the Schedule menu on
+  every dropdown open, so a check-at-relabel-time would naturally
+  re-evaluate. Hands-on smoke testing falsified it: labels froze and
+  disagreed across composes (Bug 1 + Bug 2). The assumption could not have
+  been verified without live execution; it was a guess that read as fact in
+  the code comment.
+- **My input:** Framed the falsification as *normal* for DOM-heavy
+  extension work where the model can't be empirically verified without live
+  execution, and set the standard for the response: the completion fix must
+  be **correct under both candidate DOM models** (transient *and*
+  persistent menu), not rebuilt on a fresh guess. Concretely that meant
+  idempotent bidirectional labeling, capture-original-once for locale-safe
+  revert, a shared predicate between label and click-behaviour, and the
+  reactive trigger driven off the existing observer.
+- **What Claude Code would have done without it:** The natural agent
+  response to "your assumption was wrong" is to form a *new* confident
+  assumption (e.g. "OK, the menu is persistent") and rebuild on it — which
+  the *next* smoke test could have falsified just as easily, costing
+  another round-trip. Claude *did* open by naming the falsified assumption,
+  the specific commit, and the false comment (the owner-decisions-log
+  discipline now operating on Claude's own work) — but the explicit
+  instruction to engineer for robustness *under uncertainty* rather than
+  re-assert a new model was the owner's, and it is what made the fix
+  one-and-done (Chrome 4-state verify passed first try).
+- **Outcome:** `5b88b11` — reactive, idempotent, bidirectional relabel,
+  correct whether the menu is transient or persistent; the false `0a0a5de`
+  comment corrected in the same commit. Verified against real Gmail
+  (owner's 4-state test) on the first attempt.
+- **Artifact:** Commits `0a0a5de` (the falsified original), `5b88b11` (the
+  robust completion); `notes/session-5-summary.md` (the A1 arc); this
+  entry.
+- **Lesson (for coaching):** When an unverifiable assumption is falsified,
+  the failure is not the lesson — *re-asserting confidence in a new guess*
+  is. Where you cannot empirically check the model, design for correctness
+  under *all* plausible models; robustness-under-uncertainty beats a
+  better guess, because the next guess can be wrong too.
+
 ---
 
 *New entries are appended at every session close-out, alongside the session
