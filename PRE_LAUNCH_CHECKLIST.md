@@ -81,6 +81,15 @@ Verify that OutboxIQ's UI-automated Schedule Send works on Google Workspace acco
 - **Trigger:** before Chrome Web Store submission, and after any major Gmail UI change.
 - **Reference:** `research/scheduled-send-api-spike.md` Open Question 4.
 
+### Multi-compose targeting — full fix (launch-blocking)
+
+OutboxIQ's scheduling path cannot currently tell which compose window the user acted on when **two or more compose windows are open in the same Gmail tab**. The native driver in `extension/src/lib/schedule/schedule-actions.ts` resolves the Send chevron via a global `document.querySelector(SEL_CHEVRON)`, which deterministically targets the **leftmost** compose — i.e., it would silently schedule the *wrong email*. Confirmed by hands-on smoke test (Session 5, Scenario 4).
+
+- **v1 status — interim safety net only (not the end state).** As of Session 5 there is a safety net (`extension/src/content/compose/compose-integration.ts`, `multipleComposeWindows()`): when ≥2 compose chevrons are detected, OutboxIQ does **not** open its modal and instead hands off to Gmail's native Schedule Send on the real (compose-scoped) menuItem, so Gmail schedules the correct email. This converts a silent wrong-email bug into graceful degradation, but it means **multi-compose users do not get OutboxIQ's enhanced modal at all**. That is acceptable for development/test users; it is **not** acceptable as the public-launch behaviour.
+- **What the full fix needs (its own focused session — scope it properly there):** thread a compose context from the intercepted `menuItem` through `compose-integration.ts → content-script.ts → mount.tsx → schedule-actions.ts`, and re-scope every global Gmail DOM query (chevron, dialog) to that compose. **Known hard part — the detached-popup anchor problem:** Gmail's Schedule menu is a popup it (re)creates near `<body>`, likely *not* inside the originating compose's DOM subtree, so `menuItem.closest(composeSelector)` will not reach it. A reliable "which compose owns this menu" anchor must be found first (a mini-probe, like the Session 4 pick-date-time probe). This touches `gmail-recipe.ts` (the single point of failure), so it must be re-verified via the probe in new / inline-reply / pop-out / multi-compose contexts.
+- **Trigger:** before inviting users beyond the test allowlist / Chrome Web Store submission.
+- **Reference:** `notes/session-5-summary.md` (Scenario 4 result), `notes/owner-decisions-log.md` (the silent-vs-visible-bug decision).
+
 ---
 
 ## Accessibility

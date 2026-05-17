@@ -449,6 +449,45 @@ recorded in `CLAUDE.md` so future sessions maintain it automatically.
   and ownership* behind them are not — if the decision process is the thing
   worth teaching, it has to be deliberately instrumented, or it disappears.
 
+## Entry 18 — Silent bugs may never be deferred by documentation
+
+- **Session:** 5
+- **Moment:** The Session 5 smoke test (Scenario 4) confirmed a deterministic,
+  *silent* wrong-email mis-target: with two compose windows open, scheduling
+  from one scheduled the other, with no error and no signal. Claude presented
+  three options — full fix (own session), minimal safety net, or document +
+  defer as a known MVP edge — flagged the severity as sharper than Session 4's
+  "MVP edge" framing, and recommended the minimal safety net.
+- **My input:** Chose the minimal safety net, and — the load-bearing part —
+  converted Claude's *lean* into a stated, general rule: **a bug that fails
+  silently (wrong outcome, no error, no visible degradation) may not be
+  deferred via documentation even when "document + defer" is the cheapest
+  option; the cheapest acceptable response is the one that makes the failure
+  visible or safe.** Also specified the implementation contract: an
+  unconditional (not DEV-gated) diagnostic log for test-user visibility, *no*
+  user-facing message (graceful degradation, not an apology), and that
+  PRE_LAUNCH must frame the safety net as interim, not the end state.
+- **What Claude Code would have done without it:** Honest accounting: Claude
+  had *already* surfaced the upgraded severity and recommended the same option,
+  so this is not a case where owner judgment reversed a wrong default. But
+  Claude offered "document + defer" as a *legitimate* option and only "leaned"
+  against it — had the owner picked it, Claude would have executed it. The
+  owner's contribution was removing that ambiguity: turning a situational
+  preference into a transferable principle, and pinning the
+  visibility/no-message/interim-framing contract that Claude had not specified.
+- **Outcome:** Safety net shipped (`313d34d`): ≥2 compose chevrons → hand off
+  to native on the real compose-scoped menuItem so Gmail schedules the correct
+  email; unconditional `console.info`; no user-facing message. The full fix
+  (detached-popup anchor problem) is logged as launch-blocking in
+  `PRE_LAUNCH_CHECKLIST.md`, explicitly marked interim-not-end-state.
+- **Artifact:** Commits `ce5e97f`, `313d34d`; `PRE_LAUNCH_CHECKLIST.md`
+  "Multi-compose targeting — full fix"; `notes/session-5-summary.md`
+  (Scenario 4); `CLAUDE.md` "Locked product decisions".
+- **Lesson (for coaching):** "Cheapest acceptable" is not "cheapest." Triage
+  by *failure mode*, not just cost: a bug that throws or visibly degrades can
+  be documented and deferred; a bug that silently produces the wrong result
+  must first be made loud or made safe — never just written down.
+
 ---
 
 *New entries are appended at every session close-out, alongside the session
