@@ -37,7 +37,10 @@ import {
   nowWallInTimeZone,
 } from "../../lib/schedule/gmail-format";
 import { formatTimezoneLabel } from "../../lib/schedule/timezone-format";
-import { checkWorkingHours } from "../../lib/schedule/working-hours";
+import {
+  checkWorkingHours,
+  ensureFutureSnap,
+} from "../../lib/schedule/working-hours";
 import {
   scheduleAt,
   openNativeScheduleDialog,
@@ -210,8 +213,14 @@ function makeHandler(opts: RegularSendGuardOptions, s: GuardState) {
     let snap: WallTime | null;
     let verdict;
     try {
-      verdict = checkWorkingHours(
-        nowWallInTimeZone(cfg.timezone),
+      // §5.5.1 has no user-picked day — `requested` IS now, so an
+      // `after-latest` snap to today's ceiling is always in the past.
+      // ensureFutureSnap rolls only that case to the next working morning
+      // (Session 7 Test G fix); every other snap is already future.
+      const nowWall = nowWallInTimeZone(cfg.timezone);
+      verdict = ensureFutureSnap(
+        checkWorkingHours(nowWall, cfg.workingHours),
+        nowWall,
         cfg.workingHours,
       );
       snap = verdict.snap;

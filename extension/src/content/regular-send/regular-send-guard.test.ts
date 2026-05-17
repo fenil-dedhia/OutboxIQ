@@ -24,6 +24,10 @@ vi.mock("./config-cache", () => ({
 const checkWorkingHours = vi.fn();
 vi.mock("../../lib/schedule/working-hours", () => ({
   checkWorkingHours: (...a: unknown[]) => checkWorkingHours(...a),
+  // The guard mocks the verdict math (see header); ensureFutureSnap is part
+  // of it — identity here keeps each guard branch isolated to guard logic.
+  // Its forward-roll correctness is covered in working-hours.test.ts.
+  ensureFutureSnap: (v: unknown) => v,
 }));
 
 const openRegularSendWarning = vi.fn();

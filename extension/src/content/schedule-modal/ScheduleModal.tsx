@@ -37,6 +37,7 @@ import {
 } from "../../lib/schedule/gmail-format";
 import {
   checkWorkingHours,
+  ensureFutureSnap,
   type WorkingHoursVerdict,
 } from "../../lib/schedule/working-hours";
 import {
@@ -193,7 +194,8 @@ export function ScheduleModal({
     // long-open modal / "Last scheduled time" that has since elapsed /
     // a preset that went stale across midnight is caught at click time,
     // not silently scheduled in the past. Covers preset/custom/last.
-    if (isPastWallTime(wall, nowWallInTimeZone(timezone))) {
+    const freshNow = nowWallInTimeZone(timezone);
+    if (isPastWallTime(wall, freshNow)) {
       setStatus({
         kind: "error",
         message:
@@ -201,7 +203,17 @@ export function ScheduleModal({
       });
       return;
     }
-    const verdict = checkWorkingHours(wall, workingHours);
+    // The picked time is future, but its computed snap can still be in the
+    // past in the latent case: picking a later-today time while the clock is
+    // already past the absolute ceiling (after-latest → today's ceiling,
+    // which has elapsed). ensureFutureSnap rolls only that one case forward;
+    // the locked same-day snap for a genuinely future picked day is
+    // untouched. Same fresh `now` as the past-time guard above.
+    const verdict = ensureFutureSnap(
+      checkWorkingHours(wall, workingHours),
+      freshNow,
+      workingHours,
+    );
     if (verdict.kind !== "absolute") {
       void run(action, remember);
       return;

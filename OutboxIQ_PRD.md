@@ -421,6 +421,35 @@ The modal mirrors the visual style of Gmail's native modals (rounded corners, wh
 >   absolute limits apply. Rule boundaries are inclusive (scheduling
 >   exactly at the floor/start/end/ceiling is allowed).
 
+> **Amendment (2026-05-17, owner-directed — Session 7; refines, does not
+> overturn, the 2026-05-16 absolute-snap rule above):** the "absolute snap
+> = the violated boundary on the **same calendar day**" rule is correct
+> only when that day is a **future day the user picked** (§5.3 Schedule
+> Send). For an **`after-latest`** violation it is **in the past** when
+> there is no picked future day — i.e. the §5.5.1 *regular Send* trigger,
+> where the requested time *is* "now", so "now is after today's ceiling"
+> means today's ceiling is already behind us — or when a Schedule-Send pick
+> is later-today while the clock is already past the ceiling. Gmail rejects
+> a past scheduled time ("Invalid time"); this was found by the Session 7
+> Phase 1 hands-on smoke test (Test G) and is **default-reachable** (Send
+> after the default 7:00 PM `absoluteLatest`). Resolution: an `after-latest`
+> snap that is not safely in the future is **rolled forward to the next
+> working morning** — the soonest configured working day strictly after
+> "now", at that day's working-hours start; **falling back to the next
+> calendar day at `absoluteEarliest`** when zero working days are
+> configured. This is scoped to `after-latest` **only** — every other snap
+> (`before-earliest`; all working-hours snaps) is provably already strictly
+> in the future, so their locked behaviour (including the intentional
+> non-working-day landing of a *future* picked absolute day, above) is
+> untouched whenever it remains a valid future time. Owner chose
+> "next working morning" over "tomorrow at `absoluteEarliest`" for
+> consistency with this modal's own "next working window" copy (§5.5.2) and
+> with the working-hours `after-end` behaviour, so the two "too late today"
+> cases (soft end vs hard ceiling) resolve identically. Implemented as a
+> pure, time-aware `ensureFutureSnap()` layer applied by both the §5.5.1
+> and §5.3 consumers; `checkWorkingHours` itself stays unchanged and
+> Date.now-free. Recorded in `notes/owner-decisions-log.md` (Entry 28).
+
 ---
 
 ### 5.6 Unschedule on Reply
