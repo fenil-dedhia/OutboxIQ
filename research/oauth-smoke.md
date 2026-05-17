@@ -19,12 +19,21 @@ is stripped from production builds.
 
 ## Setup (once)
 
-1. `npm --prefix extension run build`
+> **Use `npm run dev`, NOT `npm run build`.** The `__oqAuth` helper is
+> **DEV-only** (it is deliberately stripped from production `build`
+> output so it can never ship). The dev server must stay running.
+
+1. In a Terminal window: `npm --prefix extension run dev`
+   **Leave this window open** for the whole test (it serves + rebuilds
+   the dev extension into `extension/dist/`).
 2. Chrome → `chrome://extensions` → Developer mode ON → **Load unpacked**
-   → `extension/dist/` (or **Reload** if already loaded).
-3. On the extensions card, click the blue **"Service worker"** link →
-   its **Console** tab opens. **Run every command below in that
-   console.** (If the link says "Inactive", click it to wake the worker.)
+   → select `extension/dist/` (or click the **↻ reload** icon on the
+   OutboxIQ card if it's already loaded from a previous session).
+3. On the OutboxIQ card, click the blue **"service worker"** link
+   (under "Inspect views") → DevTools opens → click its **Console**
+   tab. **Run every command below in that console.** If the link says
+   "service worker (inactive)", click it — that wakes it and opens the
+   console.
 
 ---
 
