@@ -11,7 +11,7 @@ would not otherwise have gone.
    development looks like when the human stays load-bearing: where judgment,
    not just prompting, did the work.
 2. **Coaching material** — each entry ends with one transferable principle for
-   direct reports.
+   future AI-assisted builders.
 
 **Honesty rule:** the counterfactual ("what Claude Code would have done
 without it") is written to be accurate, not flattering. Where the owner's
