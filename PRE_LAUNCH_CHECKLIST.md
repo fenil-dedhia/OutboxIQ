@@ -92,6 +92,24 @@ OutboxIQ's scheduling path cannot currently tell which compose window the user a
 
 ---
 
+## v1 vs. v2 decisions
+
+Product directions deliberately scoped **out of v1**, recorded so they are not
+re-litigated mid-build and are revisited intentionally post-launch.
+
+### Network-effect features — deferred to v2 (decided Session 5.5)
+
+Working-hours sharing between OutboxIQ users, reply-time prediction, and
+cross-user send-time coordination are **not v1**. Gating single-user
+optimization on mutual adoption would compromise the single-user experience
+for a sharing incentive — poor B2B SaaS design (the product must be fully
+valuable to the very first user, with zero other users present). v1's
+single-user experience stays fully featured and self-contained. Revisit only
+post-launch, with real usage signal, as an explicit additive decision — never
+as a precondition that degrades the solo experience.
+
+---
+
 ## Accessibility
 
 PRD §6.3 mandates WCAG AA: keyboard-navigable controls, labelled fields, AA contrast, ARIA roles/labels/live regions, and visible focus indicators. No dedicated accessibility pass has been run. The onboarding flow (the first shipped UI, PRD §5.1) has **known gaps** to fix before public launch:

@@ -195,6 +195,18 @@ Below the standard options, a new section labeled "Optimize delivery for recipie
 - **Mechanism (corrected 2026-05-16 — supersedes the original Gmail-API description):** the Gmail API does **not** expose any way to *create* a scheduled send (`messages.send`/`drafts.send` both send immediately; no `scheduledTime`/`sendAt` parameter exists). This was established and verified in `research/scheduled-send-api-spike.md` (the original text here predated that spike). OutboxIQ instead drives **Gmail's own native Schedule Send UI** via a verified DOM-automation recipe (the spike's "Verification" section is canonical; the live recipe lives in `extension/src/lib/schedule/gmail-recipe.ts`). Quick Options map onto Gmail's native preset rows; a custom time uses Gmail's native "Pick date & time" path. This is what preserves the native Scheduled label (§5.7) and keeps email content on-device (§7.3.4) with no backend-scope expansion — see the spike's recommendation for why this approach was chosen over the API/cron alternatives.
 - The Gmail API *is* still used for the **cancel** path (Unschedule-on-Reply, §5.6): `messages.list?q=in:scheduled` → `messages.trash` (also verified in the spike). Creation and cancellation use different mechanisms by necessity.
 
+> **Design commitment (2026-05-16, owner-directed — Session 5.5):** the
+> working hours collected at onboarding are an **informational input to
+> §5.3.5 recipient-optimization recommendations** (built Session 6). When
+> the recipient-optimal window allows latitude, the recommendation may
+> prefer a candidate that also falls within the sender's working hours.
+> This is **advisory only** — it never hard-blocks a recipient-optimized
+> time; absolute limits remain the *only* hard constraint. This is why the
+> §5.5 working-hours calculation is retained even though §5.5 Schedule
+> Send no longer warns on working-hours violations (see §5.5 amendment).
+> Captured now so Session 6 does not re-litigate whether working hours
+> have a role here.
+
 #### 5.3.6 Working Hours Check
 
 If the computed send time falls outside the user's configured working hours, a secondary modal appears (Section 5.5) before the email is actually scheduled.
@@ -259,6 +271,21 @@ When a recipient is selected for optimization, the plugin executes the following
 ---
 
 ### 5.5 Auto-Reschedule on Outside Working Hours
+
+> **Amendment (2026-05-16, owner-directed — Session 5.5):** §5.5 enforcement
+> is **split by trigger**. **Schedule Send** raises the soft warning for
+> **absolute-limit violations only** — warning a user for *scheduling*
+> outside their working hours is warning them for OutboxIQ's core use case
+> (e.g. scheduling 3 AM local to land in a recipient's 9 AM window). Doing
+> so trains users to dismiss the modal and destroys its value for the
+> absolute-limit cases where it actually matters. **Regular Send (§5.5.1)**
+> raises the soft warning for **working-hours *and* absolute-limit**
+> violations: an *immediate* off-hours send is unintended, whereas a
+> deliberate off-hours *schedule* is the point. The §5.5 calc still
+> computes both rule types unconditionally; only the Schedule Send
+> consumer's predicate is narrowed (the working-hours branch stays — it is
+> consumed by §5.5.1 and, later, §5.3.5). Locked: see `CLAUDE.md` "Locked
+> product decisions".
 
 #### 5.5.1 Trigger
 
