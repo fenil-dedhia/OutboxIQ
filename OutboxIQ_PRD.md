@@ -266,6 +266,17 @@ This modal appears when:
 - The user clicks the regular "Send" button (not Schedule Send) and the current time is outside their configured working hours, OR
 - The user attempts to schedule an email for a time outside their working hours.
 
+> **Amendment (2026-05-16, owner-directed — Session 5):** the **first**
+> trigger (intercepting the regular "Send" button when the current time is
+> outside working hours) is **deferred to its own future session** and is
+> *not* implemented in v1's first §5.5 pass. Intercepting Gmail's primary
+> Send action is materially more invasive than the Schedule Send hook
+> OutboxIQ already owns and carries a direct §5.2.3 ("never block native
+> Gmail") risk. v1 §5.5 therefore enforces only the **second** trigger: a
+> time the user explicitly picks via OutboxIQ's Schedule Send modal
+> (preset, custom, or "Last scheduled time"). This bullet remains spec; it
+> is simply not yet built. Tracked in `notes/session-5-summary.md`.
+
 #### 5.5.2 Modal Content
 
 The modal mirrors the visual style of Gmail's native modals (rounded corners, white background, system fonts). The copy reads as follows:
@@ -289,12 +300,61 @@ The modal mirrors the visual style of Gmail's native modals (rounded corners, wh
 - Checkbox: "Always schedule for next working day when outside hours" (unchecked by default).
 - If checked, the modal is suppressed in future and the recommended action is taken automatically.
 
+> **Amendment (2026-05-16, owner-directed — Session 5; supersedes the
+> "Action buttons" and "Footer option" above for v1):** §5.5 enforcement is
+> a **soft warning**, not a hard block and not a silent auto-snap (locked
+> decision; see `CLAUDE.md` "Locked product decisions"). The modal names
+> the *specific* violation in plain language (e.g. "This email is scheduled
+> for Sun, May 17, 3:33 AM EDT — before 7:00 AM EDT, the earliest you said
+> you'd ever send an email.") and offers **exactly three explicit choices**:
+> **(1) Reschedule to [boundary]** — the recommended/primary action,
+> schedules the corrected time; **(2) Send … anyway** — schedules the
+> user's chosen time, overriding the rule just this once; **(3) Cancel** —
+> dismiss the warning and return to the schedule modal to adjust. Nothing
+> is ever auto-applied. The same pattern covers both working-hours (soft)
+> and absolute-limit (hard) violations; when **both** are violated the
+> **absolute-limit** one is surfaced (the harder constraint). The
+> **"Footer option" suppression checkbox is dropped for v1** — an always-
+> explicit choice is the whole point of the locked pattern, so a "do this
+> silently from now on" toggle is contradictory. Consequence: the
+> `alwaysScheduleOutsideHours` field in the §7.2 schema and its planned
+> §5.8 Settings toggle are **inert in v1 by design** (kept for schema
+> stability, not wired). The verbatim "Body" rationale above is retained
+> (§8.5 explain-the-why); the "Title" is unchanged. Every time shown
+> carries its timezone abbreviation adjacent (§8.4).
+
 #### 5.5.3 Calculation Logic
 
 "Next working day" is calculated by:
 1. Checking the next 24 hours for a configured working day.
 2. If found, scheduling for that day's working hours start time.
 3. If the current day is a working day but it's before working hours start, scheduling for the same day at working hours start.
+
+> **Amendment (2026-05-16, owner-directed — Session 5):** the snap target
+> resolves **by rule type**:
+> - **Working-hours (soft) violation** → the next-working-day calculation
+>   above, interpreted concretely as: *if the chosen day is itself a
+>   configured working day and the chosen time is before that day's start,
+>   snap to the same day at its start (step 3); otherwise snap to the
+>   soonest upcoming configured working day (search the chosen date +1…+7),
+>   at that day's start.* (Step 1's terse "next 24 hours" is read as
+>   "soonest upcoming configured working day", which is what the
+>   "Recommended: Send on [Next Working Day]…" copy describes.)
+> - **Absolute-limit (hard) violation** → snap to the violated absolute
+>   boundary (`absoluteEarliest`/`absoluteLatest`) **on the same calendar
+>   day the user originally picked** — *not* next-working-day. Absolute
+>   limits are clock-time rules in the user's local time, not day-of-week
+>   rules; the user chose their day deliberately, so the snap fixes only
+>   the clock-time violation and honours the chosen day. **An absolute snap
+>   may therefore land on a non-working day (e.g. Saturday 7:00 AM) — this
+>   is intentionally permitted in v1** (the explicit day choice overrides
+>   the working-hours *soft* preference). A v2 enhancement *could* add a
+>   secondary informational note for that case; deferred, not v1 scope.
+> - **Zero configured working days** is a legitimate "absolute-limits-only"
+>   configuration: the working-hours soft constraint is then inactive
+>   (never fires), so the next-working-day search is never invoked; only
+>   absolute limits apply. Rule boundaries are inclusive (scheduling
+>   exactly at the floor/start/end/ceiling is allowed).
 
 ---
 
