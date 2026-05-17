@@ -15,6 +15,7 @@
 import { createRoot, type Root } from "react-dom/client";
 import { StrictMode } from "react";
 import { ScheduleModal } from "./ScheduleModal";
+import { ModalErrorBoundary } from "./ErrorBoundary";
 import { MODAL_CSS } from "./styles";
 import type { LastScheduled } from "../../lib/storage";
 
@@ -24,6 +25,9 @@ export interface OpenScheduleModalArgs {
   timezone: string;
   lastScheduled: LastScheduled | null;
   onScheduled: (v: LastScheduled) => void;
+  /** A render-time throw in the modal hands off to Gmail's native scheduler
+   * so the user is never stranded (PRD §5.2.3). See ErrorBoundary.tsx. */
+  onRenderError: () => void;
 }
 
 export function openScheduleModal(args: OpenScheduleModalArgs): void {
@@ -48,14 +52,24 @@ export function openScheduleModal(args: OpenScheduleModalArgs): void {
     host.remove();
   };
 
+  // §5.2.3: a render-time throw tears down the broken modal and hands off to
+  // Gmail's native scheduler so the user is never stranded. Deferred out of
+  // React's commit phase by the boundary, so close()'s unmount is safe here.
+  const handleRenderError = (): void => {
+    close();
+    args.onRenderError();
+  };
+
   root.render(
     <StrictMode>
-      <ScheduleModal
-        timezone={args.timezone}
-        lastScheduled={args.lastScheduled}
-        onScheduled={args.onScheduled}
-        onClose={close}
-      />
+      <ModalErrorBoundary onError={handleRenderError}>
+        <ScheduleModal
+          timezone={args.timezone}
+          lastScheduled={args.lastScheduled}
+          onScheduled={args.onScheduled}
+          onClose={close}
+        />
+      </ModalErrorBoundary>
     </StrictMode>,
   );
 }

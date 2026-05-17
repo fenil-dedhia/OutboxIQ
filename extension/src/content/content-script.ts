@@ -49,10 +49,21 @@ async function requestOnboardingLaunch(): Promise<void> {
   }
 }
 
+/** Hand off to Gmail's own native scheduler (PRD §5.2.3 / §6.7). Used both
+ * when opening the modal fails synchronously and when it throws during React
+ * render (the ErrorBoundary → onRenderError path). The multi-compose safety
+ * net guarantees single-compose by the time the modal renders, so the global
+ * chevron query in openNativeScheduleDialog() is unambiguous here. */
+function openNativeFallback(): void {
+  void openNativeScheduleDialog().catch(() => {
+    /* native menu is still user-clickable; nothing more to do */
+  });
+}
+
 // §5.2 intercept → §5.3 modal. Sync (returns immediately); the async work
 // is self-contained with its own fallback so it never strands the user: if
-// reading state or mounting the modal fails, hand off to Gmail's own native
-// scheduler (PRD §5.2.3 / §6.7).
+// reading state, mounting, OR rendering the modal fails, hand off to Gmail's
+// own native scheduler (PRD §5.2.3 / §6.7).
 function handleScheduleSend(): void {
   void (async () => {
     try {
@@ -69,16 +80,15 @@ function handleScheduleSend(): void {
             }
           });
         },
+        // Render-time throw inside the modal (async to this try/catch) —
+        // ErrorBoundary tears the host down and routes here (§5.2.3).
+        onRenderError: openNativeFallback,
       });
     } catch (err) {
       if (import.meta.env.DEV) {
         console.warn("[OutboxIQ] §5.3 open failed → native:", err);
       }
-      try {
-        await openNativeScheduleDialog();
-      } catch {
-        /* native menu is still user-clickable; nothing more to do */
-      }
+      openNativeFallback();
     }
   })();
 }
