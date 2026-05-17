@@ -81,14 +81,23 @@ Verify that OutboxIQ's UI-automated Schedule Send works on Google Workspace acco
 - **Trigger:** before Chrome Web Store submission, and after any major Gmail UI change.
 - **Reference:** `research/scheduled-send-api-spike.md` Open Question 4.
 
-### Multi-compose targeting — full fix (launch-blocking)
+### Multi-compose targeting — full fix (v2 deferral — NOT launch-blocking)
+
+> **Reframed 2026-05-16 (owner-directed, Session 6): no longer
+> launch-blocking.** Session 5 framed this as launch-blocking, which was a
+> defensible call then. With more context it is a **v2 deferral**, argued
+> in the "v1 vs. v2 decisions" section below (the canonical place for
+> argued deferrals, per Entry 22). The Session 5 framing was correct given
+> what was known then; this is a refined product decision with more
+> context, **not** a correction of that judgment. The safety net below is
+> the accepted v1 behaviour.
 
 OutboxIQ's scheduling path cannot currently tell which compose window the user acted on when **two or more compose windows are open in the same Gmail tab**. The native driver in `extension/src/lib/schedule/schedule-actions.ts` resolves the Send chevron via a global `document.querySelector(SEL_CHEVRON)`, which deterministically targets the **leftmost** compose — i.e., it would silently schedule the *wrong email*. Confirmed by hands-on smoke test (Session 5, Scenario 4).
 
-- **v1 status — interim safety net only (not the end state).** As of Session 5 there is a safety net (`extension/src/content/compose/compose-integration.ts`, `multipleComposeWindows()`): when ≥2 compose chevrons are detected, OutboxIQ does **not** open its modal and instead hands off to Gmail's native Schedule Send on the real (compose-scoped) menuItem, so Gmail schedules the correct email. This converts a silent wrong-email bug into graceful degradation, but it means **multi-compose users do not get OutboxIQ's enhanced modal at all**. That is acceptable for development/test users; it is **not** acceptable as the public-launch behaviour.
-- **What the full fix needs (its own focused session — scope it properly there):** thread a compose context from the intercepted `menuItem` through `compose-integration.ts → content-script.ts → mount.tsx → schedule-actions.ts`, and re-scope every global Gmail DOM query (chevron, dialog) to that compose. **Known hard part — the detached-popup anchor problem:** Gmail's Schedule menu is a popup it (re)creates near `<body>`, likely *not* inside the originating compose's DOM subtree, so `menuItem.closest(composeSelector)` will not reach it. A reliable "which compose owns this menu" anchor must be found first (a mini-probe, like the Session 4 pick-date-time probe). This touches `gmail-recipe.ts` (the single point of failure), so it must be re-verified via the probe in new / inline-reply / pop-out / multi-compose contexts.
-- **Trigger:** before inviting users beyond the test allowlist / Chrome Web Store submission.
-- **Reference:** `notes/session-5-summary.md` (Scenario 4 result), `notes/owner-decisions-log.md` (the silent-vs-visible-bug decision).
+- **v1 status — accepted behaviour (graceful degradation), not just an interim.** The safety net (`extension/src/content/compose/compose-integration.ts`, `multipleComposeWindows()`; shared `composeCount()` in `gmail-recipe.ts`): when ≥2 compose chevrons are detected, OutboxIQ does **not** open its modal and hands off to Gmail's native Schedule Send on the real (compose-scoped) menuItem, so Gmail schedules the correct email. §5.5.1's regular-Send guard inherits the same net (≥2 composes → fall through to native Send). Multi-compose users do not get OutboxIQ's enhanced modal — they get **native Gmail, working correctly**. Given how uncommon multi-compose is in the target use, that is **acceptable public-launch behaviour for v1** (reasoning in the v1-vs-v2 entry below), not merely a dev/test stopgap.
+- **What the full fix would need (a v2 session — scope it properly there):** thread a compose context from the intercepted `menuItem` through `compose-integration.ts → content-script.ts → mount.tsx → schedule-actions.ts`, and re-scope every global Gmail DOM query (chevron, dialog) to that compose. **Known hard part — the detached-popup anchor problem:** Gmail's Schedule menu is a popup it (re)creates near `<body>`, likely *not* inside the originating compose's DOM subtree, so `menuItem.closest(composeSelector)` will not reach it. A reliable "which compose owns this menu" anchor must be found first (a mini-probe, like the Session 4 pick-date-time probe). This touches `gmail-recipe.ts` (the single point of failure), so it must be re-verified via the probe in new / inline-reply / pop-out / multi-compose contexts.
+- **Trigger:** v2 / post-launch — revisit with real usage signal, as an explicit additive decision. **Not** a Chrome-Web-Store-submission gate.
+- **Reference:** the "v1 vs. v2 decisions" entry below; `notes/owner-decisions-log.md` Entry 27 (reframing) and Entry 18 (the original silent-vs-visible-bug decision); `notes/session-5-summary.md` (Scenario 4 result).
 
 ---
 
@@ -107,6 +116,31 @@ valuable to the very first user, with zero other users present). v1's
 single-user experience stays fully featured and self-contained. Revisit only
 post-launch, with real usage signal, as an explicit additive decision — never
 as a precondition that degrades the solo experience.
+
+### Multi-compose enhanced modal — deferred to v2 (decided Session 6)
+
+The "full fix" for multi-compose targeting (the detached-popup anchor
+problem; see the section above for the engineering shape) is **deferred to
+v2, not launch-blocking**. Reasoning, argued so a future session does not
+feel compelled to relitigate it (Entry 22 discipline):
+
+- The Session 5 safety net already converts the only dangerous failure (a
+  *silent wrong-email* send) into graceful degradation: with ≥2 composes
+  open, OutboxIQ steps aside and Gmail's **native** Schedule Send / Send
+  handles the correct email. Users still act on the right email; they just
+  don't get OutboxIQ's enhanced modal in that case.
+- Multi-compose is **uncommon** in OutboxIQ's target use — the vast
+  majority of compose interactions are single-compose, where OutboxIQ
+  works fully. The full fix is a substantial engineering investment
+  (re-scoping every global Gmail DOM query, plus a fresh mini-probe of the
+  single-point-of-failure `gmail-recipe.ts`) for a small UX improvement on
+  an uncommon pattern. Not justified for v1.
+- This is **not** a reversal of the Session 5 launch-blocking call — that
+  was correct given what was known then. It is a refined product decision
+  made in calm review with more context (the §5.5.1 work clarified how
+  broadly the safety-net pattern applies, and the cost/benefit is now
+  clearer). Revisit only post-launch, with real usage signal, as an
+  explicit additive decision. (`notes/owner-decisions-log.md` Entry 27.)
 
 ---
 

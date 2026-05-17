@@ -335,9 +335,12 @@ This modal appears when:
 > a 30s watchdog guarantees the guard can never permanently wedge Send).
 > **Multi-compose (≥2 composes) deliberately does NOT intercept** —
 > "Reschedule" reuses the Schedule recipe whose global chevron query
-> mis-targets multi-compose (the same launch-blocking §5.2 safety-net
-> case), so §5.5.1 falls through to native Send there; documented v1
-> interim, not a regression. Tracked in `notes/session-6-summary.md`.
+> mis-targets multi-compose (the same §5.2 safety-net case — a documented
+> **v1-acceptable** behaviour, **not** launch-blocking; the full fix is a
+> v2 deferral, see `notes/owner-decisions-log.md` Entry 27 and the
+> `PRE_LAUNCH_CHECKLIST.md` "v1 vs. v2 decisions" section), so §5.5.1
+> falls through to native Send there; documented v1 interim, not a
+> regression. Tracked in `notes/session-6-summary.md`.
 
 #### 5.5.2 Modal Content
 
