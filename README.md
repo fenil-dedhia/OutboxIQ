@@ -21,7 +21,7 @@ The repository currently contains:
 - The PRD and supporting design docs.
 - The extension build toolchain (TypeScript + React + Vite, Manifest V3).
 - The first feature: the first-run onboarding flow (PRD §5.1) — a typed local-storage state layer plus a three-step onboarding UI.
-- The EU relay backend is not started yet (it is only needed for Unschedule-on-Reply and the Maps proxy).
+- The EU relay backend is not started yet (it is only needed for Unschedule-on-Reply — the sole backend purpose; Google Maps was removed from product scope, so there is no Maps proxy).
 
 The next milestone is the compose-window integration and the Schedule Send modal injection (PRD §5.2–§5.3), in line with the PRD.
 

@@ -197,7 +197,8 @@ Below the standard options, a new section labeled "Optimize delivery for recipie
 
 > **Design commitment (2026-05-16, owner-directed — Session 5.5):** the
 > working hours collected at onboarding are an **informational input to
-> §5.3.5 recipient-optimization recommendations** (built Session 6). When
+> §5.3.5 recipient-optimization recommendations** (a future session —
+> recipient-optimization is not yet built; Session 6 built §5.5.1). When
 > the recipient-optimal window allows latitude, the recommendation may
 > prefer a candidate that also falls within the sender's working hours.
 > This is **advisory only** — it never hard-blocks a recipient-optimized
@@ -234,27 +235,35 @@ When a recipient is selected for optimization, the plugin executes the following
 **Step 2: Google People API lookup.**
 - Endpoint: `GET https://people.googleapis.com/v1/people:searchContacts?query={email}&readMask=locations,addresses,emailAddresses`
 - Required OAuth scope: `https://www.googleapis.com/auth/contacts.readonly`
-- If a structured address is returned with city, region, or postal code information, proceed to Step 3.
+- If the contact record yields a usable IANA timezone, return it. If it returns only a structured address with **no usable timezone**, continue to Step 3 — paid address→timezone geocoding was **removed from product scope** (see the amendment note below).
 
-**Step 3: Geocode the address.**
-- Use the Google Maps Geocoding API to convert the address to latitude and longitude coordinates.
-- **This call is proxied through the OutboxIQ backend** (Section 7.3) so the paid Maps API key is never exposed in client code.
-- Underlying endpoint (called by the backend, not the extension): `GET https://maps.googleapis.com/maps/api/geocode/json?address={address}&key={API_KEY}`
-
-**Step 4: Resolve coordinates to timezone.**
-- Use the Google Maps Time Zone API with the coordinates from Step 3.
-- **This call is also proxied through the OutboxIQ backend** (Section 7.3). In practice, Steps 3 and 4 are handled together by a single backend endpoint (see Section 7.3.3).
-- Underlying endpoint (called by the backend, not the extension): `GET https://maps.googleapis.com/maps/api/timezone/json?location={lat},{lng}&timestamp={epoch}&key={API_KEY}`
-- The response includes `timeZoneId` (an IANA identifier like `America/Los_Angeles`).
-
-**Step 5: Google Workspace Directory fallback.**
+**Step 3: Google Workspace Directory fallback.**
 - If the user is on a Google Workspace account, query the Directory API for org-wide contacts.
 - Endpoint: `GET https://people.googleapis.com/v1/people:searchDirectoryPeople?query={email}&readMask=locations`
 - Required OAuth scope: `https://www.googleapis.com/auth/directory.readonly`
 
-**Step 6: Manual selection.**
+**Step 4: Manual selection.**
 - If all automated methods fail, present the inline timezone picker described in Section 5.3.7.
 - Once the user selects a timezone, persist it in the local cache (Step 1) so this prompt does not appear again for this recipient.
+
+> **Amendment (2026-05-16 — owner-directed): Google Maps APIs removed from
+> product scope (removed, not deferred).** The original Steps 3 and 4
+> (Google Maps Geocoding API + Google Maps Time Zone API, backend-proxied)
+> are deleted; old Step 5 (Workspace Directory) becomes Step 3 and old
+> Step 6 (manual) becomes Step 4. Reasoning, recorded accurately: the
+> geocode/timezone steps only fired when the People API returned a contact
+> with a structured address but **no usable timezone** — a single-digit
+> percentage of recipient lookups in OutboxIQ's target use (knowledge
+> workers emailing colleagues, clients, recruits, acquaintances). For that
+> small case, manual selection **cached forever per recipient** (Step 1)
+> is a fine one-time UX cost. The free Workspace Directory step already
+> covers the highest-value case (internal cross-timezone email) with no
+> Maps dependency. The hit-rate-versus-cost-and-complexity tradeoff does
+> **not** improve with time, so this is a **permanent product decision,
+> not a v2 deferral**: no Maps OAuth scopes, no Maps API key, no Maps
+> billing, no Maps proxy endpoint, ever. Consequently the backend is now a
+> **single-purpose** service — Unschedule-on-Reply only (see §7.3.1).
+> Recorded in `notes/owner-decisions-log.md` (Entry 26).
 
 #### 5.4.2 Caching
 
@@ -263,10 +272,10 @@ When a recipient is selected for optimization, the plugin executes the following
 
 #### 5.4.3 Rate Limiting and Cost Control
 
-- Geocoding and Time Zone API calls cost money. The plugin must minimize calls by:
-  - Always checking the local cache first.
+- **No paid Maps calls exist in the product** — the Geocoding and Time Zone APIs were removed from scope (see the §5.4.1 amendment). The remaining lookups (Google People API, Workspace Directory API) are **free**; the only cost-control concern is staying within their request quotas. The plugin still minimizes calls by:
+  - Always checking the local cache first (resolved timezones are cached per recipient, effectively permanently — see §5.4.2).
   - Debouncing recipient field changes (only triggering lookup when the user explicitly opens the Schedule modal, not on every keystroke).
-  - Failing gracefully if API quotas are exhausted (fall back to manual selection).
+  - Failing gracefully if a quota is exhausted (fall back to manual selection, then cache the choice).
 
 ---
 
@@ -550,7 +559,7 @@ Clicking "Undo" within the 7-second window cancels the scheduled email and reope
 #### 6.1.1 Principles
 
 - **Data minimization:** Collect only what is necessary to power a feature. No behavioral analytics, no email content scraping, no recipient profiling.
-- **Local-first storage:** All user preferences, working hours, timezone, recipient cache, and feature toggles are stored in the browser's local extension storage. Nothing is transmitted to any server unless absolutely required. The two exceptions are Unschedule-on-Reply (Section 5.6) and the backend-proxied Google Maps API calls used for recipient timezone resolution (Section 5.4).
+- **Local-first storage:** All user preferences, working hours, timezone, recipient cache, and feature toggles are stored in the browser's local extension storage. Nothing is transmitted to any server unless absolutely required. The **only exception** is Unschedule-on-Reply (Section 5.6). (Recipient timezone resolution is fully on-device — the Google Maps APIs were removed from product scope; see the §5.4.1 amendment and §7.3.1.)
 - **Explicit consent:** Users must check a consent box during onboarding before any data is collected. Users must explicitly enable Unschedule-on-Reply before any data is sent to the backend.
 - **Right to access:** Users can export all their data as a JSON file from the Settings panel.
 - **Right to erasure:** Users can delete all their data (local and backend) from the Settings panel. The action is irreversible and is confirmed with a modal.
@@ -676,13 +685,19 @@ All local data is stored in the browser's extension storage. Suggested schema:
 
 #### 7.3.1 Purpose
 
-The backend serves **exactly two purposes**:
+The backend serves **exactly one purpose**:
 
 1. **Unschedule-on-Reply relay.** Subscribes to Gmail push notifications via Google Cloud Pub/Sub, detects when a recipient replies to a thread that has a pending OutboxIQ-scheduled email, and cancels the scheduled send. See Section 5.6.
 
-2. **Maps API proxy for recipient timezone resolution.** Proxies Google Maps Geocoding and Google Maps Time Zone API calls on behalf of the extension. Centralizing these calls in the backend keeps the paid Maps API key out of client code, provides a single place to enforce rate limiting and caching, and gives a single audit point for cost control. See Section 5.4 (steps 3 and 4).
+> **Amendment (2026-05-16 — owner-directed):** the former second purpose
+> ("Maps API proxy for recipient timezone resolution") is **removed from
+> product scope, not deferred** — the Google Maps Geocoding and Time Zone
+> APIs are gone entirely (see the §5.4.1 amendment for the hit-rate-versus-
+> cost-and-complexity reasoning). The backend is now single-purpose. No
+> Maps API key, billing, OAuth scope, or proxy endpoint exists or will.
+> Recorded in `notes/owner-decisions-log.md` (Entry 26).
 
-The backend is not used for any other feature. In particular: no analytics, no telemetry, no user profile or social features, no content storage of any kind. Any future proposal to expand the backend's role must be reviewed against this scope boundary.
+The backend is not used for any other feature. In particular: no analytics, no telemetry, no user profile or social features, no content storage of any kind. Any future proposal to expand the backend's role must be reviewed against this **one-purpose** scope boundary.
 
 #### 7.3.2 Hosting
 
@@ -696,7 +711,6 @@ The backend is not used for any other feature. In particular: no analytics, no t
 - `POST /unsubscribe` — Deregister a scheduled email (called when the user cancels or sends manually).
 - `POST /push/gmail` — Webhook endpoint that receives Gmail push notifications from Google Cloud Pub/Sub.
 - `WS /events` — WebSocket endpoint for the extension to receive real-time cancellation events.
-- `POST /timezone/resolve` — Proxies the Google Maps Geocoding and Time Zone APIs on behalf of the extension. Body includes recipient address components (city, region, postal code, etc.). Returns the resolved IANA timezone identifier. Used by Section 5.4 steps 3 and 4. Stateless: the backend does not store the request or the response.
 - `GET /export` — Returns all user data as JSON (right of access).
 - `DELETE /user` — Deletes all user data (right of erasure).
 
@@ -713,8 +727,6 @@ No email content, no recipient profiles, no usage analytics.
 - **Gmail API:** for composing, scheduling, canceling, and watching messages.
 - **Google Calendar API:** for reading the user's timezone setting only.
 - **Google People API:** for recipient contact lookup.
-- **Google Maps Geocoding API:** for converting addresses to coordinates.
-- **Google Maps Time Zone API:** for converting coordinates to IANA timezone identifiers.
 - **Google Cloud Pub/Sub:** for receiving Gmail push notifications.
 
 Each API has its own quota and pricing. The plugin must respect rate limits and implement exponential backoff on 429 and 5xx responses.
