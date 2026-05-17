@@ -55,6 +55,72 @@ export const SEL_DIALOG_PRESET = '[role="dialog"] [role="menuitem"].Az';
 export const SEL_DIALOG_PICK_DATETIME =
   '[role="dialog"] [role="menuitem"].Az.AM';
 
+// --- §5.5.1 regular "Send" button -------------------------------------------
+// Verified by research/send-button-probe.{js,md} (Session 6, hands-on, 4
+// contexts: new-compose / 2-compose / inline-reply / pop-out). The Send
+// button has NO jsaction and only a locale-DEPENDENT aria-label/data-tooltip
+// ("Send ‪(⌘Enter)‬"); its obfuscated class (`aoO`) is too fragile to anchor
+// on. The robust, verified anchor is STRUCTURAL: it is the non-chevron
+// `[role="button"]` sibling of the (already-accepted) chevron within their
+// shared send-button group (`div.dC` = chevron.parentElement). The probe's
+// independent attribute heuristic AGREED with this in every context (4/4),
+// and each compose's Send button is its OWN in-pane subtree (compose-scoped,
+// unlike the detached Schedule popup that breaks §5.2 multi-compose).
+
+/** How many compose windows are open in THIS document (= chevron count).
+ * The single source of truth for "multi-compose" — both the §5.2 safety net
+ * and the §5.5.1 guard read it here so they can never disagree. Never throws
+ * (a detection failure must never break Gmail). */
+export function composeCount(): number {
+  try {
+    return document.querySelectorAll(SEL_CHEVRON).length;
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * The regular Send button for the chevron's compose: the role=button in the
+ * chevron's parent group that is neither the chevron nor nested in/around it.
+ * Cross-checked against the locale-dependent "Send"-prefixed aria-label/
+ * data-tooltip (secondary; the structural relation is primary). Returns null
+ * on any unexpected shape — callers must treat null as "don't intercept".
+ */
+export function regularSendButtonFor(chevron: Element): HTMLElement | null {
+  const group = chevron.parentElement;
+  if (!group) return null;
+  const sendish = (b: Element): boolean => {
+    const al = (b.getAttribute("aria-label") ?? "").trim();
+    const tip = (b.getAttribute("data-tooltip") ?? "").trim();
+    return /^send\b/i.test(al) || /^send\b/i.test(tip);
+  };
+  const siblings = Array.from(
+    group.querySelectorAll<HTMLElement>('[role="button"]'),
+  ).filter(
+    (b) => b !== chevron && !b.contains(chevron) && !chevron.contains(b),
+  );
+  // Prefer the sibling that ALSO looks like Send (structural ∧ attribute —
+  // the probe's "AGREE" path); fall back to the lone structural sibling.
+  return siblings.find(sendish) ?? siblings[0] ?? null;
+}
+
+/**
+ * The single compose's Send button, or null. Returns null when there is NOT
+ * exactly one compose: 0 = nothing to guard; ≥2 = the §5.2/§5.5.1
+ * multi-compose safety net (the Schedule recipe's global chevron query
+ * mis-targets, so §5.5.1 must not intercept — fail toward native Send).
+ */
+export function singleComposeSendButton(): HTMLElement | null {
+  try {
+    const chevrons = document.querySelectorAll<HTMLElement>(SEL_CHEVRON);
+    if (chevrons.length !== 1) return null;
+    const chevron = chevrons[0];
+    return chevron ? regularSendButtonFor(chevron) : null;
+  } catch {
+    return null;
+  }
+}
+
 // --- Recipe primitives ------------------------------------------------------
 
 function dev(): boolean {

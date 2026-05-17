@@ -56,6 +56,31 @@ describe("WorkingHoursWarning (PRD §5.5 soft-warning)", () => {
     ).toBeInTheDocument();
   });
 
+  it("context='send' (§5.5.1): present-tense lead + 'Send now anyway'", () => {
+    const verdict = checkWorkingHours(at(18, 3), WH); // Mon 03:00 → abs floor
+    render(
+      <WorkingHoursWarning
+        verdict={verdict}
+        tzAbbr="EDT"
+        context="send"
+        busy={false}
+        onSnap={vi.fn()}
+        onProceed={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+    // §5.5.1 sends NOW — copy must say so, not "is scheduled for".
+    const lead = screen.getByText(/earliest you said you'd ever send/i);
+    expect(lead.textContent).toMatch(/^It's /);
+    expect(lead.textContent).not.toMatch(/is scheduled for/i);
+    expect(
+      screen.getByRole("button", { name: /^send now anyway$/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /send on .* anyway/i }),
+    ).not.toBeInTheDocument();
+  });
+
   it("no Reschedule button when there is no snap (defensive)", () => {
     const verdict: WorkingHoursVerdict = {
       ok: false,

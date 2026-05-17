@@ -22,8 +22,8 @@
 // once. All Gmail DOM knowledge lives in ../../lib/schedule/gmail-recipe.
 
 import {
-  SEL_CHEVRON,
   SEL_SCHEDULE_MENUITEM,
+  composeCount,
   fireFull,
 } from "../../lib/schedule/gmail-recipe";
 import { SCHEDULE_SEND_LABEL } from "../../lib/constants";
@@ -213,17 +213,15 @@ async function fallbackToNative(menuItem: HTMLElement): Promise<void> {
 // originating compose), so Gmail schedules the CORRECT email. Graceful
 // degradation: the user simply gets Gmail's native scheduler, no message.
 //
-// Each compose's Send button carries exactly one SEL_CHEVRON ("More send
+// Each compose's Send button carries exactly one chevron ("More send
 // options"); counting them measures the exact ambiguity surface. A
 // popped-out compose is a separate document, so this correctly fires only
 // for same-window multi-compose (smoke-test Scenarios 1/3 were single-chevron
-// per document and are unaffected).
+// per document and are unaffected). composeCount() is the single source of
+// truth (gmail-recipe.ts), shared with the §5.5.1 guard so the two can never
+// disagree about "how many composes".
 function multipleComposeWindows(): boolean {
-  try {
-    return document.querySelectorAll(SEL_CHEVRON).length >= 2;
-  } catch {
-    return false; // never let detection itself break interception
-  }
+  return composeCount() >= 2;
 }
 
 // One user activation is mousedown → mouseup → click. We block native at the

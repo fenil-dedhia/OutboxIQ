@@ -14,10 +14,21 @@
 import { formatForGmail } from "../../lib/schedule/gmail-format";
 import type { WorkingHoursVerdict } from "../../lib/schedule/working-hours";
 
+/**
+ * Which trigger raised this warning. "schedule" = §5.3 Schedule Send (a
+ * future time the user picked). "send" = §5.5.1 regular Send (the user is
+ * sending *now*). Only the lead sentence's verb and the proceed-button label
+ * differ; the locked 3-option pattern and the verbatim "why" are identical.
+ * Defaults to "schedule" so §5.3's existing callsite is unchanged.
+ */
+export type WarningContext = "schedule" | "send";
+
 export interface WorkingHoursWarningProps {
   verdict: WorkingHoursVerdict;
   /** Timezone abbreviation for §8.4 adjacency (e.g. "EDT"). */
   tzAbbr: string;
+  /** §5.3 (default) vs §5.5.1 regular-Send copy. */
+  context?: WarningContext;
   busy: boolean;
   /** Schedule the snapped (corrected) time. Only rendered if a snap exists. */
   onSnap: () => void;
@@ -27,28 +38,37 @@ export interface WorkingHoursWarningProps {
   onCancel: () => void;
 }
 
-function leadText(v: WorkingHoursVerdict, abbr: string): string {
+function leadText(
+  v: WorkingHoursVerdict,
+  abbr: string,
+  context: WarningContext,
+): string {
   const req = `${formatForGmail(v.requested).display} ${abbr}`;
   const boundary = v.snap ? `${formatForGmail(v.snap).gmailTime} ${abbr}` : "";
+  // §5.3: a future time was *picked* ("This email is scheduled for …").
+  // §5.5.1: the user is sending *now* ("It's … — before/after …").
+  const at =
+    context === "send" ? `It's ${req}` : `This email is scheduled for ${req}`;
   switch (v.detail) {
     case "before-earliest":
-      return `This email is scheduled for ${req} — before ${boundary}, the earliest you said you'd ever send an email.`;
+      return `${at} — before ${boundary}, the earliest you said you'd ever send an email.`;
     case "after-latest":
-      return `This email is scheduled for ${req} — after ${boundary}, the latest you said you'd ever send an email.`;
+      return `${at} — after ${boundary}, the latest you said you'd ever send an email.`;
     case "non-working-day":
       return `${req} isn't one of your working days.`;
     case "before-start":
-      return `This email is scheduled for ${req}, before your working hours start.`;
+      return `${at}, before your working hours start.`;
     case "after-end":
-      return `This email is scheduled for ${req}, after your working hours end.`;
+      return `${at}, after your working hours end.`;
     default:
-      return `This email is scheduled for ${req}.`;
+      return `${at}.`;
   }
 }
 
 export function WorkingHoursWarning({
   verdict,
   tzAbbr,
+  context = "schedule",
   busy,
   onSnap,
   onProceed,
@@ -58,6 +78,9 @@ export function WorkingHoursWarning({
   const snap = verdict.snap
     ? `${formatForGmail(verdict.snap).display} ${tzAbbr}`
     : null;
+  // §5.5.1 sends now → "Send now anyway"; §5.3 honours the picked time.
+  const proceedLabel =
+    context === "send" ? "Send now anyway" : `Send on ${req} anyway`;
 
   return (
     <div
@@ -73,7 +96,7 @@ export function WorkingHoursWarning({
         aria-label="Outside your working hours"
       >
         <h1>Send this email later?</h1>
-        <p className="warn-lead">{leadText(verdict, tzAbbr)}</p>
+        <p className="warn-lead">{leadText(verdict, tzAbbr, context)}</p>
         <p className="warn-why">
           Emails sent late at night or on weekends are statistically less likely
           to be opened or replied to, and may signal poor work-life boundaries
@@ -93,7 +116,7 @@ export function WorkingHoursWarning({
             </button>
           )}
           <button className="secondary" disabled={busy} onClick={onProceed}>
-            Send on {req} anyway
+            {proceedLabel}
           </button>
           <button className="text" disabled={busy} onClick={onCancel}>
             Cancel

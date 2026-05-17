@@ -1,0 +1,88 @@
+// PRD §5.5.1 — synchronous working-hours config snapshot.
+//
+// Why this exists: §5.5.1 must decide "is *now* outside working hours?"
+// *inside* the Send-button event handler, BEFORE calling preventDefault —
+// the probe (research/send-button-probe.md) proved Gmail finalises the send
+// within the same gesture, so there is no time to `await chrome.storage`.
+// We therefore keep a synchronously-readable snapshot, seeded from
+// getState() at install and refreshed on chrome.storage changes.
+//
+// Fail-OPEN by design: if the snapshot is null (not yet loaded, or storage
+// unavailable) the guard does nothing and the native Send proceeds. We never
+// block a send because we don't yet know the rules — §5.2.3 / §6.7.
+
+import { getState } from "../../lib/storage";
+import { STORAGE_KEY_STATE } from "../../lib/constants";
+import type { WorkingHours } from "../../lib/storage";
+
+export interface SendGuardConfig {
+  /** User's configured IANA timezone (PRD §7.2 user.timezone). */
+  timezone: string;
+  /** Working hours + absolute limits (PRD §7.2). The §5.5 calc input. */
+  workingHours: WorkingHours;
+}
+
+let cached: SendGuardConfig | null = null;
+
+/** The current snapshot, or null if not loaded yet (→ guard inert). */
+export function getCachedConfig(): SendGuardConfig | null {
+  return cached;
+}
+
+/** Test seam + content-script seed: set the snapshot directly. */
+export function setCachedConfig(c: SendGuardConfig | null): void {
+  cached = c;
+}
+
+/**
+ * Keep the snapshot fresh: re-derive from getState() whenever the persisted
+ * state changes (so an onboarding edit / Settings change takes effect without
+ * a page reload). Returns a teardown (used by tests; the content script
+ * installs once for the page lifetime). Any failure leaves the prior
+ * snapshot (or null) — never throws into Gmail.
+ */
+export function startConfigWatch(initial?: SendGuardConfig): () => void {
+  let disposed = false;
+  if (initial) cached = initial;
+
+  const refresh = (): void => {
+    void getState()
+      .then((s) => {
+        if (!disposed) {
+          cached = {
+            timezone: s.user.timezone,
+            workingHours: s.workingHours,
+          };
+        }
+      })
+      .catch(() => {
+        /* leave the prior snapshot; fail-open if it was null */
+      });
+  };
+
+  // Seed if no initial snapshot was supplied.
+  if (!initial) refresh();
+
+  const listener = (
+    changes: Record<string, chrome.storage.StorageChange>,
+    area: string,
+  ): void => {
+    if (area !== "local" || !changes[STORAGE_KEY_STATE]) return;
+    refresh(); // via getState() so default-merge / schema migration applies
+  };
+
+  try {
+    chrome.storage.onChanged.addListener(listener);
+  } catch {
+    /* no chrome.storage.onChanged here (e.g. tests) — seed-only is fine */
+  }
+
+  return (): void => {
+    disposed = true;
+    try {
+      chrome.storage.onChanged.removeListener(listener);
+    } catch {
+      /* ignore */
+    }
+  };
+}
