@@ -37,9 +37,9 @@ export function WorkingHoursStep({ workingHours, onChange }: Props) {
       <fieldset className="oq-days">
         <legend>Working days and times</legend>
         <p className="oq-help">
-          When you&rsquo;d normally send &mdash; your regular send-time
-          pattern, in your local time. If you click Send outside these hours,
-          OutboxIQ will gently confirm before sending.
+          When you&rsquo;d normally send &mdash; your regular send-time pattern,
+          in your local time. If you click Send outside these hours, OutboxIQ
+          will gently confirm before sending.
         </p>
         {WEEKDAYS.map((day) => {
           const d = workingHours[day];

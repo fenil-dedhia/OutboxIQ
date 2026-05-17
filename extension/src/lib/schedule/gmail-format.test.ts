@@ -114,7 +114,10 @@ describe("past-time guard helpers (A2)", () => {
 
   it("addMinutesToWall rolls over hour/day boundaries", () => {
     expect(
-      addMinutesToWall({ year: 2026, month: 5, day: 16, hour: 23, minute: 58 }, 5),
+      addMinutesToWall(
+        { year: 2026, month: 5, day: 16, hour: 23, minute: 58 },
+        5,
+      ),
     ).toEqual({ year: 2026, month: 5, day: 17, hour: 0, minute: 3 });
   });
 
@@ -124,7 +127,10 @@ describe("past-time guard helpers (A2)", () => {
     expect(isPastWallTime({ ...now, minute: 4 }, now)).toBe(true); // in buffer
     expect(isPastWallTime({ ...now, minute: 5 }, now)).toBe(false); // == now+5
     expect(
-      isPastWallTime({ year: 2026, month: 5, day: 17, hour: 9, minute: 0 }, now),
+      isPastWallTime(
+        { year: 2026, month: 5, day: 17, hour: 9, minute: 0 },
+        now,
+      ),
     ).toBe(false); // tomorrow
   });
 

@@ -92,7 +92,10 @@ function weekdayOf(w: WallTime): Weekday {
 }
 
 /** Pure calendar shift by whole days (no tz move — only the date changes). */
-function addDays(w: WallTime, days: number): { year: number; month: number; day: number } {
+function addDays(
+  w: WallTime,
+  days: number,
+): { year: number; month: number; day: number } {
   const d = new Date(Date.UTC(w.year, w.month - 1, w.day));
   d.setUTCDate(d.getUTCDate() + days);
   return {
@@ -174,7 +177,12 @@ export function checkWorkingHours(
   if (mins < aEarliest) {
     const t = clockToHm(wh.absoluteEarliest);
     return ok(
-      { year: requested.year, month: requested.month, day: requested.day, ...t },
+      {
+        year: requested.year,
+        month: requested.month,
+        day: requested.day,
+        ...t,
+      },
       "absolute",
       "before-earliest",
     );
@@ -182,7 +190,12 @@ export function checkWorkingHours(
   if (mins > aLatest) {
     const t = clockToHm(wh.absoluteLatest);
     return ok(
-      { year: requested.year, month: requested.month, day: requested.day, ...t },
+      {
+        year: requested.year,
+        month: requested.month,
+        day: requested.day,
+        ...t,
+      },
       "absolute",
       "after-latest",
     );

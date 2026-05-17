@@ -75,11 +75,10 @@ export function WorkingHoursWarning({
         <h1>Send this email later?</h1>
         <p className="warn-lead">{leadText(verdict, tzAbbr)}</p>
         <p className="warn-why">
-          Emails sent late at night or on weekends are statistically less
-          likely to be opened or replied to, and may signal poor work-life
-          boundaries to your recipients. Scheduling for your next working
-          window helps maximize visibility and protects your professional
-          brand.
+          Emails sent late at night or on weekends are statistically less likely
+          to be opened or replied to, and may signal poor work-life boundaries
+          to your recipients. Scheduling for your next working window helps
+          maximize visibility and protects your professional brand.
         </p>
 
         <div className="warn-actions">
