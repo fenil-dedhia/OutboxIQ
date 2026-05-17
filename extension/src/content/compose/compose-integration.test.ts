@@ -21,6 +21,13 @@ function makeScheduleMenuItem(label = "Schedule send"): HTMLElement {
   return item;
 }
 
+function makeChevron(): HTMLElement {
+  const c = document.createElement("div");
+  c.setAttribute("role", "button");
+  c.setAttribute("aria-label", "More send options");
+  return c;
+}
+
 const tick = (): Promise<void> => new Promise((r) => setTimeout(r, 0)); // flush MutationObserver + guards
 
 let teardown: (() => void) | null = null;
@@ -135,6 +142,37 @@ describe("§5.2.2 interception", () => {
     // the module suppression flag; wait for it to settle so the suite stays
     // order-independent (the replay window is ~120ms in real Gmail).
     await new Promise((r) => setTimeout(r, 200));
+  });
+
+  it("multi-compose: hands off to native instead of opening OutboxIQ (Session 5 safety net)", async () => {
+    const onScheduleSend = vi.fn();
+    // Two composes → two chevrons → ambiguous; must NOT open our modal.
+    document.body.appendChild(makeChevron());
+    document.body.appendChild(makeChevron());
+    const item = makeScheduleMenuItem();
+    document.body.appendChild(item);
+    teardown = installComposeIntegration({ onScheduleSend });
+
+    const inner = item.querySelector("div div") as HTMLElement;
+    expect(() =>
+      inner.dispatchEvent(new MouseEvent("click", { bubbles: true })),
+    ).not.toThrow();
+    expect(onScheduleSend).not.toHaveBeenCalled();
+    // The native replay is async + briefly toggles the suppression flag;
+    // settle it so the suite stays order-independent (cf. the §5.2.3 test).
+    await new Promise((r) => setTimeout(r, 200));
+  });
+
+  it("single compose still opens OutboxIQ (safety net does not over-fire)", () => {
+    const onScheduleSend = vi.fn();
+    document.body.appendChild(makeChevron()); // exactly one compose
+    const item = makeScheduleMenuItem();
+    document.body.appendChild(item);
+    teardown = installComposeIntegration({ onScheduleSend });
+
+    const inner = item.querySelector("div div") as HTMLElement;
+    inner.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(onScheduleSend).toHaveBeenCalledTimes(1);
   });
 
   it("teardown removes the interceptor", () => {
