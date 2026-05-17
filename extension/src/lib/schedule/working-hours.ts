@@ -23,6 +23,19 @@
 //     check is inactive; only absolute limits apply).
 //   • Boundaries are inclusive: scheduling exactly at 07:00 when the floor
 //     is 07:00 is allowed (the user said "earliest I'd EVER send").
+//
+// CONSUMERS — this module computes BOTH rule types unconditionally; each
+// consumer narrows for itself. Do NOT delete the working-hours branch as
+// "unused": the Schedule Send path ignoring it does not make it dead.
+//   1. §5.5 Schedule Send (ScheduleModal.gate) — acts on `kind:"absolute"`
+//      ONLY (locked Session 5.5: warning on a deliberate off-hours
+//      *schedule* trains dismissal — that's the core use case).
+//   2. §5.5.1 regular Send (Session 5.6) — acts on the FULL verdict
+//      (working-hours AND absolute: an immediate off-hours send is
+//      unintended, unlike a deliberate off-hours schedule).
+//   3. §5.3.5 recipient optimization (Session 6) — uses working-hours
+//      `detail`/`snap` as an advisory recommendation input (never a hard
+//      block; absolute stays the only hard constraint).
 
 import type { WallTime } from "./gmail-format";
 import type { WorkingHours, Weekday } from "../storage";

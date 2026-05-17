@@ -8,10 +8,15 @@
 //
 // In scope: §5.3.1 layout, §5.3.2 header + timezone subtitle, §5.3.3 Quick
 // Options + "Last scheduled time" row (§5.3.3 amendment), §5.3.4 custom
-// picker ("Pick custom"), and the §5.3.6 → §5.5 working-hours check (now
-// real: the resolved wall time is gated through checkWorkingHours before
-// scheduling; a violation opens the soft-warning modal). Deferred
-// (owner-directed): §5.3.5 Optimize-for-recipient + §5.3.7.
+// picker ("Pick custom"), and the §5.3.6 → §5.5 check. Per the locked
+// decision (CLAUDE.md "Locked product decisions", Session 5.5) the
+// **Schedule Send** path only warns on **absolute-limit** violations:
+// scheduling outside one's working hours to hit a recipient's window is
+// OutboxIQ's core use case, so warning on it trains dismissal. Working-
+// hours violations still get computed by checkWorkingHours (consumed by
+// §5.5.1 regular-Send and future §5.3.5) — Schedule Send just doesn't act
+// on them. Deferred (owner-directed): §5.3.5 Optimize-for-recipient +
+// §5.3.7; §5.5.1 regular-Send trigger (Session 5.6).
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -159,16 +164,21 @@ export function ScheduleModal({
     }
   }
 
-  // §5.3.6 → §5.5 seam: gate a resolved wall time through the working-hours
-  // check before scheduling. ok → schedule now; violation → soft-warning
-  // modal (the user explicitly chooses proceed / reschedule / cancel).
+  // §5.3.6 → §5.5 seam: gate a resolved wall time through the check before
+  // scheduling. Locked Session 5.5: on the **Schedule Send** path only an
+  // **absolute-limit** violation raises the soft warning — a working-hours
+  // "violation" here is the product working as intended (deliberately
+  // scheduling off-hours to land in a recipient's window), so warning on
+  // it would train users to dismiss the modal and gut its value for the
+  // absolute case. So: not absolute → schedule directly; absolute → the
+  // soft-warning modal (proceed / reschedule / cancel).
   function gate(
     wall: WallTime,
     action: ScheduleAction,
     remember: LastScheduled,
   ): void {
     const verdict = checkWorkingHours(wall, workingHours);
-    if (verdict.ok) {
+    if (verdict.kind !== "absolute") {
       void run(action, remember);
       return;
     }
