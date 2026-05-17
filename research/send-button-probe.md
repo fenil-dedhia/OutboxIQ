@@ -312,10 +312,40 @@ proves the "Send now anyway" + fail-toward-send path is realisable.
   keydown, not a single event — a superset of what the §5.2 interceptor
   already does (mousedown+click).
 
-**Gate status:** the make-or-break unknown (can capture-phase suppress
-Gmail's Send?) is **resolved YES**. Q1 (new/2-compose/inline ✅, pop-out
-owed), Q3 ✅, Q5 ✅, Q4-suppress ✅. **Still owed before code:** pop-out
-`discover()` (Q1 completeness, safe) and **`testReplay()`** (Q4 replay path
-— load-bearing: "Send now anyway" + fail-toward-send both require
-re-driving the native Send; destructive, throwaway acct). No §5.5.1
-implementation written until those two close.
+**Pop-out (Q1) — ✅ clean** (4th context; `discover()` ran, nothing sent,
+same structure as new-compose/inline/2-compose).
+
+**Replay (`testReplay()`, Q4) — ✅ verified, BOTH paths send:**
+
+- `testReplay()` (firePlain — plain mouse mousedown/mouseup/click) → **real
+  email sent.** Gmail's Send button honours a plain local handler (like the
+  chevron, per the spike).
+- `testReplay({ full:true })` (fireFull — full pointer→mouse→click recipe,
+  resolved to inner `<div class="T-I … aoO …">`) → **real email also sent.**
+- ⇒ The "Send now anyway" + fail-toward-send path is realisable. Production
+  will use the **full recipe** (`gmail-recipe.ts` `fireFull`) for robustness
+  consistency, with `firePlain` as a known-good fallback.
+
+### ✅ GATE CLEARED — §5.5.1 interception design HOLDS
+
+Both load-bearing assumptions confirmed hands-on against live Gmail:
+**(a)** a capture-phase document listener suppresses Gmail's Send — mouse
+*and* ⌘/Ctrl+Enter — when the **whole gesture** is blocked;
+**(b)** replaying the Send actually sends (plain and full recipe). Q1
+(4 contexts, stable, no context-variants), Q3, Q5 (compose-scoped, DISTINCT)
+all resolved. Implementation requirements crystallised:
+
+1. Intercept at **capture phase, document level**, the **whole gesture**
+   (`pointerdown`+`mousedown`+`pointerup`+`mouseup`+`click`) + `keydown`
+   ⌘/Ctrl+Enter — not a single event (the one-shot leak proved why).
+2. **Anchor:** the non-chevron `[role="button"]` in the chevron's `div.dC`
+   group (locale-tied only to the already-accepted chevron anchor);
+   `aria-label`/`data-tooltip` ~ `/^Send/i` as secondary cross-check. No
+   `jsaction`; obfuscated classes (`aoO`) too fragile to anchor on.
+3. **Compose-scoped** via the clicked Send's own pane (in-pane, DISTINCT
+   per compose — not the §5.2 detached-popup problem).
+4. **Replay** via `fireFull` (fallback `firePlain`) with our interception
+   suppressed, for "Send now anyway" + fail-toward-send.
+5. Decision must be **synchronous** (cached config + fresh now) — we
+   `preventDefault` only on a real violation; the vast majority of in-hours
+   Sends are never touched (§5.2.3).
