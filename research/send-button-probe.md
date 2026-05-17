@@ -296,6 +296,26 @@ proves the "Send now anyway" + fail-toward-send path is realisable.
   probe's mid-session `live()` fix). **No §5.5.1 implementation code
   written — probe-gate held.**
 
-**Still owed:** pop-out `discover()`; `armBlockGesture()` (B vs C);
-keyboard suppression; `testReplay()` (Q4 replay path). Gate verdict pending
-`armBlockGesture()`.
+**Gesture-block (`armBlockGesture()`, Q4) — ✅ C CONFIRMED, suppression works:**
+
+- Run ×2, full gesture blocked at capture (pointerdown/pointerup/click ×N +
+  ⌘+Enter keydown ×N), all `defaultPrevented=true`. **No email sent either
+  time** — not by button, not by keyboard. (Note: blocking `pointerdown` at
+  capture cascades to suppress the compat `mousedown`/`mouseup`; the real
+  gesture Gmail uses is **pointerdown → pointerup → click**, and Gmail
+  finalises the send on the *later* event — which is why one-shot
+  `armSuppress` (mousedown-then-disarm) leaked.)
+- ⇒ **Capture-phase document interception reliably stops Gmail's Send (mouse
+  AND ⌘/Ctrl+Enter).** Interpretation **C** (one-shot was too blunt), not B.
+  The §5.5.1 planned design **HOLDS**. Production requirement: intercept the
+  **whole gesture** (pointerdown/mousedown + pointerup/mouseup + click) +
+  keydown, not a single event — a superset of what the §5.2 interceptor
+  already does (mousedown+click).
+
+**Gate status:** the make-or-break unknown (can capture-phase suppress
+Gmail's Send?) is **resolved YES**. Q1 (new/2-compose/inline ✅, pop-out
+owed), Q3 ✅, Q5 ✅, Q4-suppress ✅. **Still owed before code:** pop-out
+`discover()` (Q1 completeness, safe) and **`testReplay()`** (Q4 replay path
+— load-bearing: "Send now anyway" + fail-toward-send both require
+re-driving the native Send; destructive, throwaway acct). No §5.5.1
+implementation written until those two close.
