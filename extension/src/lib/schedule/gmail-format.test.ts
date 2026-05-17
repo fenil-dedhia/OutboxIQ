@@ -3,6 +3,11 @@ import {
   formatForGmail,
   parsePickerInputs,
   parseGmailDateTime,
+  nowWallInTimeZone,
+  addMinutesToWall,
+  isPastWallTime,
+  wallToDateInput,
+  wallToTimeInput,
 } from "./gmail-format";
 
 describe("formatForGmail (probe-confirmed Gmail input formats)", () => {
@@ -83,5 +88,49 @@ describe("parseGmailDateTime (inverse of formatForGmail, for the 'last' path)", 
     expect(parseGmailDateTime("May 17, 2026", "8 AM")).toBeNull();
     expect(parseGmailDateTime("Foo 17, 2026", "8:00 AM")).toBeNull();
     expect(parseGmailDateTime("2026-05-17", "08:00")).toBeNull();
+  });
+});
+
+describe("past-time guard helpers (A2)", () => {
+  const ref = new Date("2026-05-16T03:33:00Z");
+
+  it("nowWallInTimeZone reads wall components in the given tz", () => {
+    expect(nowWallInTimeZone("UTC", ref)).toEqual({
+      year: 2026,
+      month: 5,
+      day: 16,
+      hour: 3,
+      minute: 33,
+    });
+    // EDT = UTC-4 in May → previous evening.
+    expect(nowWallInTimeZone("America/New_York", ref)).toEqual({
+      year: 2026,
+      month: 5,
+      day: 15,
+      hour: 23,
+      minute: 33,
+    });
+  });
+
+  it("addMinutesToWall rolls over hour/day boundaries", () => {
+    expect(
+      addMinutesToWall({ year: 2026, month: 5, day: 16, hour: 23, minute: 58 }, 5),
+    ).toEqual({ year: 2026, month: 5, day: 17, hour: 0, minute: 3 });
+  });
+
+  it("isPastWallTime: min acceptable is ref + bufferMins (inclusive)", () => {
+    const now = { year: 2026, month: 5, day: 16, hour: 12, minute: 0 };
+    expect(isPastWallTime({ ...now, hour: 11 }, now)).toBe(true); // past
+    expect(isPastWallTime({ ...now, minute: 4 }, now)).toBe(true); // in buffer
+    expect(isPastWallTime({ ...now, minute: 5 }, now)).toBe(false); // == now+5
+    expect(
+      isPastWallTime({ year: 2026, month: 5, day: 17, hour: 9, minute: 0 }, now),
+    ).toBe(false); // tomorrow
+  });
+
+  it("wallToDateInput / wallToTimeInput zero-pad for native inputs", () => {
+    const w = { year: 2026, month: 5, day: 9, hour: 7, minute: 5 };
+    expect(wallToDateInput(w)).toBe("2026-05-09");
+    expect(wallToTimeInput(w)).toBe("07:05");
   });
 });

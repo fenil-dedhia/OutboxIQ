@@ -59,6 +59,78 @@ export function formatForGmail(w: WallTime): GmailScheduleStrings {
   };
 }
 
+// --- Past-time guard helpers (Session 5.5, A2) -----------------------------
+// Wall-clock comparison via the same UTC-construction trick used everywhere
+// here (Date.UTC over the wall components): both operands use the identical
+// convention, so "is target before ref" is exact. DST is ignored (a wall
+// comparison straddling a DST flip can be off by ≤1h once a year) — the
+// accepted, codebase-wide tradeoff (see presets.ts / formatForGmail).
+
+function wallMs(w: WallTime): number {
+  return Date.UTC(w.year, w.month - 1, w.day, w.hour, w.minute);
+}
+
+/** "now" as wall-clock components in `timeZone` (fresh per call — callers
+ * pass a live Date for the click-time defense-in-depth). */
+export function nowWallInTimeZone(
+  timeZone: string,
+  ref: Date = new Date(),
+): WallTime {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(ref);
+  const g = (t: string): number =>
+    Number(parts.find((p) => p.type === t)?.value ?? "0");
+  const hour = g("hour");
+  return {
+    year: g("year"),
+    month: g("month"),
+    day: g("day"),
+    hour: hour === 24 ? 0 : hour, // some engines emit "24" at midnight
+    minute: g("minute"),
+  };
+}
+
+/** Add whole minutes to a wall time (DST-free, same UTC trick). */
+export function addMinutesToWall(w: WallTime, mins: number): WallTime {
+  const d = new Date(wallMs(w) + mins * 60000);
+  return {
+    year: d.getUTCFullYear(),
+    month: d.getUTCMonth() + 1,
+    day: d.getUTCDate(),
+    hour: d.getUTCHours(),
+    minute: d.getUTCMinutes(),
+  };
+}
+
+/** True if `target` is before `ref` + `bufferMins` (i.e. in the past, or
+ * too soon). Minimum acceptable schedule time is now + bufferMins. */
+export function isPastWallTime(
+  target: WallTime,
+  ref: WallTime,
+  bufferMins = 5,
+): boolean {
+  return wallMs(target) < wallMs(ref) + bufferMins * 60000;
+}
+
+/** "YYYY-MM-DD" for an `<input type="date">` value/min. */
+export function wallToDateInput(w: WallTime): string {
+  const p = (n: number): string => String(n).padStart(2, "0");
+  return `${w.year}-${p(w.month)}-${p(w.day)}`;
+}
+
+/** "HH:MM" (24h) for an `<input type="time">` value/min. */
+export function wallToTimeInput(w: WallTime): string {
+  const p = (n: number): string => String(n).padStart(2, "0");
+  return `${p(w.hour)}:${p(w.minute)}`;
+}
+
 const MONTH_ABBR = [
   "jan",
   "feb",

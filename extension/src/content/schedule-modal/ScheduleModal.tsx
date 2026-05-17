@@ -28,6 +28,11 @@ import {
   formatForGmail,
   parsePickerInputs,
   parseGmailDateTime,
+  nowWallInTimeZone,
+  addMinutesToWall,
+  isPastWallTime,
+  wallToDateInput,
+  wallToTimeInput,
   type WallTime,
 } from "../../lib/schedule/gmail-format";
 import {
@@ -108,6 +113,13 @@ export function ScheduleModal({
     () => formatTimezoneLabel(timezone, now),
     [timezone, now],
   );
+  // A2: floor the custom picker at today (user tz). This is the render-time
+  // affordance only — the real guard is the FRESH-now check in gate(), so a
+  // long-open modal can't slip a now-stale time through.
+  const minDate = useMemo(
+    () => wallToDateInput(nowWallInTimeZone(timezone, now)),
+    [timezone, now],
+  );
 
   useEffect(() => {
     cardRef.current?.focus();
@@ -177,6 +189,18 @@ export function ScheduleModal({
     action: ScheduleAction,
     remember: LastScheduled,
   ): void {
+    // A2 defense-in-depth: a FRESH now (not the mount-time memo) so a
+    // long-open modal / "Last scheduled time" that has since elapsed /
+    // a preset that went stale across midnight is caught at click time,
+    // not silently scheduled in the past. Covers preset/custom/last.
+    if (isPastWallTime(wall, nowWallInTimeZone(timezone))) {
+      setStatus({
+        kind: "error",
+        message:
+          "That time has already passed. Refresh Gmail and pick a new time.",
+      });
+      return;
+    }
     const verdict = checkWorkingHours(wall, workingHours);
     if (verdict.kind !== "absolute") {
       void run(action, remember);
@@ -252,6 +276,13 @@ export function ScheduleModal({
   const presetSelected = (p: SchedulePreset): boolean =>
     selection?.kind === "preset" && selection.preset.id === p.id;
   const customSelected = selection?.kind === "custom";
+  // A2: when the picked date is today, also floor the time at now + 5 min
+  // (a time input's min can't couple to the date itself). Render-time hint
+  // only; gate()'s fresh-now check is the actual guard.
+  const minTime =
+    date === minDate
+      ? wallToTimeInput(addMinutesToWall(nowWallInTimeZone(timezone, now), 5))
+      : undefined;
 
   // §8.7 one decision per screen: the §5.5 warning replaces the schedule
   // card (same Shadow-DOM backdrop) rather than stacking on top of it.
@@ -326,6 +357,7 @@ export function ScheduleModal({
             type="date"
             aria-label="Date"
             value={date}
+            min={minDate}
             disabled={busy}
             onChange={(e) => updateCustom(e.target.value, time)}
           />
@@ -333,6 +365,7 @@ export function ScheduleModal({
             type="time"
             aria-label="Time"
             value={time}
+            min={minTime}
             disabled={busy}
             onChange={(e) => updateCustom(date, e.target.value)}
           />
