@@ -731,6 +731,27 @@ The backend serves **exactly one purpose**:
 
 The backend is not used for any other feature. In particular: no analytics, no telemetry, no user profile or social features, no content storage of any kind. Any future proposal to expand the backend's role must be reviewed against this **one-purpose** scope boundary.
 
+> **Amendment (2026-05-17, owner-directed — pre-Session-8):** the
+> **one-purpose** discipline is **unchanged and still binding** — but the
+> honest framing is: the backend's purpose is **Unschedule-on-Reply *and*
+> the OAuth token management that enables it**. Per the §7.5 amendment,
+> refresh tokens live only on the backend (server-side code exchange,
+> per-user encryption); the backend therefore owns the OAuth
+> `exchange`/`token`/`revoke` flow (§7.3.3). This is **not a second
+> purpose** and is **not** a reversal of the Entry-26 Maps-removal /
+> single-purpose narrowing: token management is the **infrastructure that
+> the one purpose structurally requires** (§5.6 needs backend-initiated
+> Gmail calls when the extension is not running ⇒ a backend refresh token
+> ⇒ the backend must run the OAuth exchange). Because there is exactly one
+> Google OAuth grant per user, that same backend-managed access-token path
+> is **necessarily reused** by the extension's other Google API calls
+> (Calendar/People in §5.4; the §5.6 cancel path) — reuse of the one
+> purpose's infrastructure, not scope creep. The scope test is unchanged:
+> anything that is **not** Unschedule-on-Reply or the OAuth/token plumbing
+> that enables it does **not** belong on the backend (still no analytics,
+> telemetry, profiles, or content storage). Recorded in
+> `notes/owner-decisions-log.md` (Entry 31).
+
 #### 7.3.2 Hosting
 
 - Region: EU (Frankfurt, Dublin, Amsterdam, or equivalent).
@@ -746,6 +767,22 @@ The backend is not used for any other feature. In particular: no analytics, no t
 - `GET /export` — Returns all user data as JSON (right of access).
 - `DELETE /user` — Deletes all user data (right of erasure).
 
+> **Amendment (2026-05-17, owner-directed — pre-Session-8):** the
+> Option-B OAuth flow (§7.5 amendment) adds three authentication
+> endpoints:
+> - `POST /auth/exchange` — the extension POSTs the one-time
+>   authorization code; the backend exchanges it with Google (Client
+>   Secret in backend env only), stores the per-user-encrypted refresh
+>   token (§7.3.4), and returns a short-lived access token.
+> - `POST /auth/token` — the extension requests a fresh access token; the
+>   backend mints one from the stored refresh token.
+> - `POST /auth/revoke` — user-initiated revocation; the backend revokes
+>   the grant with Google and deletes the stored refresh token.
+>
+> These are the OAuth plumbing for the single purpose (§7.3.1 amendment),
+> not new product surface. Endpoint names are the working spec; the
+> Session-8 implementation may refine exact paths but not this contract.
+
 #### 7.3.4 Data Stored
 
 - User email address (hashed where possible).
@@ -753,6 +790,17 @@ The backend is not used for any other feature. In particular: no analytics, no t
 - Active scheduled message records: `{ user_email, message_id, thread_id, recipient_emails[], scheduled_send_time, created_at }`.
 
 No email content, no recipient profiles, no usage analytics.
+
+> **Amendment (2026-05-17, owner-directed — pre-Session-8): confirmation,
+> not a change.** This section's "Encrypted OAuth refresh token" is now
+> the **single, authoritative** location for a user's refresh token (§7.5
+> amendment supersedes the old client/backend split). Concretely: the
+> stored refresh token is encrypted at rest with the user's **per-user
+> key**; the extension persists **no refresh token at all** and holds only
+> short-lived access tokens (in service-worker memory / transient storage),
+> fetched on demand via `POST /auth/token`. The existing wording already
+> covers this — recorded explicitly so Session 8 builds to it without
+> re-deciding.
 
 ### 7.4 Third-Party API Dependencies
 
@@ -770,6 +818,52 @@ Each API has its own quota and pricing. The plugin must respect rate limits and 
 - Refresh tokens are stored encrypted (locally for client-only features, on the backend for Unschedule-on-Reply).
 - Tokens are rotated and refreshed automatically before expiration.
 - Users can revoke access at any time via Google account settings, which immediately disables the plugin.
+
+> **Amendment (2026-05-17, owner-directed — pre-Session-8, Entry 19
+> "lock the design in calm"):** the third bullet's "**locally** for
+> client-only features, on the backend for Unschedule-on-Reply" split is
+> **superseded**. **Refresh tokens live ONLY on the backend, encrypted with
+> per-user keys (Option B — server-side authorization-code exchange).** The
+> extension **never** stores a refresh token and never performs the
+> code→token exchange itself (PKCE-in-extension, "Option A", is explicitly
+> rejected).
+>
+> **Flow:** the extension runs the user-facing OAuth dance
+> (`chrome.identity.launchWebAuthFlow`, the Session-7 Web-application
+> client), receives a **one-time authorization code**, and POSTs it to the
+> backend (`POST /auth/exchange`, §7.3.3). The backend exchanges the code
+> with Google (the **Client Secret lives only in backend env vars** — never
+> in the extension; satisfies §6.5), encrypts the **refresh** token with
+> the user's per-user key (§7.3.4), stores it, and returns a **short-lived
+> access token**. When the extension needs a fresh access token it requests
+> one from the backend (`POST /auth/token`), which mints it from the stored
+> refresh token. Revocation (`POST /auth/revoke`) revokes with Google and
+> deletes the stored refresh token.
+>
+> **Why (recorded for future architectural reference — CASA prep,
+> enterprise security reviews):** (1) Unschedule-on-Reply (§5.6) requires
+> backend-initiated Gmail calls when the extension is not running — that
+> *structurally* requires a backend refresh token; the Session-7
+> Web-application client (Entry 29) was chosen precisely to enable this.
+> (2) §7.3.4 already specifies backend per-user-encrypted refresh tokens —
+> Option B *is* the spec; Option A would have needed an Entry-6 PRD
+> amendment. (3) Privacy story stays clean ("on-device, except the minimal
+> EU relay, encrypted per-user"). (4) Keeps the CASA Tier-2 audited surface
+> in one place. (5) Enterprise/GDPR posture (per-user-encrypted, EU
+> region) is what security reviews expect; tokens in `chrome.storage.local`
+> would not survive that scrutiny.
+>
+> **Graceful-degradation consequence (an implication this decision
+> surfaces, not previously named):** because every access token is now
+> minted via the backend, a backend outage degrades **not only**
+> Unschedule-on-Reply (§6.7) **but also** the client-only Calendar/People
+> features. This does **not** weaken §6.7's "never block the user" rule —
+> it degrades to the **already-specified §6.7 fallbacks** (Calendar
+> unavailable → browser timezone; People unavailable → manual recipient
+> timezone selection) and Schedule Send itself is unaffected (it drives
+> Gmail's own UI, no token). The newly broadened trigger of those existing
+> fallbacks is the only change; §6.7's fallback *behaviour* already covers
+> it. Recorded in `notes/owner-decisions-log.md` (Entry 31).
 
 ---
 

@@ -72,9 +72,19 @@ Google classifies the Gmail scopes OutboxIQ uses (`gmail.compose`, `gmail.modify
 
 ## Infrastructure
 
-- Production Fly.io app deployed in confirmed EU region (Frankfurt or Amsterdam).
-- Production Supabase project in EU region.
-- Per-user encryption-key strategy for OAuth refresh tokens reviewed and documented.
+> **Status shift (2026-05-17, OAuth-token-architecture decision — Entry 31):**
+> refresh tokens live **only** on the backend (server-side code exchange,
+> per-user encryption — PRD §7.5/§7.3 amendments). Consequence: a working
+> backend (Fly.io EU + Supabase EU + the per-user-key encryption scheme) is
+> now a **Session-8 prerequisite for OAuth to work end-to-end at all**, not
+> merely a deferred-launch concern. The *production-hardening* of these
+> items stays here (pre-launch); the *first working instance* is Session-8
+> build scope. The per-user-encryption-key item below is **confirmed
+> accurate and now central** (it is the audited CASA-Tier-2 surface).
+
+- Production Fly.io app deployed in confirmed EU region (Frankfurt or Amsterdam). *(A dev/staging instance is Session-8 build scope; this line is the production-hardened deployment.)*
+- Production Supabase project in EU region. *(Likewise — dev instance is Session 8.)*
+- Per-user encryption-key strategy for OAuth refresh tokens reviewed and documented. **Central to CASA Tier 2** (the audited surface is backend token storage; PRD §7.3.4).
 - Backup and disaster-recovery plan for the backend database documented.
 - Custom domain configured for the backend and listed in Google OAuth authorized domains.
 
@@ -188,6 +198,32 @@ real legal docs are drafted (deferred, see "Legal" above), host them on a
 **rename-proof, brand-neutral or guaranteed-stable URL** so a later repo /
 product rename does not break the consent screen or the in-extension link.
 Pick this URL at the same time as the legal-doc hosting decision.
+
+**Lead-time + trademark dimension (surfaced 2026-05-17, owner question at
+Session-7 close — previously only mentioned in passing):** this is not a
+same-day task. It has procurement and naming lead time that must start
+well before the public-OAuth (Production) switch:
+
+- **Domain acquisition is a lead-time item.** Google's consent screen
+  requires an *owned, verified* authorized domain (this is exactly why the
+  Session-7 raw-GitHub stubs could not be used even as Testing
+  placeholders). Registering a domain, verifying ownership in Google
+  Search Console, and wiring it into the consent screen + `constants.ts`
+  takes calendar time — schedule it ahead of the Testing→Production gate,
+  not at it.
+- **The branded-vs-neutral choice interacts with the open rename
+  question.** "Rename-proof" does **not** force committing to "OutboxIQ"
+  publicly — that is the point of choosing a **brand-neutral / stable**
+  host (e.g. a name-independent domain, or GitHub Pages on a permanently
+  named repo): it survives a rebrand precisely *because* it is not the
+  brand. Choosing a **branded** domain (e.g. `outboxiq.com`) is the
+  opposite — it *does* commit to the brand and additionally warrants a
+  **trademark / name-availability check** before purchase (and before any
+  public marketing leans on the name). Decide *brand-neutral vs branded*
+  consciously; only the branded path carries the trademark dependency.
+- This sits upstream of the legal-doc *drafting* deferral: the **hosting
+  URL / domain decision** can (and given lead time, should) be settled
+  before the docs themselves are written.
 
 A future *optional* code task (deliberately **not** done in Session 7 to
 keep it focused, owner-directed): centralise the brand display name into a

@@ -918,6 +918,69 @@ that preceded the §5.3.5/§5.4 build. They qualify; Entries 26 and 27.
   written guardrail and surfaces the single place it leaks — long before
   launch pressure makes it costly.
 
+## Entry 31 — Locking "refresh tokens live on the backend" before Session 8 could decide it under pressure
+
+- **Session:** 7 close-out → pre-Session-8 (a documents-only architectural
+  lock; not new Session-7 build work — sits alongside Entries 28–30).
+- **Moment:** Session 7 deferred the OAuth flow to Session 8 with "where
+  do tokens live (PKCE-in-extension vs server-side exchange)?" left as an
+  open question for Session 8's pre-implementation review. Before that
+  review, the owner stepped in to settle it in calm.
+- **My input (owner):** Directed **Option B** — refresh tokens live only
+  on the backend, per-user-encrypted, obtained via server-side
+  authorization-code exchange; the extension never stores a refresh token
+  and PKCE-in-extension (Option A) is explicitly rejected. Supplied the
+  full five-point rationale (Unschedule-on-Reply structurally needs a
+  backend refresh token; §7.3.4 already specifies exactly this; the
+  privacy story; one CASA-audited surface; enterprise/GDPR posture) and
+  the explicit instruction to encode it across PRD/CLAUDE/PRE_LAUNCH and
+  to expand the roadmap to three sessions (8 backend+OAuth, 9 cascade,
+  10 UI).
+- **What Claude Code would have done without it:** Session 8 would have
+  opened with "where do tokens live?" as a live question and very likely
+  resolved it **mid-build, under implementation pressure**, in favour of
+  whichever option Claude led with. The end answer might well have been
+  the same (Option B is the spec-consistent choice), but the *reasoning*
+  would not have been recorded with the depth later work needs (CASA
+  prep, enterprise security reviews). **Honest credit split (Entry 17):**
+  the decision, its A-vs-B weighing, and the rationale were the **owner's
+  — brought whole**, not produced by Claude in this round (do not inflate
+  this: the prompt itself contained the analysis). Claude's load-bearing
+  contributions were *upstream and downstream*, not the choice itself:
+  (a) the Session-7 Entry-29 analysis that `getAuthToken` cannot deliver
+  refresh tokens → the Web-application client, which is the technical
+  precondition Option B rests on; (b) this close-out review surfacing two
+  implications the owner's directive did **not** enumerate — that a
+  backend outage now also degrades the client-only Calendar/People
+  features (broadening §6.7's trigger, captured in the §7.5 amendment),
+  and that "add OAuth token management to the backend" had to be framed
+  so it does not read as reversing the Entry-26 single-purpose narrowing.
+  Owner forced and decided; Claude supplied the precondition and hardened
+  the record. Neither did the other's part.
+- **Outcome:** PRD §7.5 (Option B, supersedes the split-storage wording),
+  §7.3.1 (one-purpose-incl-OAuth-infra framing), §7.3.3 (`/auth/exchange`,
+  `/auth/token`, `/auth/revoke`), §7.3.4 (refresh-token-backend-exclusive
+  confirmation) amended; CLAUDE.md Architecture + "Google Cloud / OAuth"
+  (locked, with the 8/9/10 split and a §5.1.3 Calendar-amendment tracking
+  marker); PRE_LAUNCH Infrastructure + "Naming / rebrand readiness"
+  (domain lead-time/trademark) updated; `backend/README.md` refined to
+  match (a forward-looking doc the prompt did not name — flagged). The
+  Entry-19 lesson applied **successfully**: the decision was made in calm,
+  not under build pressure.
+- **Artifact:** This entry; PRD §7.5/§7.3.1/§7.3.3/§7.3.4 amendments;
+  `CLAUDE.md` "Google Cloud / OAuth" + Architecture; `PRE_LAUNCH_CHECKLIST.md`
+  Infrastructure + "Naming / rebrand readiness"; `backend/README.md`;
+  `notes/session-7-summary.md` (deferred-scope update).
+- **Lesson (for coaching):** The decisions most worth taking off the
+  critical path are the architectural ones a future session would
+  otherwise make mid-build. Pulling "where do tokens live?" into calm
+  review didn't change the likely answer — it changed whether the
+  *reasoning* was recorded at the depth that audits, enterprise reviews,
+  and future architecture will need. And split credit precisely: bringing
+  a decision whole is a different contribution from creating the
+  precondition it rests on or surfacing its unstated implications — a log
+  that blurs them teaches the wrong lesson.
+
 ---
 
 *New entries are appended at every session close-out, alongside the session

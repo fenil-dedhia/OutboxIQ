@@ -179,3 +179,40 @@ token storage/refresh design, where the cascade lives, the
 `extension-key.pem` (the extension's signing identity) is `*.pem`-gitignored
 on the owner's machine — required to be kept; losing it only matters if a
 signed `.crx` with this identity is ever needed.
+
+## g. Post-close-out addendum — OAuth token architecture locked (Entry 31)
+
+> A documents-only owner-directed lock made **after** the Session-7
+> close-out above, before Session 8. The historical sections a–f are left
+> intact (accurate record of Session-7-end state); this addendum is the
+> **superseding forward-looking record** for the deferred scope (the
+> session-6-summary precedent).
+
+- **Decision:** refresh tokens live **only on the backend**,
+  per-user-encrypted, via **server-side authorization-code exchange
+  (Option B)**; the extension never stores a refresh token;
+  PKCE-in-extension (Option A) is **rejected** — Session 8's review does
+  **not** reopen it. Rationale + counterfactual: owner-decisions-log
+  **Entry 31**. Encoded in PRD §7.5/§7.3.1/§7.3.3/§7.3.4, CLAUDE.md,
+  PRE_LAUNCH, `backend/README.md`.
+- **Roadmap re-split (supersedes §a/§d/§f "Session 8 = Phase 3 / cascade"
+  for the forward record):**
+  - **Session 8** — backend skeleton (Fly.io EU + Hono + Supabase EU +
+    per-user-key encryption) **+** OAuth server-side exchange **+**
+    refresh-token storage. End state: OAuth works end-to-end through the
+    backend. **The backend must stand up before OAuth can be tested E2E.**
+  - **Session 9** — Calendar (user timezone) + People + Workspace
+    Directory + recipient cache + the `resolveRecipientTimezone()`
+    contract. **Must amend PRD §5.1.3** when the Calendar source is wired
+    (Entry-6 marker, also in CLAUDE.md — answers the owner's Session-7
+    "will the §5.1.3 amendment be forgotten?" concern with a durable
+    marker, not summary memory).
+  - **Session 10** — Optimize-for-recipient UI in the §5.3 modal.
+- **Implications surfaced in this lock (not in the owner's directive):**
+  (1) a backend outage now also degrades client-only Calendar/People to
+  their existing §6.7 fallbacks (browser tz / manual) — §7.5 amendment;
+  (2) `extension/src/lib/oauth-config.ts` comments still float
+  "PKCE … Phase 3 decision" — a **stale code comment** (no logic, not
+  launch-affecting) to correct when Session 8 first touches that file
+  (out of scope for this documents-only lock); (3) `backend/README.md`
+  was refined for consistency though the directive didn't name it.
