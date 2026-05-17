@@ -52,7 +52,8 @@ Each chunk its own commit (no bundling):
    discipline.
 
 Final: typecheck/lint clean, **57 tests pass**, prod build OK, sw-loader
-chunk correct, tree clean & pushed.
+chunk correct, tree clean. All committed locally; **push pending owner
+confirmation** (not pushed yet).
 
 ## Decisions / deviations
 
@@ -149,7 +150,8 @@ chunk correct, tree clean & pushed.
 
 ## Repo state at session end
 
-- All work **committed and pushed**; `main` == `origin/main`, tree clean.
+- All work **committed locally**, tree clean; **push pending owner
+  confirmation** (`main` is ahead of `origin/main` until then).
 - typecheck / lint / **57 tests** / build / sw-loader all green.
 - §5.5 (Schedule-send path) implemented; error boundary + multi-compose
   safety net in; PRD/CLAUDE.md synced; owner-decisions log current.
