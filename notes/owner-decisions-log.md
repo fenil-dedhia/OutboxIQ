@@ -488,6 +488,74 @@ recorded in `CLAUDE.md` so future sessions maintain it automatically.
   be documented and deferred; a bug that silently produces the wrong result
   must first be made loud or made safe — never just written down.
 
+## Entry 19 — Locking §5.5 as a soft warning *before* the build
+
+- **Session:** 5
+- **Moment:** Session 5 planning, before any §5.5 code. The PRD calls the
+  feature "Auto-Reschedule on Outside Working Hours" and §5.5.2 lists a
+  primary "Schedule for [Next Working Day]" action plus an auto-suppress
+  checkbox.
+- **My input:** Pre-emptively locked the interaction model as a **soft
+  warning** — three explicit choices (Reschedule / Send anyway / Cancel),
+  never a hard block, never a silent auto-snap, surface the absolute-limit
+  violation when both fire — and required it recorded in CLAUDE.md *before*
+  planning, "not have it surface as a decision during build." Later refined
+  the snap target (Q3): absolute violations snap to the same-day boundary,
+  not next-working-day, because "absolute limits are clock-time rules, not
+  day-of-week rules — the user picked their day deliberately."
+- **What Claude Code would have done without it:** The PRD's name
+  ("Auto-Reschedule"), the §5.5.2 primary action, and the auto-suppress
+  checkbox all point an implementer toward auto-snap-with-a-toggle. Claude
+  would plausibly have built the literal §5.5.2 (recommended action primary,
+  suppress-in-future checkbox) — defensible spec-following, but it bakes in
+  the silent-shift behaviour the owner considers a trust violation. The
+  snap-target subtlety (same-day vs next-working-day for *absolute*
+  violations) is exactly the kind of thing that surfaces mid-build as an
+  ambiguous decision made under implementation pressure.
+- **Outcome:** Locked decision recorded pre-build (`ce5e97f`); §5.5 shipped
+  as the soft warning (`0921d26`); PRD §5.5.1/.2/.3 amended to match
+  (`c86e424`) rather than left to contradict the code (Entry-6 discipline).
+  No build-time re-litigation occurred — the lock did its job.
+- **Artifact:** `CLAUDE.md` "Locked product decisions"; commits `ce5e97f`,
+  `0921d26`, `c86e424`; PRD §5.5 amendments; `notes/session-5-summary.md`.
+- **Lesson (for coaching):** The decisions most worth making are the ones
+  you make *before* the work, in calm, not the ones forced on you mid-build
+  by the code. If a spec's defaults encode a behaviour you'd object to,
+  override it explicitly and in writing up front — don't let "follow the
+  spec" smuggle it in.
+
+## Entry 20 — Catching a paternalistic rule in my own approved plan
+
+- **Session:** 5
+- **Moment:** Implementing the agreed validation prerequisite. The approved
+  plan (Claude's own, owner-signed-off) said: add a "must have ≥1 working
+  day enabled" hard rule so §5.5.3's next-working-day search is well-defined.
+- **My input:** Stopped implementation and surfaced that the *approved
+  plan itself* was wrong — a ≥1-day hard-block forbids a legitimate
+  "absolute-limits-only, no soft preference" configuration and is the same
+  config-layer paternalism the soft-warning lock rejects — then chose
+  "treat zero days as no soft constraint" and had §5.5 handle it instead.
+- **What Claude Code would have done without it:** This one is honest in
+  Claude's favour and the owner's both: Claude *did* catch its own plan's
+  flaw and surface it rather than build the approved-but-wrong thing — the
+  "surface, don't act" rule (Entry 15) firing on Claude's *own* plan, not
+  just on scope creep. But the call to accept the legitimacy of an
+  absolute-only config (rather than, say, hard-blocking and adding a UI
+  hint) was the owner's. Without the owner the most likely path is Claude
+  builds the approved hard-block, because deviating from an
+  owner-approved plan needs explicit re-clearance — which is precisely
+  what surfacing obtained.
+- **Outcome:** No hard-block added; `validateWorkingHours` unchanged;
+  defense-in-depth went to `completeOnboarding` instead; §5.5 calc treats
+  zero days as soft-constraint-inactive (`eac9218`, `29610a5`). PRD §5.5.3
+  amendment documents the zero-days semantics.
+- **Artifact:** Commits `eac9218`, `29610a5`; PRD §5.5.3 amendment;
+  `notes/session-5-summary.md` "surfaced-and-corrected".
+- **Lesson (for coaching):** An approved plan is not immune from the
+  "surface, don't act" rule — if you discover *your own signed-off plan*
+  is wrong while building it, stop and re-clear, don't loyally implement
+  the mistake. Plan approval buys direction, not infallibility.
+
 ---
 
 *New entries are appended at every session close-out, alongside the session
