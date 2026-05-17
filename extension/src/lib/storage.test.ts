@@ -8,6 +8,7 @@ import {
   isOnboardingComplete,
   saveOnboardingDraft,
   setLastScheduled,
+  WEEKDAYS,
 } from "./storage";
 import { PRIVACY_POLICY_VERSION, SCHEMA_VERSION } from "./constants";
 
@@ -57,6 +58,36 @@ describe("completeOnboarding (PRD §5.1.4)", () => {
     // Draft is cleared so a finished flow can't be "resumed".
     const clearedDraft = await getOnboardingDraft();
     expect(clearedDraft.stepIndex).toBe(0);
+  });
+
+  it("rejects invalid working hours (defense in depth, commits nothing)", async () => {
+    const base = createDefaultDraft();
+    const draft = {
+      ...base,
+      consentChecked: true,
+      workingHours: {
+        ...base.workingHours,
+        absoluteEarliest: "19:00",
+        absoluteLatest: "07:00", // ceiling before floor → invalid
+      },
+    };
+    await expect(
+      completeOnboarding(draft, PRIVACY_POLICY_VERSION),
+    ).rejects.toThrow(/working hours are invalid/i);
+    expect(await isOnboardingComplete()).toBe(false);
+  });
+
+  it("accepts zero enabled working days (absolute-limits-only is valid)", async () => {
+    const base = createDefaultDraft();
+    const workingHours = { ...base.workingHours };
+    for (const d of WEEKDAYS) {
+      workingHours[d] = { ...workingHours[d], enabled: false };
+    }
+    await completeOnboarding(
+      { ...base, consentChecked: true, workingHours },
+      PRIVACY_POLICY_VERSION,
+    );
+    expect(await isOnboardingComplete()).toBe(true);
   });
 });
 

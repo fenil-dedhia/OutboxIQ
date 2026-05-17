@@ -273,6 +273,15 @@ export async function completeOnboarding(
   draft: OnboardingDraft,
   privacyPolicyVersion: string,
 ): Promise<void> {
+  // Defense in depth: App.tsx disables "Finish Setup" on invalid hours, but
+  // the invariant belongs with the data write, not one UI path — §5.5 will
+  // enforce against these values, so a non-UI caller or a regression must
+  // never be able to commit invalid working hours into the real state.
+  // (Zero enabled days is NOT invalid — that's a legitimate
+  // absolute-limits-only config; §5.5 treats it as no soft constraint.)
+  if (!isWorkingHoursValid(draft.workingHours)) {
+    throw new Error("Cannot complete onboarding: working hours are invalid.");
+  }
   const now = new Date().toISOString();
   const state = await getState();
   const next: OutboxIQState = {
