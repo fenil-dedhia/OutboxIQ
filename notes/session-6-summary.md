@@ -150,10 +150,58 @@ locked protocol, not a trajectory change. The `armSuppress`-too-blunt
 near-miss is a *Claude*-side process residual (logged in §f above), not an
 owner-decisions entry per that file's defined purpose.
 
+> **Superseded at close-out (see §h):** the *§5.5.1 work itself* still has
+> no entry (the reasoning above stands), but the close-out review produced
+> **two** owner-driven, trajectory-changing scope decisions —
+> **Entries 26 (Maps removed) and 27 (multi-compose reframed)**. The
+> owner-decisions-log now carries both; this section's "no entries this
+> session" applies only to the §5.5.1 implementation, not to the session.
+
+## h. Close-out addendum — two owner scope-reduction decisions (Decisions 1 & 2)
+
+After the §5.5.1 shipment, a calm pre-§5.3.5/§5.4 review produced two
+owner-driven, trajectory-changing decisions. Documents-only; no feature
+code or test changes.
+
+- **Decision 1 — Google Maps APIs removed from product scope (permanent,
+  not a v2 deferral).** The §5.4.1 geocode/timezone steps only fired on a
+  single-digit % of lookups (People API returns an address but no usable
+  timezone); manual selection cached forever covers that, and free
+  Workspace Directory covers the high-value internal case. Backend is now
+  **single-purpose** (Unschedule-on-Reply). PRD §5.4.1/§5.4.3/§6.1.1/
+  §7.3.1/§7.3.3/§7.4, CLAUDE.md, README, PRE_LAUNCH amended. Commit
+  `2a89c81`. Owner-decisions-log **Entry 26** (honest credit split: the
+  owner asked "what does Maps do here?"; the hit-rate/cost analysis was
+  Claude's). Also fixed a surfaced unrelated staleness (authorised): the
+  §5.3.5 note's "(built Session 6)" → "a future session"; and a
+  *pre-existing* PRD self-contradiction (line 16 vs §7.3.1) was resolved
+  as a side effect.
+- **Decision 2 — multi-compose full fix reframed launch-blocking → v2
+  deferral.** The safety net already degrades gracefully (native Gmail
+  handles the correct email); multi-compose is uncommon; the full fix is
+  a large investment for a small gain. Argued in PRE_LAUNCH's "v1 vs. v2
+  decisions" (Entry 22 discipline). PRD §5.5.1 amendment + CLAUDE.md +
+  PRE_LAUNCH amended. Commit `33c79ac`. Owner-decisions-log **Entry 27**
+  (explicitly a refinement with more context, **not** a correction of the
+  correct-at-the-time Session 5 call).
+
+> **Supersedes, for the forward-looking record, this summary's earlier
+> launch-blocking / Maps references** (§d, §f, §g and the original
+> Session-7 pointer): those remain as the accurate record of the state
+> *during* the §5.5.1 work; the forward-looking truth is the two decisions
+> above. Per the close-out constraint, historical text was not rewritten —
+> this addendum is the superseding layer.
+
 ## Repo state at session end
 
-All work committed. typecheck / lint / `format:check` / **85 tests** /
-build / sw-loader all green. `backend/` still untouched. **Session 7
-should open with a hands-on real-extension smoke test of §5.5.1** (Entry-10
-discipline — green jsdom ≠ verified), then §5.3.5/§5.4 (OAuth + People API
-+ Maps proxy) or the multi-compose full fix (launch-blocking).
+All work committed (5 commits: `cf8c452`→`d2922bd` probe+§5.5.1+§5.5.1
+close-out from the earlier part of the session; `2a89c81`, `33c79ac`, plus
+this log/summary commit for Decisions 1 & 2). typecheck / lint /
+`format:check` / **85 tests** / build / sw-loader all green (documents-only
+changes did not touch `extension/`). `backend/` still untouched and now
+**single-purpose by decision**. **Session 7 should open with a hands-on
+real-extension smoke test of §5.5.1** (Entry-10 discipline — green jsdom ≠
+verified), then **§5.3.5/§5.4** against the now-updated PRD (OAuth + People
+API + Workspace Directory — **no Maps**; the simplified cache → People →
+Directory → manual cascade). The multi-compose full fix is **no longer a
+launch blocker** — it is a v2 deferral, not Session-7 scope.

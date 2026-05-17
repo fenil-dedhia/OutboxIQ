@@ -713,19 +713,99 @@ recorded in `CLAUDE.md` so future sessions maintain it automatically.
   under *all* plausible models; robustness-under-uncertainty beats a
   better guess, because the next guess can be wrong too.
 
-## Session 6 — no entries this session.
+## Session 6 — note on the §5.5.1 work itself (no entry), then Entries 26–27
 
-Session 6 executed the already-locked Entry-2 / Entry-23 probe-gating
-discipline (build the Send-button probe, clear the gate against live Gmail,
-then implement §5.5.1). No new owner judgment redirected the build. The
-owner's faithful hands-on probe runs — including reporting the alarming
-intermediate "it sent" rather than mislabelling it, which is exactly what
-let the gate catch the too-blunt one-shot diagnostic — were *execution of
-the locked protocol*, not a trajectory change. The `armSuppress`-too-blunt
-near-miss is a Claude-side process residual (recorded honestly in
-`notes/session-6-summary.md` §f), not an owner-decisions entry per this
-file's defined purpose. Recorded explicitly per the maintenance habit; not
-manufactured into an entry.
+The §5.5.1 implementation that was the body of Session 6 produced **no
+owner-decisions entry**: it executed the already-locked Entry-2 / Entry-23
+probe-gating discipline (build the Send-button probe, clear the gate
+against live Gmail, then implement). No new owner judgment redirected that
+build. The owner's faithful hands-on probe runs — including reporting the
+alarming intermediate "it sent" rather than mislabelling it, which is
+exactly what let the gate catch the too-blunt one-shot diagnostic — were
+*execution of the locked protocol*, not a trajectory change. The
+`armSuppress`-too-blunt near-miss is a Claude-side process residual
+(recorded honestly in `notes/session-6-summary.md` §f), not an
+owner-decisions entry per this file's defined purpose.
+
+The two decisions below are **separate** from that §5.5.1 work — owner-
+driven, trajectory-changing scope reductions made in the same calm review
+that preceded the §5.3.5/§5.4 build. They qualify; Entries 26 and 27.
+
+## Entry 26 — Removing Google Maps from product scope by asking what it was for
+
+- **Session:** 6 (close-out, pre-§5.3.5/§5.4 review)
+- **Moment:** Prepping the §5.3.5/§5.4 "Optimize for recipient" work.
+  Claude Code surfaced the Google Maps Geocoding + Time Zone APIs as part
+  of that prep — as a paid third-party dependency behind a backend proxy —
+  carrying it forward as a given because the PRD specified it.
+- **My input:** Pushed back with, in effect, "what does Maps actually do
+  here?" — refusing to build the dependency before its necessity was
+  established. The resulting decision: **remove** Maps from scope entirely
+  (not defer to v2), eliminating a paid API, the backend's entire second
+  purpose, the `POST /timezone/resolve` endpoint, two OAuth-adjacent
+  concerns, and an estimated session of proxy work.
+- **What Claude Code would have done without it:** Carried Maps forward as
+  PRD-specified scope and built §5.4.1 steps 3–4 + the backend proxy in
+  Session 7 — faithfully implementing the spec, which is the correct
+  default for a careful agent. **Honest split of credit (Entry 17 rule):**
+  the *analysis* that justified removal — the single-digit hit-rate
+  estimate, the cache-forever mitigation, the free-Workspace-Directory
+  alternative, the cost/complexity argument — was Claude Code's, produced
+  in response to the owner's question. The owner's contribution was the
+  *question* and the *decision*; Claude Code's was the *analysis*. Neither
+  gets all the credit: without the question the analysis never runs;
+  without the analysis the question doesn't resolve into a confident
+  permanent removal.
+- **Outcome:** Maps removed permanently. Backend is single-purpose
+  (Unschedule-on-Reply). PRD §5.4.1/§5.4.3/§6.1.1/§7.3.1/§7.3.3/§7.4,
+  CLAUDE.md, README, PRE_LAUNCH amended (commit `2a89c81`). A pre-existing
+  PRD self-contradiction (line 16 "only … Unschedule-on-Reply" vs §7.3.1
+  "two purposes") was resolved as a side effect.
+- **Artifact:** Commit `2a89c81`; PRD §5.4.1 + §7.3.1 amendments;
+  `CLAUDE.md` Architecture (`backend/` "exactly one reason");
+  `notes/session-6-summary.md` close-out addendum.
+- **Lesson (for coaching):** A spec line is not a justification. Before
+  building a costly external dependency, ask "what does this actually buy,
+  and how often?" — a single question can delete a paid API, a backend
+  purpose, and a session of work. And split credit honestly: the question
+  and the analysis are different contributions; a log that hands either
+  one the whole win teaches the wrong lesson.
+
+## Entry 27 — Reframing the multi-compose deferral with an argument, not a status change
+
+- **Session:** 6 (close-out, same review)
+- **Moment:** Reviewing launch blockers before §5.3.5/§5.4. The
+  multi-compose "full fix" was carried (Session 5) as **launch-blocking**.
+- **My input:** Reframed it as a **v2 deferral, not launch-blocking** —
+  and required the deferral be *argued in writing* in the canonical
+  "v1 vs. v2 decisions" place (Entry 22 discipline: an argued deferral
+  holds, an unargued one gets relitigated), explicitly framing this as a
+  refined decision with more context, **not** a correction of the Session
+  5 call (which was right given what was known then).
+- **What Claude Code would have done without it:** Kept the
+  launch-blocking label — it was a documented prior decision; an agent
+  respecting locked decisions does not silently downgrade a launch
+  blocker. The honest counterfactual is not "Claude would have built the
+  wrong thing" (the safety net already exists and is correct); it is that
+  the blocker would have sat there *unargued*, and a future session — or a
+  future "we're near launch, let's clear blockers" pass — would have
+  either felt compelled to spend a session on the full fix or downgraded
+  it without the reasoning written down. The owner's contribution was the
+  judgment that the cost/benefit doesn't justify v1 work **and** the
+  discipline to argue it rather than just relabel it.
+- **Outcome:** Reframed across PRE_LAUNCH (section + a new argued
+  "v1 vs. v2" entry), CLAUDE.md, and the PRD §5.5.1 amendment (commit
+  `33c79ac`). The Session 5 launch-blocking framing is preserved in the
+  historical summaries as accurate-at-the-time.
+- **Artifact:** Commit `33c79ac`; `PRE_LAUNCH_CHECKLIST.md` "Multi-compose
+  targeting" + "v1 vs. v2 decisions"; this entry; Entry 18 (the original
+  silent-vs-visible-bug decision this refines) and Entry 22 (the pattern
+  this applies).
+- **Lesson (for coaching):** Downgrading a prior "must-fix" is legitimate
+  — but only if you *argue* it, not just relabel it, and only if you say
+  plainly that it's a refinement with more context, not a correction of
+  the earlier call. An unargued downgrade reads as drift and gets
+  relitigated; an argued one, placed where deferrals are tracked, holds.
 
 ---
 
