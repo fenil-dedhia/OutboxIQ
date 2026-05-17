@@ -556,6 +556,122 @@ recorded in `CLAUDE.md` so future sessions maintain it automatically.
   is wrong while building it, stop and re-clear, don't loyally implement
   the mistake. Plan approval buys direction, not infallibility.
 
+## Entry 21 — Warnings fire for unintended actions, not the core use case
+
+- **Session:** 5.5
+- **Moment:** Hands-on use of the Session 5 §5.5 build. It warned on *every*
+  out-of-working-hours schedule — including the product's entire reason to
+  exist: deliberately scheduling 3 AM local to land in a recipient's 9 AM.
+- **My input:** Diagnosed this as a UX miscalibration, not a bug, and
+  pivoted the design: **Schedule Send warns on absolute limits only;**
+  working hours stop triggering the Schedule Send modal (kept for the
+  regular-Send trigger and future §5.3.5). Reasoning: warning a user for
+  doing exactly what the product enables trains them to reflex-dismiss the
+  modal, destroying its value for the absolute-limit cases that matter.
+- **What Claude Code would have done without it:** Claude built §5.5 to the
+  literal PRD ("a time outside their working hours" → warn) and it passed
+  its own review — 57 green tests, locked-pattern modal, PRD-amended. No
+  automated check could surface this: the code did exactly what the spec
+  said. It took the owner *using* the product on its own core use case to
+  see that the spec itself was miscalibrated. Claude would have carried the
+  over-warning forward.
+- **Outcome:** One-predicate narrowing (`fbad42d`), zero calc ripple
+  (`checkWorkingHours` still computes both; only the consumer narrows); PRD
+  §5.5 amended, CLAUDE.md locked. The working-hours branch explicitly
+  preserved for §5.5.1/§5.3.5 with a CONSUMERS doc-block so it isn't later
+  deleted as dead.
+- **Artifact:** Commit `fbad42d`; PRD §5.5 amendment; `CLAUDE.md` "Locked
+  product decisions"; `notes/session-5.5-summary.md`.
+- **Lesson (for coaching):** A feature that fires on the user's *intended*
+  action isn't protecting them — it's noise that teaches them to ignore the
+  signal. Calibrate alerts against the core use case first; "the spec said
+  to warn" is not the same as "warning here helps."
+
+## Entry 22 — Refusing a network-effect design before it was ever coded
+
+- **Session:** 5.5
+- **Moment:** Scoping forward features. Working-hours sharing / reply-time
+  prediction / cross-user send-time coordination are attractive
+  network-effect ideas.
+- **My input:** Explicitly deferred all of them to v2 and recorded *why*
+  in PRE_LAUNCH: gating single-user optimization on mutual adoption would
+  compromise the solo experience for a sharing incentive — bad B2B SaaS
+  design; the product must be fully valuable to user #1 with no other
+  users present.
+- **What Claude Code would have done without it:** This is a clean
+  owner-judgment entry — the idea was never in a plan or the code, so
+  Claude had nothing to build or not-build. The value was *pre-empting*:
+  naming the anti-pattern and writing it into the launch checklist so a
+  future session (or a future enthusiastic "while we're here") cannot
+  reintroduce adoption-gated optimization without confronting the recorded
+  reasoning. Without it, the idea stays un-adjudicated and resurfaces.
+- **Outcome:** PRE_LAUNCH "v1 vs. v2 decisions" section created
+  (`5fe1536`); single-user experience explicitly protected as a v1
+  invariant.
+- **Artifact:** `PRE_LAUNCH_CHECKLIST.md` "v1 vs. v2 decisions"; commit
+  `5fe1536`.
+- **Lesson (for coaching):** The cheapest time to kill a bad design is
+  before it is a plan. Write down the *reasoning* for a deferral, not just
+  the deferral — an un-argued "later" gets relitigated; an argued one
+  holds.
+
+## Entry 23 — Pulling §5.5.1 forward, then accepting the split
+
+- **Session:** 5.5
+- **Moment:** Deciding when to build the regular-Send (§5.5.1) trigger.
+- **My input:** Pushed to pull §5.5.1 *forward* into this work rather than
+  leave it loosely "its own future session" — reasoning that the full
+  trigger surface (Schedule Send + regular Send) is one UX story and should
+  be handled holistically while context is fresh, before more dependent
+  code lands.
+- **What Claude Code would have done without it:** Left §5.5.1 as the
+  vaguely-deferred item Session 5 had made it. The owner's push forced the
+  question "is this one session?" — and the honest answer (which Claude
+  then gave, and the owner accepted) was *no*: §5.5.1 is probe-gated
+  (unverified primary-Send DOM) and the single highest-criticality change
+  in the product (a bug = users cannot send email), so it earns isolation.
+  The owner's instinct (handle holistically, soon) and the sizing reality
+  (isolate the dangerous, unverified piece) were reconciled into a
+  back-to-back 5.5 → 5.6 split with zero rework.
+- **Outcome:** §5.5.1 scheduled as its own Session 5.6 with a probe gate;
+  5.5 shipped the independent pieces (bug fixes, narrowing, copy, docs).
+  The "holistic" goal is preserved at the program level; the risk is
+  isolated.
+- **Artifact:** `notes/session-5.5-summary.md` (split + 5.6 sequence);
+  `CLAUDE.md` Repository status.
+- **Lesson (for coaching):** "Do it all together while it's fresh" and
+  "isolate the riskiest, least-known piece" can both be right — the
+  resolution is sequencing (adjacent sessions), not cramming. Pulling work
+  forward is good; pulling *risk* forward into a crowded session is not.
+
+## Entry 24 — Product changes propagate to copy
+
+- **Session:** 5.5
+- **Moment:** After the §5.5 narrowing + §5.5.1 split, the onboarding
+  working-hours helper still described the *old* behaviour ("a soft daily
+  preference") — accurate before the pivot, stale after it.
+- **My input:** Required the surrounding language move with the behaviour:
+  the helper now states that clicking Send outside working hours triggers a
+  gentle confirm. Also demanded a check of the transparency screen (the
+  outcome there: the verbatim PRD §5.1.3 bullet was *still* accurate, so it
+  was deliberately left unchanged — propagation means *re-checking* copy,
+  not reflexively rewriting it).
+- **What Claude Code would have done without it:** Shipped the behaviour
+  change with the onboarding copy untouched. Copy drift is invisible to
+  tests and to the implementer (the words still "read fine"); only a reader
+  holding the new mental model notices the mismatch. It would have sat
+  there until a confused user hit it — small, but exactly the kind of
+  detail that erodes trust by accumulation.
+- **Outcome:** Helper copy updated (`1bf9f0d`); transparency bullet
+  re-verified and intentionally kept (no PRD §5.1.3 amendment needed —
+  contrast Entry 6, where deviation *did* require amending the spec).
+- **Artifact:** Commit `1bf9f0d`; `notes/session-5.5-summary.md` (H).
+- **Lesson (for coaching):** When a feature's behaviour shifts, its
+  surrounding language is part of the change, not an afterthought — a
+  codebase whose copy describes the old behaviour ships users a wrong
+  mental model. "Propagate to copy" also means *re-confirm*, not blindly
+  rewrite: some copy survives the change correct.
+
 ---
 
 *New entries are appended at every session close-out, alongside the session
