@@ -981,6 +981,132 @@ that preceded the §5.3.5/§5.4 build. They qualify; Entries 26 and 27.
   precondition it rests on or surfacing its unstated implications — a log
   that blurs them teaches the wrong lesson.
 
+## Entry 32 — Splitting OutboxIQ into Free v1 and Premium v1 tiers before Session 8 could build the backend
+
+- **Session:** 7 close-out → pre-Session-8 (a documents-only scope/tier
+  decision; sits *after* Entry 31, same day, 2026-05-17 — not new
+  Session-7 build work).
+- **Moment:** Session 7 had locked the Option-B token architecture
+  (Entry 31) and set Session 8 to start the **backend skeleton + OAuth
+  server-side exchange** — because, under the then-operative assumption,
+  Unschedule-on-Reply (the backend's reason to exist) was in v1's only
+  tier, so OAuth couldn't work end-to-end without the backend. Before
+  that build began, the owner asked the load-bearing strategic question:
+  **"does Optimize-for-recipient (§5.3.5) actually require a backend?"**
+- **My input (owner):** Split OutboxIQ into **two tiers of the same
+  generation**: **Free v1** — extension-only, no backend, free, the
+  public-launch target — and **Premium v1** — extension + backend, paid,
+  built later, carrying Unschedule-on-Reply and the whole backend. The
+  reasoning: implementation work across Sessions 5–7 had made the
+  *cost-to-ship of the full scope* concrete (CASA Tier 2 — several-
+  thousand-USD, 4–8 weeks; backend infra; per-user encryption; ongoing
+  hosting; EU compliance posture), while the PRD's core value
+  proposition — recipient-aware Schedule Send with Optimize-for-recipient
+  — is fully deliverable on-device. A leaner Free v1 validates demand
+  *before* that investment. Two sub-decisions flowed from it: **(a)**
+  retain the Session-7 Web-application OAuth client for Free v1 (with
+  `access_type=online`, no refresh token, no backend); **(b)** add two
+  informational Gmail-API pre-launch probes to validate a *potential*
+  future inbox-organization direction before naming/positioning is
+  finalized — rather than expand Free v1 scope on intuition.
+- **What Claude Code would have done without it (Entry 17 honesty
+  rule):** Session 8 would have opened and **begun backend
+  implementation for Unschedule-on-Reply** — faithfully executing the
+  Entry-31 lock and the Session-7 roadmap, which is the correct default
+  for an agent respecting locked decisions. That path incurs the full
+  cost-to-ship (CASA Tier 2 alone is 4–8 weeks) and delays any public
+  launch by **months**, to ship a feature whose demand is unvalidated.
+  The honest credit split:
+  - **The implementation work itself surfaced the cost realities.** The
+    PRD was **not "wrong"** — it was written before the cost-to-ship was
+    concrete. Sessions 5–7 *taught* the team what the full scope
+    actually costs by building against it. The spec didn't fail; it was
+    front-loaded before the evidence existed.
+  - **Claude Code's earlier work is foundation, not failure.** Sessions
+    5–7 built real, valuable features (the §5.5/§5.5.1 enforcement, the
+    verified Schedule Send recipe, the GCP/OAuth foundation). Every
+    architecture decision along the way — including Entry 31's Option B —
+    was **correct for its scope** and remains the binding design *for
+    Premium v1*. The tier split reframes on top of that work; it does
+    not invalidate it (Entry-4 discipline made explicit: locked against
+    drift, not against the new fact that Unschedule-on-Reply is now
+    tier-gated).
+  - **The owner's strategic question was the load-bearing pivot.** "Does
+    Optimize-for-X require a backend?" forced the explicit
+    feature-by-feature examination of *which capability needs which
+    infrastructure* — the analysis that established the backend
+    dependency is isolated to exactly one PRD feature. Claude supplied
+    that mapping in response; the owner supplied the question and the
+    decision. Neither does the other's part (the recurring Entry-26
+    pattern: a question can delete — or here, defer — a whole
+    infrastructure tier).
+  - **A small Entry-25 moment (logged honestly against Claude):** earlier
+    in this conversation Claude initially leaned toward switching from
+    the Web-application OAuth client to a Chrome-extension client for the
+    simpler Free v1 flow. The owner's pushback — *"do we lose
+    anything?"* — forced Claude to re-examine, and it revised: a
+    Chrome-extension client (`getAuthToken`) **cannot let a multi-Google-
+    account user choose which account to authorize**, a real correctness
+    bug for the target users. Claude examined its own guess and corrected
+    it when given the chance; the owner's question is what created the
+    chance. (This is *why* the Web-app client is retained for Free v1 —
+    the multi-account UX, not just the Premium reuse.)
+  - **Framing: this is a tier split, not scope deletion.** Free v1 and
+    Premium v1 are **parallel tiers of the same generation**, not
+    sequential versions and **not "v2"** (which in this repo means a
+    later generation / post-launch additive direction). The deferred
+    design is **preserved verbatim and intact in PRD §13**, explicitly
+    *not* an Entry-26-style permanent removal. This framing is
+    load-bearing for the product's eventual commercial structure (a
+    Free→Premium upgrade, not a forced migration).
+  - **GDPR is not tiered.** Compliance is a regulatory obligation, not a
+    Premium feature; Free v1's lighter posture follows naturally from it
+    processing less personal data (local-first only), not from a
+    decision to "tier compliance" (PRD §6.1 amendment).
+- **Outcome:** Documents-only encoding (no feature code, no test, no GCP
+  change). PRD: new **§13 Premium v1 Scope** (full §5.6 + §7.3 + the
+  Entry-31 §7.5 Option-B design moved verbatim, with §5.6/§7.3 left as
+  stubs); §7.5 rewritten as the Free v1 `access_type=online` model;
+  §11 tier note (§11 = never build, in any tier ≠ §13 = build, Premium
+  tier); dated tier pointers on §1/§2.2/§6.1/§6.5/§6.7/§7.1/§7.4 so the
+  PRD stays internally consistent. CLAUDE.md: Repository status, Source-
+  of-truth docs, Architecture, Locked tech decisions, and a rewritten
+  "Google Cloud / OAuth" (two OAuth models, Free roadmap, updated §5.1.3
+  + stale-comment tracking markers). `PRE_LAUNCH_CHECKLIST.md` retitled
+  to **Free v1** and audited per item; `PREMIUM_LAUNCH_CHECKLIST.md`
+  created (CASA Tier 2, backend infra, online→offline OAuth, backend
+  legal addendum, Free→Premium migration, billing). A new "Pre-launch
+  probes" section captures the two Gmail-API probes with reasoning and
+  fixed sequencing (feature-complete → probes → naming/positioning →
+  hardening). **A flagged refinement of the directive, surfaced not
+  silently implemented (Entry-20/25 discipline):** "CASA Tier 2 → Premium,
+  no longer Free-v1-blocking" is only half-right — Free v1 keeps the
+  restricted Gmail scopes, so *a* CASA assessment (plausibly Tier 1,
+  tier-to-confirm) is **still Free-v1-launch-blocking**; encoded
+  accurately rather than as a launch-blindsiding "no assessment needed".
+- **Artifact:** This entry; PRD §13 + §7.5 rewrite + §1/§2.2/§6/§7/§11
+  tier amendments; `CLAUDE.md` (Repository status, Architecture, Locked
+  tech, "Google Cloud / OAuth"); `PRE_LAUNCH_CHECKLIST.md` (Free v1
+  audit + "Pre-launch probes"); `PREMIUM_LAUNCH_CHECKLIST.md` (new);
+  `notes/session-7-summary.md` forward addendum; `README.md` /
+  `backend/README.md` tier touches. Entry 31 (the preserved Premium
+  design, *not* rewritten), Entry 26 (removal-vs-preservation contrast),
+  Entry 22 (the argued-deferral pattern this applies at scope level),
+  Entry 4 (locked-against-drift-not-new-facts), Entry 17 (the credit-
+  split honesty this entry runs on).
+- **Lesson (for coaching):** Building against a spec is how you learn
+  what the spec actually costs — and the right response to "this is more
+  expensive than the document assumed" is not to cut the feature or push
+  through regardless, but to ask *which part actually carries the cost*
+  and whether the validated-value core can ship without it. A tier split
+  preserves the deferred design (a future build reads it intact) instead
+  of deleting it; it is a different move from removal, and saying which
+  one you're making — in writing, argued, where deferrals are tracked —
+  is what stops it being relitigated. And keep crediting precisely:
+  the implementation that surfaced the cost, the question that forced the
+  examination, and the analysis that answered it are three different
+  contributions; a log that merges them teaches the wrong lesson.
+
 ---
 
 *New entries are appended at every session close-out, alongside the session

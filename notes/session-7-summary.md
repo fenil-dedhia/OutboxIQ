@@ -223,3 +223,66 @@ signed `.crx` with this identity is ever needed.
   launch-affecting) to correct when Session 8 first touches that file
   (out of scope for this documents-only lock); (3) `backend/README.md`
   was refined for consistency though the directive didn't name it.
+
+## h. Post-close-out addendum 2 — Free / Premium tier split (Entry 32)
+
+> A second documents-only owner-directed scope decision, made **after**
+> the Entry-31 addendum (§g) above, still **pre-Session-8**, dated
+> 2026-05-17. Historical sections **a–f** (Session-7-end state) and the
+> §g Entry-31 record are **left intact and accurate**; this addendum is
+> now the **superseding forward-looking record** for the deferred scope
+> and **supersedes the §g/§a/§d/§f "Session 8 = backend skeleton + OAuth
+> exchange" roadmap** (the session-6/§g precedent: don't rewrite history,
+> add a superseding addendum).
+
+- **Decision:** OutboxIQ splits into **Free v1** (extension-only, no
+  backend, free — the public-launch target) and **Premium v1**
+  (extension + backend, paid — a separate later track). Parallel tiers
+  of the **same generation**, **not** sequential versions, **not** "v2".
+  Rationale + honest credit split: `notes/owner-decisions-log.md`
+  **Entry 32**. Encoded in PRD (new **§13** + §7.5 rewrite + §1/§2.2/§6/
+  §7/§11 tier pointers + §5.6/§7.3 stubs), CLAUDE.md, the retitled
+  **Free v1** `PRE_LAUNCH_CHECKLIST.md`, and the new
+  **`PREMIUM_LAUNCH_CHECKLIST.md`**.
+- **Roadmap re-split (supersedes §g's 8/9/10 backend-first plan for the
+  forward record):**
+  - **Session 8 (Free v1)** — **extension-side** OAuth
+    (`launchWebAuthFlow` + `access_type=online` code exchange +
+    access-token storage; **no backend, no refresh token**) + Calendar
+    (user timezone) + People + Workspace Directory + recipient cache +
+    the `resolveRecipientTimezone()` contract. **This replaces §g's
+    "Session 8 = backend skeleton + OAuth server-side exchange", which
+    was correct only under the pre-tier-split assumption.** Entry 31's
+    Option B is **not reopened** — it is preserved verbatim in PRD §13.3
+    as the still-locked **Premium v1** design (Entry-4 discipline).
+  - **Following Free v1 session(s)** — §5.3.5 Optimize-for-recipient UI;
+    then the two Gmail-API pre-launch probes
+    (`PRE_LAUNCH_CHECKLIST.md` "Pre-launch probes") → naming/positioning
+    → Free v1 pre-launch hardening.
+  - **Premium v1 (separate, later — NOT the next work)** — backend
+    skeleton + Option-B server-side exchange + Unschedule-on-Reply;
+    gated by `PREMIUM_LAUNCH_CHECKLIST.md` / PRD §13.
+- **§5.1.3 Calendar-amendment tracking marker — moved earlier, not
+  lost:** the Entry-6 marker (CLAUDE.md "Google Cloud / OAuth") now
+  fires in **Session 8** (the Free v1 session that wires the Calendar
+  timezone source), not Session 9 — the tier split pulled Calendar into
+  the extension-side Session 8.
+- **Flagged refinement of the directive (Entry-20/25 discipline —
+  surfaced, not silently implemented):** "CASA Tier 2 → Premium, no
+  longer Free-v1-blocking" is only half-right. Free v1 keeps the
+  **restricted** Gmail scopes, so *a* CASA assessment (plausibly **Tier
+  1**, tier-to-confirm — itself a Free-v1 pre-launch task) is **still
+  Free-v1-launch-blocking**. Only *Tier 2* (backend + restricted scopes)
+  moved to Premium. Encoded accurately in both checklists rather than as
+  a launch-blindsiding "no assessment needed".
+- **Other contradictions surfaced & resolved (not in the directive):**
+  Free v1's extension-side non-confidential installed-client Client
+  Secret vs PRD §6.5 / the Entry-31 lock (resolved with tier notes +
+  the documented installed-app exception); the Entry-31 "backend outage
+  also degrades Calendar/People" implication is **Premium-v1-only**
+  under the split (Free v1 fetches tokens directly from Google);
+  `extension/README.md` is badly stale for **pre-existing** reasons
+  unrelated to the split — left as-is and flagged, not in-scope to fix
+  here.
+- **Constraint honoured:** documents only — no feature code, no test
+  changes, no GCP changes; build/typecheck/lint/format/tests still green.
