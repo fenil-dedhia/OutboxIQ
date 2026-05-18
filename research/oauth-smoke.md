@@ -54,13 +54,16 @@ is stripped from production builds.
 The built `dist/` is almost certainly fine (MV3 caches the old service
 worker hard). Resolve it deterministically:
 
-**1. Prove the build is good (Terminal, one line):**
+**1. Prove the build is good (Terminal — one short, copy-safe line):**
 
 ```
-cd /Users/fenildedhia/Code/Projects/OutboxIQ/extension && rm -rf dist && npm run build:smoke >/dev/null 2>&1 && SW=$(grep -o 'assets/service-worker.ts-[^"]*' dist/service-worker-loader.js) && (grep -q "OAuth smoke harness ready" "dist/$SW" && echo "✅ BUILD OK — harness is in the service worker ($SW). Any failure now is Chrome caching, not the build." || echo "❌ BUILD BAD — send this to Claude")
+npm --prefix /Users/fenildedhia/Code/Projects/OutboxIQ/extension run smoke:check
 ```
 
-If it prints **✅ BUILD OK**, the folder is correct — do step 2.
+(Do **not** use a hand-pasted multi-command line — it wraps on copy and
+corrupts the check. This script does the clean `build:smoke` and proves
+the harness is in the service-worker chunk.) Expect **✅ BUILD OK**;
+then do step 2.
 
 **2. Hard-reset Chrome (kills the cached worker):**
 

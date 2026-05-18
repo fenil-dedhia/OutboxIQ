@@ -16,6 +16,7 @@ All commands run from `extension/` (the only component with tooling so far; `bac
 - `npm run dev` — Vite dev server with CRXJS hot-reload, for live development against Gmail.
 - `npm run build` — typecheck (`tsc --noEmit`) then production build to `extension/dist/` (the loadable unpacked extension). The DEV-only `__oqAuth` OAuth smoke harness is **stripped** from this build.
 - `npm run build:smoke` — same clean one-shot build **plus** the `__oqAuth` OAuth console harness (`OQ_SMOKE=1` → `vite.config.ts` `define` `__OQ_SMOKE__`). For the owner's hands-on OAuth verification (`research/oauth-smoke.md`). Do **not** use this for the shippable artifact — plain `npm run build` is the ship build (harness absent; verified by grepping `dist/assets` for `__oqAuth`).
+- `npm run smoke:check` — copy-safe self-check (`scripts/check-smoke-build.mjs`): runs a clean `build:smoke` and asserts the `__oqAuth` harness landed in the exact SW chunk `service-worker-loader.js` imports. Prints `✅ BUILD OK` / `❌ BUILD BAD`. Exists because a hand-pasted multi-command verification line wrapped on copy and gave a false negative (Session 8); a short single command can't be corrupted that way.
 - `npm run typecheck` — type-check only, no build.
 - `npm run lint` — ESLint (typescript-eslint + react-hooks + react-refresh; Prettier-compatible).
 - `npm run format` / `npm run format:check` — Prettier (default config) write / check.
