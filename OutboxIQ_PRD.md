@@ -879,10 +879,28 @@ Each API has its own quota and pricing. The plugin must respect rate limits and 
 >   parameter is round-tripped and verified; a mismatch discards the
 >   response.
 > - On expiry the extension re-runs `launchWebAuthFlow` **silently**
->   (`interactive:false`); Chrome re-issues with no UI if the Google
->   session + consent still hold, else it escalates to the interactive
->   screen. Schedule Send itself needs no token — it drives Gmail's own
->   UI (§5.3.5 mechanism).
+>   (`interactive:false`, `prompt=none`); Chrome re-issues with no UI if
+>   the Google session + consent still hold, else it escalates to the
+>   interactive screen. Schedule Send itself needs no token — it drives
+>   Gmail's own UI (§5.3.5 mechanism).
+>
+> > **Entry-6 amendment (2026-05-17 — Session 8, owner-directed; from
+> > Phase-2 hands-on smoke, Entry-10 discipline).** Silent renewal works
+> > **invisibly for a user with a single Google account** signed into
+> > Chrome. For a user with **multiple Google accounts**, access-token
+> > expiry (~1 h) triggers an **account-chooser re-prompt** instead of a
+> > silent renewal: with several accounts and no `login_hint`, Google
+> > refuses to pick one without UI and returns an interaction-required
+> > error, which the extension maps to a clean interactive escalation.
+> > **This is graceful degradation, not a failure mode** — nothing
+> > breaks or blocks; full functionality continues; the user simply
+> > re-picks their account on expiry (and Schedule Send, the core
+> > feature, is unaffected — it uses no token). The user's authorized-
+> > account email — the value needed to pass `login_hint` and make
+> > renewal invisible for multi-account users too — becomes available
+> > through the **People API integration in §5.4 (Phase 3)**; the silent
+> > path incorporates it at that point. Recorded in
+> > `notes/owner-decisions-log.md` (Session 8).
 > - Users revoke access at any time via Google account settings; with no
 >   stored refresh token, revocation simply causes the next token fetch
 >   to fail, degrading to the §6.7 fallbacks.

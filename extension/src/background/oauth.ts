@@ -76,6 +76,16 @@ function buildAuthUrl(
   // interaction_required`, which parseRedirect maps to needs_interactive
   // so getAccessToken cleanly escalates to an interactive prompt.
   p.set("prompt", interactive ? "select_account" : "none");
+  // TODO(Phase 3 — owner-decisions-log Session 8, tracked sub-task):
+  // multi-account users still re-prompt on silent renewal because Google
+  // won't pick an account without a `login_hint`. When Phase 3 People API
+  // resolves the authenticated user's email, add it here on the silent
+  // (`!interactive`) request: `p.set("login_hint", grantedEmail)`. Until
+  // then this is the OWNER-ACCEPTED v1 graceful degradation (PRD §7.5
+  // Entry-6 amendment) — do NOT add an OAuth scope just to get the email
+  // (PRD §6.6 minimal-scopes rule); it comes free from the §5.4 People
+  // work. Wire it from the StoredAuth.grantedEmail field (already in the
+  // shape, currently null).
   return `${OAUTH_AUTH_ENDPOINT}?${p.toString()}`;
 }
 
