@@ -49,6 +49,38 @@ is stripped from production builds.
 
 ---
 
+## If `__oqAuth is not defined` — it's a stale Chrome service worker
+
+The built `dist/` is almost certainly fine (MV3 caches the old service
+worker hard). Resolve it deterministically:
+
+**1. Prove the build is good (Terminal, one line):**
+
+```
+cd /Users/fenildedhia/Code/Projects/OutboxIQ/extension && rm -rf dist && npm run build:smoke >/dev/null 2>&1 && SW=$(grep -o 'assets/service-worker.ts-[^"]*' dist/service-worker-loader.js) && (grep -q "OAuth smoke harness ready" "dist/$SW" && echo "✅ BUILD OK — harness is in the service worker ($SW). Any failure now is Chrome caching, not the build." || echo "❌ BUILD BAD — send this to Claude")
+```
+
+If it prints **✅ BUILD OK**, the folder is correct — do step 2.
+
+**2. Hard-reset Chrome (kills the cached worker):**
+
+- `chrome://extensions` → OutboxIQ card → **Remove**.
+- **Fully quit Chrome** — ⌘Q (not just closing the window).
+- Reopen Chrome → `chrome://extensions` → Developer mode ON →
+  **Load unpacked** → `/Users/fenildedhia/Code/Projects/OutboxIQ/extension/dist`.
+- Click the **service worker** link → DevTools → **Console** tab.
+- On the card, click the **↻ reload** icon once and watch the console.
+
+**3. Look for the marker FIRST** (before typing anything):
+
+> `[OutboxIQ] ✅ OAuth smoke harness ready — type __oqAuth in this console`
+
+- **Marker present** → the new code is running; proceed to the tests.
+- **Marker absent** (even after the ↻ reload, with ✅ BUILD OK from
+  step 1) → you loaded a different folder or profile: re-check the
+  Load-unpacked path is exactly `…/extension/dist`, and that you don't
+  have a second OutboxIQ in another Chrome profile. Send a screenshot.
+
 ## Tests (run in order; copy-paste each line)
 
 ### A. First authorization (interactive — the consent screen)
