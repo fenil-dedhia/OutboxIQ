@@ -113,10 +113,43 @@ The onboarding flow opens automatically on install, and again on browser startup
 > - Cancel scheduled emails when someone replies, so you never send a stale message.
 
 **Step 2: Timezone confirmation.**
-- The plugin attempts to read the user's timezone from the Google Calendar API endpoint `GET /calendar/v3/users/me/settings/timezone`. (Until OAuth/Calendar is wired in just-in-time, the browser timezone is used as the documented §6.7 fallback, labelled accordingly.)
-- The detected timezone is pre-filled with a label indicating its source ("Detected from your Google Calendar settings" or "Detected from your browser").
-- The user can confirm or override via a dropdown listing all IANA timezones.
+- The plugin pre-fills the user's timezone from the **browser** (`Intl.DateTimeFormat().resolvedOptions().timeZone`), labelled "Detected from your browser".
+- The user can confirm or override via a dropdown listing all IANA timezones (override is recorded as source `manual`).
 - Copy: "This is the timezone we'll use when you don't specify one explicitly. You can change it any time in Settings."
+
+> **Amendment (2026-05-17, owner-directed — Session 8; Entry-6
+> discipline; this is an ASSUMPTION CORRECTION, not a deferral —
+> Entry-11 shape).** The original spec (above, pre-amendment) had the
+> plugin read the user's timezone from the Google Calendar API
+> (`GET /calendar/v3/users/me/settings/timezone`) and treated the browser
+> timezone only as a §6.7 *fallback*. **For v1 there is no Calendar API
+> call in onboarding at all — the browser timezone is THE source, full
+> stop.** Honest rationale: the original PRD assumed Calendar was the more
+> *authoritative* source; on reflection it is not, for OutboxIQ's use
+> case. The browser reads the **OS timezone, which auto-updates as the
+> user travels** — exactly the "current working context" OutboxIQ
+> schedules against. Google Calendar's timezone is a **manually
+> configured preference that does not auto-update with location**, so it
+> is *stale* precisely for the travelling-user cases OutboxIQ exists to
+> serve. Calendar is only arguably-better for edge users who deliberately
+> pin a laptop timezone regardless of travel (VPN/power users) — and those
+> users are the ones most likely to set an explicit override anyway. So
+> the corrected default is browser-tz; manual override covers the rest.
+> Consequences: (1) the "Detected from your Google Calendar settings"
+> label is removed from v1; (2) **OAuth consent is no longer requested
+> during onboarding** — it is requested later, in context, the first time
+> the user invokes an action that needs it (§5.3.5 Optimize-for-recipient,
+> Session 9); (3) a *future* §5.8 Settings option — "Override with your
+> Google Calendar timezone (requires Google sign-in)" — could serve the
+> edge users; **explicitly not v1 scope**, recorded so it is not lost;
+> (4) `calendar.settings.readonly` now has **no v1 consumer** — whether to
+> drop it from the default OAuth scope set (vs. request it incrementally
+> only if that future Setting is built) is an open scope-minimisation
+> decision flagged at §6.6. The `calendar_api` value stays in the §7.2
+> `timezoneSource` type (schema stability + that future Setting). Recorded
+> in `notes/owner-decisions-log.md` (Session 8); discharges the CLAUDE.md
+> "§5.1.3 Calendar-amendment tracking marker" (resolved by correction, not
+> by wiring).
 
 **Step 3: Working hours.**
 - The plugin presents an interface for configuring working days and per-day start/end times.
@@ -701,6 +734,30 @@ Request only the following scopes:
 - `https://www.googleapis.com/auth/directory.readonly` (only requested for Workspace users, only if needed for directory lookup).
 
 Do **not** request `gmail.readonly` or any broader scope.
+
+> **Open scope-minimisation decision (flagged 2026-05-17 — Session 8;
+> surfaced, NOT yet decided — this list is otherwise locked).** Inspection
+> this session established that **Free v1 actually calls only the People
+> API (`contacts.readonly`)**: Schedule Send is DOM automation (no Gmail
+> API token), the Gmail cancel path is Premium v1 (§13), and the §5.1.3
+> amendment removed the only `calendar.settings.readonly` consumer. So in
+> Free v1 today, `gmail.compose`, `gmail.modify`, and
+> `calendar.settings.readonly` are **requested but unused**. Requesting
+> unused scopes contradicts this section's own "minimum scopes" intent
+> and §6.1.1 data-minimisation, enlarges the consent screen (an
+> activation cost), and — because `gmail.compose`/`gmail.modify` are
+> Google **restricted** scopes — is what drags the CASA assessment into
+> Free v1's launch path (`PRE_LAUNCH_CHECKLIST.md`). **Honest
+> counter-uncertainty (Entry-25 — not over-claiming):** later Free v1
+> features may need `gmail.modify` — §5.9 Undo and §5.7 badge-cleanup
+> *might* cancel a native scheduled send via the Gmail API
+> (`messages.list?q=in:scheduled` → `messages.trash`, per the spike) **or
+> via Gmail's own UI** (unverified — implementation-approach dependent).
+> Dropping a scope now and re-adding later forces **all users to
+> re-consent**. This is therefore an owner decision (it changes
+> `OAUTH_SCOPES`, this locked list, the GCP consent screen, and the CASA
+> picture), tracked in `notes/owner-decisions-log.md` (Session 8) pending
+> resolution. Until resolved the list above stands unchanged.
 
 ### 6.7 Graceful Degradation
 

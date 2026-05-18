@@ -9,16 +9,16 @@ interface Props {
 }
 
 function detectedLabel(source: TimezoneSource): string {
-  switch (source) {
-    case "calendar_api":
-      return "Detected from your Google Calendar settings";
-    case "browser":
-      // OAuth/Calendar is wired just-in-time later; until then §6.7's
-      // documented fallback (browser timezone) is what we detect.
-      return "Detected from your browser";
-    case "manual":
-      return "Set by you";
-  }
+  // v1 (PRD §5.1.3, 2026-05-17 amendment): the browser timezone is THE
+  // source — not a fallback. It reads the OS zone, which auto-updates as
+  // the user travels (their real "current working context"); Google
+  // Calendar's manually-set zone does not, so it can be stale. Onboarding
+  // therefore only ever produces "browser" (auto-detected) or "manual"
+  // (user override via the dropdown). `calendar_api` stays in the
+  // TimezoneSource type for a possible FUTURE §5.8 Settings "override
+  // with your Google Calendar timezone (requires Google sign-in)" — it is
+  // NOT produced by v1 onboarding and is not surfaced here.
+  return source === "manual" ? "Set by you" : "Detected from your browser";
 }
 
 // PRD §5.1 step 2: confirm or override the detected timezone.

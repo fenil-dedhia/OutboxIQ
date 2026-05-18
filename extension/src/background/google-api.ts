@@ -10,8 +10,14 @@
 
 import { getAccessToken, invalidateStoredToken } from "./oauth";
 
-const CALENDAR_TZ_URL =
-  "https://www.googleapis.com/calendar/v3/users/me/settings/timezone";
+// NOTE: there is intentionally NO Calendar call here. PRD §5.1.3 was
+// amended (2026-05-17) — browser timezone is the v1 source (it auto-updates
+// with travel; Calendar's manual setting does not), so onboarding does not
+// read Google Calendar. A `getCalendarTimezone()` existed briefly in the
+// Phase-3 core commit; removed as dead v1 code (YAGNI / Entry 22). If the
+// future §5.8 "override with Google Calendar timezone" Setting is ever
+// built it re-adds a ~12-line GET of
+// `…/calendar/v3/users/me/settings/timezone` — trivial; not v1.
 const PEOPLE_SEARCH_URL =
   "https://people.googleapis.com/v1/people:searchContacts";
 
@@ -56,24 +62,6 @@ async function authedGetJson(
   } catch {
     return { ok: false, reason: "bad_response" };
   }
-}
-
-/**
- * PRD §5.1.3 / §7.4 — the user's own timezone from Google Calendar
- * settings. `GET …/users/me/settings/timezone` → `{ value: "<IANA>" }`.
- * Onboarding calls this interactively; failure → caller keeps the browser
- * fallback (§6.7).
- */
-export async function getCalendarTimezone(
-  interactive: boolean,
-): Promise<{ ok: true; timezone: string } | { ok: false; reason: ApiFailure }> {
-  const r = await authedGetJson(CALENDAR_TZ_URL, interactive);
-  if (!r.ok) return r;
-  const value = (r.json as { value?: unknown } | null)?.value;
-  if (typeof value !== "string" || value.length === 0) {
-    return { ok: false, reason: "bad_response" };
-  }
-  return { ok: true, timezone: value };
 }
 
 /**

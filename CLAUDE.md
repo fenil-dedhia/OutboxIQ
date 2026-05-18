@@ -114,19 +114,24 @@ Fresh GCP project, **just-in-time setup** — wire up Cloud APIs only when a fea
 - **Premium v1 (separate later track) — Entry-31 Option B, preserved and still locked.** **Refresh tokens live ONLY on the backend, per-user-encrypted, server-side authorization-code exchange (Option B); PKCE-in-extension (Option A) stays rejected.** This is **not reopened by the tier split** (Entry-4 discipline) — it was correct given the then-true assumption that Unschedule-on-Reply was in the only tier; it remains the binding Premium-v1 design, preserved verbatim in **PRD §13.3**. The flip from Free v1 is purely `access_type` online→offline on the *same* client + adding the backend `/auth/{exchange,token,revoke}` plumbing. **Do not relitigate Option A vs B for the Premium build, and do not "restore" Option B onto Free v1** — Free v1's simpler model is the deliberate Entry-32 decision, *not* a reversal of Entry 31.
 
 **Free v1 roadmap (supersedes the old 3-session backend-first plan):**
-- **Session 8** — **extension-side** OAuth (`launchWebAuthFlow` + **implicit grant `response_type=token`**, no code exchange, access-token storage; **no backend**) ✅ *done*; + Calendar API (user timezone, §5.1.3) + People API + Workspace Directory + recipient cache + the `resolveRecipientTimezone()` contract *(Phase 3, in progress)*.
-- **Following Free v1 session(s)** — §5.3.5 Optimize-for-recipient UI in the §5.3 modal; then Free v1 pre-launch hardening + the two Gmail-API probes (`PRE_LAUNCH_CHECKLIST.md` "Pre-launch probes") + naming/positioning.
+- **Session 8** — **extension-side** OAuth (`launchWebAuthFlow` + **implicit grant `response_type=token`**, no code exchange, access-token storage; **no backend**) ✅ *done & hands-on verified*; + the **recipient-timezone cascade core** — `resolveRecipientTimezone()` (Session-9 contract), SW Google-API layer (People only), recipient cache, `MSG_RESOLVE_RECIPIENT_TZ` bridge ✅ *built, 130 tests, NOT yet hands-on verified*. **Calendar API: removed from v1 (not deferred)** — PRD §5.1.3 amended: browser tz is the v1 source (auto-updates with travel; Calendar's manual setting doesn't). Workspace Directory: deferred (cascade has the seam). `login_hint` sub-task: pending.
+- **Following Free v1 session(s)** — §5.3.5 Optimize-for-recipient UI in the §5.3 modal (consumes the cascade); Workspace Directory; the `login_hint` sub-task; then Free v1 pre-launch hardening + the two Gmail-API probes (`PRE_LAUNCH_CHECKLIST.md` "Pre-launch probes") + naming/positioning.
 - **Premium v1 (separate, later — NOT the next work)** — backend skeleton (Fly.io EU, Hono, Supabase EU, per-user-key encryption) + Option-B server-side exchange + Unschedule-on-Reply. Gated by `PREMIUM_LAUNCH_CHECKLIST.md` / PRD §13.
 
-> **Tracking marker (Entry-6 discipline — do not lose this):** PRD §5.1.3
-> ("Detected from your Google Calendar settings") is deliberately **NOT yet
-> amended** — the Calendar path is unbuilt, so the spec does not yet
-> diverge. **The Free v1 session that wires the Calendar timezone source
-> (now Session 8, per the roadmap above — moved earlier by the tier split,
-> was Session 9) MUST amend PRD §5.1.3** when the live source replaces the
-> browser-only fallback. This marker exists so the amendment is not
-> forgotten when Calendar ships (the risk the owner flagged at Session-7
-> close).
+> **Tracking marker (Entry-6) — DISCHARGED 2026-05-17 (Session 8).** The
+> §5.1.3 Calendar-amendment marker is **resolved by correction, not by
+> wiring**: the owner determined the original PRD assumption was wrong —
+> browser timezone is the *better* v1 source (it auto-updates as the user
+> travels; Calendar's manually-set zone goes stale), not merely a §6.7
+> fallback. **Calendar is removed from v1 onboarding entirely** (no
+> Calendar API call; OAuth consent moves to in-context at §5.3.5 in
+> Session 9). PRD §5.1.3 amended accordingly (Entry-11-shape assumption
+> correction). Consequence: `calendar.settings.readonly` has no v1
+> consumer → an **open scope-minimisation decision is flagged at PRD §6.6**
+> (and below) — surfaced to the owner, not yet decided; the
+> `OAUTH_SCOPES` list is unchanged until it is. A future §5.8 Settings
+> "override with Google Calendar timezone" is the only thing that would
+> revive the Calendar path — explicitly not v1.
 
 > **Stale code comment to fix in Session 8 (flagged, not a doc):**
 > `extension/src/lib/oauth-config.ts` comments still float "PKCE vs
