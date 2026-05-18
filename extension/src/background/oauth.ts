@@ -249,4 +249,11 @@ if (import.meta.env.DEV || __OQ_SMOKE__) {
       return { status: r.status, body: await r.json() };
     },
   };
+  // Loud startup marker: if this line is in the service-worker console,
+  // the smoke build is loaded and `__oqAuth` is available. Its ABSENCE
+  // means Chrome is running stale/old code (Remove + reload — see
+  // research/oauth-smoke.md). Unconditional within this block on purpose.
+  console.info(
+    "[OutboxIQ] ✅ OAuth smoke harness ready — type __oqAuth in this console",
+  );
 }
