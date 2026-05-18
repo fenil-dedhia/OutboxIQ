@@ -534,6 +534,28 @@ The modal mirrors the visual style of Gmail's native modals (rounded corners, wh
 
 ### 5.7 Scheduled Emails View (Native Gmail Integration)
 
+> **Amendment (2026-05-17, owner-directed — Session 8; PRD-vs-architecture
+> correction, Entry-26-shaped REMOVAL, not a deferral).** The **OutboxIQ
+> badge** (§5.7.2.1) and its **hover tooltip** (§5.7.2.2) are **removed
+> from product scope entirely — all tiers**. Reasoning: once OutboxIQ is
+> installed, the Schedule Send chevron is rebranded and the user's natural
+> scheduling path *is* OutboxIQ's modal, so the set of "post-install
+> scheduled emails NOT created via OutboxIQ" is effectively empty — the
+> badge differentiates against nothing, and building it would add a
+> Gmail-DOM surface for no user value (and lean on brand inside Gmail,
+> against §8.1). This is the same shape as the Maps removal (Entry 26):
+> the native-architecture choice (Session 2 spike) silently rendered this
+> moot; the spec simply hadn't caught up. The **§5.7.2.3
+> cleanup-listening** behaviour is **not a separate Free v1 concern**:
+> Free v1 keeps **no local scheduled-message records** (it drives Gmail's
+> native UI; Gmail tracks the scheduled email itself), and the backend
+> deregistration is **Premium v1's Unschedule-on-Reply** concern, already
+> fully captured in §13.1/§13.2 — so it is absorbed there, with no
+> separate Free v1 tracking. §5.7.1 (use the native Scheduled label, build
+> no dashboard — reinforcing §11.18) is **unchanged and still binding**.
+> §5.7.2/§5.7.3 below are superseded by this note. Recorded in
+> `notes/owner-decisions-log.md` (Session 8, Entry 37).
+
 #### 5.7.1 Approach
 
 OutboxIQ does **not** build a separate dashboard for scheduled emails. Instead, it leverages Gmail's native "Scheduled" label, which already provides:
@@ -607,6 +629,22 @@ Accessible via:
 ---
 
 ### 5.9 Undo Window
+
+> **Amendment (2026-05-17, owner-directed — Session 8; Entry-26-shaped
+> REMOVAL, not a deferral — all tiers).** §5.9 is **removed from product
+> scope**. Because OutboxIQ schedules by driving **Gmail's own native
+> Schedule Send** (Session 2 spike architecture), Gmail's **own
+> scheduled-send confirmation toast already appears** and already carries
+> the native undo affordance. Building OutboxIQ's own 7-second toast on
+> top of it would **duplicate native functionality and violate §8.1
+> ("native feel over branded feel")** — the §9.2 "schedule confirmation
+> toast" success metric and the §5.8.2 "Schedule confirmation toast"
+> feature toggle are likewise moot (the native toast is not ours to
+> toggle; the toggle field stays inert in the §7.2 schema like
+> `alwaysScheduleOutsideHours`, kept for schema stability, not wired).
+> This holds for **both tiers** (the native toast appears regardless of
+> tier). §5.9.1/§5.9.2 below are superseded. Recorded in
+> `notes/owner-decisions-log.md` (Session 8, Entry 37).
 
 #### 5.9.1 Behavior
 
@@ -726,38 +764,45 @@ Clicking "Undo" within the 7-second window cancels the scheduled email and reope
 
 ### 6.6 Minimum OAuth Scopes
 
-Request only the following scopes:
-- `https://www.googleapis.com/auth/gmail.compose` (to create and schedule drafts).
-- `https://www.googleapis.com/auth/gmail.modify` (to cancel scheduled emails and manage labels).
-- `https://www.googleapis.com/auth/calendar.settings.readonly` (to read the user's timezone).
-- `https://www.googleapis.com/auth/contacts.readonly` (to look up recipient information).
-- `https://www.googleapis.com/auth/directory.readonly` (only requested for Workspace users, only if needed for directory lookup).
+**Free v1 requests exactly one scope:**
 
-Do **not** request `gmail.readonly` or any broader scope.
+- `https://www.googleapis.com/auth/contacts.readonly` (look up a recipient's contact record for timezone optimization — §5.4.1 step 2). This is a Google **"sensitive"** scope, **not** a "restricted" one.
 
-> **Open scope-minimisation decision (flagged 2026-05-17 — Session 8;
-> surfaced, NOT yet decided — this list is otherwise locked).** Inspection
-> this session established that **Free v1 actually calls only the People
-> API (`contacts.readonly`)**: Schedule Send is DOM automation (no Gmail
-> API token), the Gmail cancel path is Premium v1 (§13), and the §5.1.3
-> amendment removed the only `calendar.settings.readonly` consumer. So in
-> Free v1 today, `gmail.compose`, `gmail.modify`, and
-> `calendar.settings.readonly` are **requested but unused**. Requesting
-> unused scopes contradicts this section's own "minimum scopes" intent
-> and §6.1.1 data-minimisation, enlarges the consent screen (an
-> activation cost), and — because `gmail.compose`/`gmail.modify` are
-> Google **restricted** scopes — is what drags the CASA assessment into
-> Free v1's launch path (`PRE_LAUNCH_CHECKLIST.md`). **Honest
-> counter-uncertainty (Entry-25 — not over-claiming):** later Free v1
-> features may need `gmail.modify` — §5.9 Undo and §5.7 badge-cleanup
-> *might* cancel a native scheduled send via the Gmail API
-> (`messages.list?q=in:scheduled` → `messages.trash`, per the spike) **or
-> via Gmail's own UI** (unverified — implementation-approach dependent).
-> Dropping a scope now and re-adding later forces **all users to
-> re-consent**. This is therefore an owner decision (it changes
-> `OAUTH_SCOPES`, this locked list, the GCP consent screen, and the CASA
-> picture), tracked in `notes/owner-decisions-log.md` (Session 8) pending
-> resolution. Until resolved the list above stands unchanged.
+Conditionally, **only** if/when the deferred Workspace Directory path (§5.4.1 step 3) is built, for Workspace users only:
+
+- `https://www.googleapis.com/auth/directory.readonly` (org directory lookup; incrementally requested, not in the default set).
+
+Do **not** request `gmail.readonly` or any broader scope. Premium v1's backend (§13) requests the Gmail scopes its server-side Unschedule-on-Reply needs (`gmail.modify` etc.) — that is Premium-tier scope, not Free v1.
+
+> **Amendment (2026-05-17, owner-directed — Session 8; Entry-6; RESOLVES
+> the scope-minimisation question previously flagged here).** The
+> original list also requested `gmail.compose`, `gmail.modify`, and
+> `calendar.settings.readonly`. Code inspection this session established
+> these have **no Free v1 consumer**: Schedule Send is DOM automation (no
+> Gmail API token), the Gmail cancel path is Premium v1 (§13), and the
+> §5.1.3 amendment removed the only `calendar.settings.readonly`
+> consumer. They are **removed from the Free v1 request**. The
+> load-bearing reason is **activation/trust, not only the locked §6.1.1
+> data-minimisation principle**: the consent screen appears at the
+> moment the user clicks "Optimize for [recipient]" — asking there to
+> "read and modify all your email" for a *scheduling* action creates
+> cognitive dissonance that drives consent-screen abandonment and
+> erodes trust even among users who approve; "see your contacts" for an
+> "optimize for recipient" action matches intent exactly (§8.5). The
+> trim is **unconditionally safe**: §5.9 and §5.7 (the only future Free
+> v1 features that could have wanted `gmail.modify`) were **removed from
+> product scope this session** (see their amendments / Entry 37), so no
+> DOM-vs-API probe is needed. Because `gmail.compose`/`gmail.modify` are
+> Google **restricted** scopes, dropping them may **remove the CASA
+> assessment from Free v1's launch path entirely** (now only a sensitive
+> scope remains — `PRE_LAUNCH_CHECKLIST.md` reframed accordingly). Any
+> future Free v1 feature needing a restricted scope triggers an
+> **explicit re-evaluation** (consent-screen reconfig + a forced
+> re-consent for all users) before the scope is added back — it is not
+> to be re-added speculatively. The GCP consent screen must be
+> reconfigured to this trimmed set (a Session-9 first-item owner task;
+> the OAuth *client* is unchanged). Recorded in
+> `notes/owner-decisions-log.md` (Session 8, Entry 36).
 
 ### 6.7 Graceful Degradation
 
@@ -1029,7 +1074,7 @@ Whenever the plugin asks for data or makes a recommendation, a one-line explanat
 
 ### 8.6 Reversibility
 
-Every action has an undo or cancel path. Scheduled emails can be canceled or edited via Gmail's native UI. The 7-second undo toast catches the most recent action. Destructive actions in Settings (clear cache, delete data) require explicit confirmation.
+Every action has an undo or cancel path. Scheduled emails can be canceled or edited via Gmail's native UI (and **Gmail's own native scheduled-send toast** provides the immediate undo affordance — OutboxIQ's own 7-second toast was removed, see the §5.9 amendment). Destructive actions in Settings (clear cache, delete data) require explicit confirmation.
 
 ### 8.7 Minimal Cognitive Load
 
@@ -1049,7 +1094,12 @@ First-time users see a friendly walkthrough, not a blank screen. The recipient t
 
 ### 8.11 Visual Distinguishability Without Clutter
 
-The OutboxIQ badge on scheduled emails is small, unobtrusive, and uses a single muted accent color. It signals "OutboxIQ-scheduled" without dominating the email row or competing with Gmail's existing UI elements.
+> **Superseded (2026-05-17, owner-directed — Session 8).** This section
+> described **only** the §5.7.2 OutboxIQ badge, which is **removed from
+> product scope** (see the §5.7 amendment, Entry 37). No other visual
+> element depended on it, so the section is retired (heading kept for
+> stable §8 numbering / cross-references). The surviving "native feel,
+> don't clutter Gmail" intent lives in §8.1 and is unaffected.
 
 ---
 
