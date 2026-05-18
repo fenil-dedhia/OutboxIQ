@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { getAccessToken } from "./oauth";
 import {
+  clearStoredAuth,
   getStoredAuth,
   setStoredAuth,
   type StoredAuth,
@@ -75,7 +76,7 @@ describe("getAccessToken — cache", () => {
 });
 
 describe("getAccessToken — silent then interactive escalation", () => {
-  it("silent success stores the token and uses response_type=token, no prompt", async () => {
+  it("silent success uses response_type=token + prompt=none and stores the token", async () => {
     const launch = stubLaunch(async ({ url }) => redirect(stateOf(url)));
     const r = await getAccessToken();
     expect(r).toEqual({ ok: true, token: "AT-123" });
@@ -84,10 +85,32 @@ describe("getAccessToken — silent then interactive escalation", () => {
     expect(url.searchParams.get("client_id")).toBeTruthy();
     expect(url.searchParams.get("redirect_uri")).toContain("chromiumapp.org");
     expect(url.searchParams.get("scope")).toBe(OAUTH_SCOPES.join(" "));
-    expect(url.searchParams.has("prompt")).toBe(false); // silent: no chooser
+    // Silent renewal MUST be prompt=none (Session-8 Test-D fix) so Google
+    // returns a token with zero UI; without it launchWebAuthFlow silent
+    // fails and the user is re-prompted ~hourly.
+    expect(url.searchParams.get("prompt")).toBe("none");
     const stored = await getStoredAuth();
     expect(stored?.accessToken).toBe("AT-123");
     expect(stored?.scopes).toEqual([...OAUTH_SCOPES]);
+  });
+
+  it("a prompt=none silent failure (login_required) escalates to needs_interactive", async () => {
+    // Real silent-renewal failure shape: Google 302s back with
+    // ?error=login_required (NOT a launchWebAuthFlow rejection).
+    stubLaunch(async ({ url, interactive }) => {
+      if (!interactive)
+        return "https://dicnmcmhapcfceodecocnkaacjdpplnm.chromiumapp.org/?error=login_required";
+      return redirect(stateOf(url)); // interactive then succeeds
+    });
+    const escalated = await getAccessToken({ interactive: true });
+    expect(escalated).toEqual({ ok: true, token: "AT-123" });
+    // The successful escalation cached a token — clear it so the next
+    // assertion exercises a *fresh* silent attempt, not the cache.
+    await clearStoredAuth();
+    // With interactive:false, a login_required silent failure stays a
+    // clean needs_interactive (the two-outcome silent contract).
+    const r = await getAccessToken({ interactive: false });
+    expect(r).toEqual({ ok: false, reason: "needs_interactive" });
   });
 
   it("silent fail + interactive:false → needs_interactive, nothing stored", async () => {

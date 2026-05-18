@@ -64,9 +64,18 @@ function buildAuthUrl(
   });
   // Interactive: force the account chooser so a multi-account user always
   // picks which Google account to authorize (the getAuthToken bug we avoid
-  // by using a Web-app client — Entry 29). Silent: no `prompt`, so Google
-  // may return a token with zero UI when a session+grant already exist.
-  if (interactive) p.set("prompt", "select_account");
+  // by using a Web-app client — Entry 29).
+  //
+  // Silent: `prompt=none` is REQUIRED for a real silent renewal. Without
+  // it Google still renders an interstitial, which launchWebAuthFlow
+  // ({interactive:false}) cannot show → it fails and the user gets
+  // re-prompted every ~hour (the Session-8 hands-on smoke Test-D finding).
+  // With `prompt=none` Google, when a session + prior consent exist,
+  // 302s straight back with a fresh token and zero UI; otherwise it
+  // redirects with `error=login_required|consent_required|
+  // interaction_required`, which parseRedirect maps to needs_interactive
+  // so getAccessToken cleanly escalates to an interactive prompt.
+  p.set("prompt", interactive ? "select_account" : "none");
   return `${OAUTH_AUTH_ENDPOINT}?${p.toString()}`;
 }
 
@@ -90,13 +99,17 @@ function parseRedirect(redirectUrl: string):
   const frag = new URLSearchParams(url.hash.replace(/^#/, ""));
   const err = frag.get("error") ?? url.searchParams.get("error");
   if (err) {
-    return {
-      ok: false,
-      reason:
-        err === "access_denied" || err === "interaction_required"
-          ? "denied"
-          : "unknown",
-    };
+    if (err === "access_denied") return { ok: false, reason: "denied" };
+    // The `prompt=none` "needs a human" family → escalate to interactive.
+    if (
+      err === "login_required" ||
+      err === "consent_required" ||
+      err === "interaction_required" ||
+      err === "account_selection_required"
+    ) {
+      return { ok: false, reason: "needs_interactive" };
+    }
+    return { ok: false, reason: "unknown" };
   }
   const accessToken = frag.get("access_token");
   if (!accessToken) return { ok: false, reason: "no_token" };
