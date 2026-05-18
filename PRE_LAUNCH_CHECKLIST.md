@@ -12,17 +12,37 @@ Items that must be completed **before OutboxIQ Free v1 can be made publicly avai
 
 ## Google / OAuth
 
-### CASA security assessment — required for Free v1, deferred (tier to confirm)
+### CASA security assessment — possibly NOT required for Free v1 (verify)
 
-> **Flagged refinement of the tier-split directive (2026-05-17 — Entry 32 close-out).** The directive said "CASA Tier 2 moves to Premium, no longer Free-v1-blocking." Half-true and corrected here: *Tier 2* moves to Premium, but **Free v1 still requires *a* CASA assessment** and that requirement is still **Free-v1-launch-blocking**. Reading the split as "Free v1 needs no security assessment" would blind-side the launch by weeks — surfaced rather than silently implemented.
+> **Materially reframed 2026-05-17 (Session 8 scope trim, Entry 36 —
+> supersedes the Entry-32 "Free v1 still needs *a* CASA assessment"
+> framing).** That earlier framing was correct *while Free v1 requested
+> the restricted Gmail scopes*. **Session 8 trimmed Free v1's OAuth ask
+> to `contacts.readonly` only** (PRD §6.6 amendment) — a Google
+> **"sensitive"** scope, **not "restricted."** CASA is triggered by
+> **restricted** scopes. So Free v1 may now require **no CASA assessment
+> at all**, which would make the Testing→Production path materially
+> simpler and remove the single biggest pre-launch cost/lead-time item
+> from Free v1.
 
-Google classifies the Gmail scopes OutboxIQ uses (`gmail.compose`, `gmail.modify`) as **restricted scopes**. **Any app requesting restricted scopes from users outside the test-user list must pass a CASA security assessment** (conducted by a Google-approved third-party auditor — e.g., Bishop Fox, NCC Group, Leviathan), **regardless of whether it has a backend**. Free v1 keeps these restricted scopes, so this gate applies to Free v1.
-
-- **Which tier (1 vs 2) — to confirm.** *Tier 2* is driven by the combination of restricted scopes **and** a backend handling user data + OAuth refresh tokens. **Free v1 has no backend and no refresh tokens** (`access_type=online`, access tokens only — PRD §7.5), so it is **plausibly Tier 1**, not Tier 2. **Confirming the exact tier against Google's current CASA documentation is itself a Free-v1 pre-launch task** — do not assume Tier 1; do not assume zero.
-- **Typical cost / turnaround:** Tier 1 is materially lighter than Tier 2's several-thousand-USD / 4–8-week profile, but is still **not instant** — budget lead time.
-- **Trigger to begin:** when Free v1 is feature-complete and we are ready to invite real users beyond the OAuth test-user allowlist.
-- **Until then:** we operate in **OAuth Testing mode** with a small set of explicitly-added test users. Fully functional for development; just not usable by the general public.
-- **Premium v1:** the full **CASA Tier 2** assessment (restricted scopes **+** backend) is tracked in `PREMIUM_LAUNCH_CHECKLIST.md` — that is where the Tier-2-specific cost/turnaround detail now lives.
+- **The actual pre-launch task is now a verification, not an
+  assessment:** confirm against Google's current OAuth-verification /
+  CASA documentation whether an app requesting **only
+  `contacts.readonly`** (sensitive, no restricted scopes, no backend)
+  needs **any** CASA tier, or only standard OAuth-consent
+  verification. **Do not assume "none"** — verify and record the
+  finding; the answer drives the Production timeline.
+- If verification says **no CASA**: Free v1's Production gate is just
+  the standard consent-screen verification (homepage / Privacy / ToS /
+  authorized domain) — see "OAuth consent screen — Production status".
+- If verification says **some CASA still applies** to a lone sensitive
+  scope: budget that lead time; it is still far lighter than Tier 2.
+- **Premium v1** still faces the full **CASA Tier 2** (restricted Gmail
+  scopes **+** backend) — tracked in `PREMIUM_LAUNCH_CHECKLIST.md`,
+  unchanged by this reframe.
+- **Trigger:** when Free v1 is feature-complete and ready for users
+  beyond the test allowlist. Until then we stay in **OAuth Testing
+  mode** (fully functional for dev; not public).
 - **Reference:** https://support.google.com/cloud/answer/13465431
 
 ### OAuth consent screen — Production status
@@ -69,7 +89,7 @@ Google classifies the Gmail scopes OutboxIQ uses (`gmail.compose`, `gmail.modify
 
 - **Brand identity finalized.** Logo, color palette, typography direction. v1 development uses **placeholder icons** (a colored square with "OQ" text or similar minimal mark). PRD §8.1 ("native feel over branded feel") means OutboxIQ's in-Gmail surface intentionally does not lean on brand — brand mainly shows up in the Chrome Web Store listing, the OAuth consent screen, and the onboarding flow.
 - **Extension icons (16, 48, 128 PNG).** Production-quality artwork, replacing the placeholders in `extension/public/icons/`.
-- **Scheduled-email badge artwork.** The small indicator on OutboxIQ-scheduled emails in Gmail's Scheduled label (PRD §5.7.2). Final, polished version.
+- ~~**Scheduled-email badge artwork.**~~ **Removed (2026-05-17, Session 8):** the §5.7.2 OutboxIQ badge was removed from product scope (see the PRD §5.7 amendment / owner-decisions-log Entry 37) — post-install it differentiates against an empty set. No badge artwork is needed. (Struck through, not deleted, so the scope-change is on the record.)
 - **OAuth consent screen logo.** 120×120 minimum, follows Google's OAuth branding requirements.
 - **Chrome Web Store listing assets.** Promotional images (440×280 small tile, 920×680 marquee), screenshots (1280×800 or 640×400, up to 5), short description, detailed description, support email.
 - **Trigger:** before Chrome Web Store submission. Fenil intends to commission or design these assets — does not need to happen during feature development.
