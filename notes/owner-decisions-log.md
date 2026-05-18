@@ -1107,6 +1107,175 @@ that preceded the §5.3.5/§5.4 build. They qualify; Entries 26 and 27.
   examination, and the analysis that answered it are three different
   contributions; a log that merges them teaches the wrong lesson.
 
+## Entry 33 — Implicit-grant pivot, caught at the Entry-19 architecture review
+
+- **Session:** 8 (Phase 2 pre-implementation review).
+- **Moment:** The Session-8 prompt (and the tier-split docs it rested on)
+  specified Free v1 OAuth as an authorization-code exchange with a
+  (non-confidential) Client Secret shipped in the extension. The Entry-19
+  architecture review ran *before* any OAuth code.
+- **My input (owner):** Preserved the Entry-19 checkpoint (architecture
+  review before code) and authorised the pivot when it surfaced.
+- **What Claude Code would have done without it:** This one is honestly
+  in Claude's favour on the catch. At the review Claude surfaced that the
+  OAuth 2.0 **implicit grant** (`response_type=token`) is the standard
+  installed-client online pattern, is materially simpler (no token
+  endpoint, fewer failure modes), and **ships zero confidential
+  material** — strictly better than the spec'd code+secret for the Free
+  v1 (online, no-refresh) case. Without the Entry-19 gate, Claude would
+  have built the literal prompt (code+secret) — defensible spec-following
+  that would have shipped a needless "secret" and more failure surface,
+  then likely been reworked later. The load-bearing owner contribution
+  was *keeping the review gate that made the catch possible* and saying
+  yes; the technical proposal was Claude's.
+- **Outcome:** Implicit grant implemented (`src/background/oauth.ts`);
+  PRD §7.5/§6.5 amended (Entry-6) so the spec matches the code; the
+  "non-confidential secret exception" to §6.5 was *withdrawn* (no secret
+  exists). Commits `50ab02e`…`fd60134`.
+- **Artifact:** Commits `50ab02e`, `8153726`, `49977ed`, `7fae602`,
+  `fd60134`; PRD §7.5/§6.5 Session-8 amendments; `notes/session-8-summary.md`.
+- **Lesson (for coaching):** Entry-19 architecture reviews keep earning
+  their keep. A strategic decision fixed at the prompt/spec level can
+  still carry an implementation detail that benefits from technical
+  scrutiny *before* code lands — the cheapest place to change it.
+
+## Entry 34 — Silent-renewal Option 1: graceful degradation, fix at the seam
+
+- **Session:** 8 (Phase 2 hands-on smoke).
+- **Moment:** Hands-on testing showed `silent()` after token expiry
+  returns `needs_interactive` for a multi-account user — Google won't
+  silently pick an account without a `login_hint` the extension doesn't
+  capture.
+- **My input (owner):** Chose **Option 1** — accept the graceful
+  re-prompt as documented Free v1 behaviour; fix it later via
+  `login_hint` once Phase 3's People API provides the user's email; do
+  **not** pull Phase 3 identity work into Phase 2 or expand OAuth scope
+  for it.
+- **What Claude Code would have done without it:** Joint, honestly
+  split. Claude surfaced the failure mode rather than burying it as an
+  "edge case", and presented three options with a recommendation
+  (Option 1) — so the *finding* and the *menu* were Claude's. But Claude
+  offered "fix login_hint now" and "halt" as legitimate options; the
+  owner's contribution was the **sequencing judgment** — fix at the
+  natural seam (People API already yields the email in Phase 3), don't
+  distort phase boundaries or scope for it — and turning that into a
+  transferable rule.
+- **Outcome:** `prompt=none` fix landed (real single-account silent
+  renewal); the multi-account limitation documented (PRD §7.5 Entry-6
+  amendment) with a `TODO(Phase 3)` in `oauth.ts` and a tracked
+  sub-task. Commit `fd60134`.
+- **Artifact:** Commits `fd60134`, `7c100e9`; PRD §7.5 multi-account
+  amendment; `oauth.ts buildAuthUrl` TODO; Session-8 task list.
+- **Lesson (for coaching):** A graceful-degradation finding does not
+  require halt-and-redesign. Document it honestly, fix it at the natural
+  seam where the missing piece arrives for free, and keep shipping —
+  but say plainly it's a known limitation until the seam is reached.
+
+## Entry 35 — Calendar-timezone assumption-correction (the PRD was wrong, not imprecise)
+
+- **Session:** 8 (Phase 3 onboarding-wiring decision point).
+- **Moment:** About to wire the PRD-specified Calendar API timezone read
+  into onboarding (browser tz had been treated as a mere §6.7 fallback).
+- **My input (owner):** Asked, in effect, "isn't the *browser* timezone
+  more accurate for us — the OS zone auto-updates as the user travels,
+  but a Google Calendar setting is a manual preference that goes stale?"
+  — and directed that Calendar be **removed from v1 entirely** (not
+  deferred), browser tz made THE source, with the PRD assumption
+  corrected, not just the code changed.
+- **What Claude Code would have done without it:** Owner-driven, and
+  logged honestly *against* Claude: Claude had carried the PRD's
+  "Calendar is the authoritative source" framing without scrutinising it
+  — across the tier-split work and Phase 3 core, Claude built toward
+  wiring Calendar and only flagged the *UX* of when to prompt, never the
+  *premise*. The owner's product question caught a spec assumption that
+  sounds reasonable in the abstract but is wrong for OutboxIQ's actual
+  use case (scheduling against the user's current working context).
+  Without the question, Calendar integration ships and travelling users
+  get stale timezones.
+- **Outcome:** Calendar removed from v1; PRD §5.1.3 amended as an
+  explicit assumption-correction (Entry-11 shape); the dead
+  `getCalendarTimezone()` removed; CLAUDE.md §5.1.3 marker discharged
+  "by correction, not wiring"; a future §5.8 Calendar-override Setting
+  recorded as explicitly-not-v1. Commit `4f3b2eb`.
+- **Artifact:** Commit `4f3b2eb`; PRD §5.1.3 amendment; `CLAUDE.md`
+  §5.1.3 marker discharge; `notes/session-8-summary.md`.
+- **Lesson (for coaching):** Implementation-vs-spec contact points are
+  where owner product judgment pays off most. A spec assumption that
+  reads as obviously-reasonable ("a Google API beats a browser API")
+  can be exactly backwards for the product's real use case — and the
+  agent that accepted the spec is the worst-placed to notice. Sharp
+  owner review at the build moment catches it at the cheapest time.
+
+## Entry 36 — Scope minimisation (Option A), made load-bearing by the activation framing
+
+- **Session:** 8 (Phase 3 close-out review).
+- **Moment:** The Calendar removal prompted "what scopes does Free v1
+  actually use?"
+- **My input (owner):** Chose **Option A** — trim Free v1's OAuth ask to
+  `contacts.readonly` only — and supplied the **activation-funnel /
+  user-trust** argument as the load-bearing reason: the consent screen
+  fires at the "Optimize for [recipient]" click; asking there to
+  read/modify all email for a scheduling action creates cognitive
+  dissonance that drives consent abandonment and erodes trust even among
+  approvers.
+- **What Claude Code would have done without it:** Joint, split
+  honestly. Claude's code inspection produced the *discovery* (Free v1
+  calls only People `searchContacts`; three requested scopes unused) and
+  the data-minimisation / CASA arguments. But framed only as
+  "minimisation + compliance + CASA", this reads as architectural
+  housekeeping. The owner's **activation-funnel framing** is what makes
+  it a visible product win (consent-abandonment / trust at the exact
+  moment of the ask) rather than cleanup — and that reframing is what
+  justifies acting now rather than "revisit at Settings". Without it
+  Claude would likely have left the scopes (it had only *flagged* the
+  question, recommending the owner decide).
+- **Outcome:** `OAUTH_SCOPES` → `contacts.readonly`; PRD §6.6 resolved;
+  manifest host fixed to `people.googleapis.com` (a latent bug the trim
+  surfaced); PRE_LAUNCH CASA item reframed to "verify whether Free v1
+  needs CASA at all". Commits `7f86a55`, `600ce07`, `c8209f6`.
+- **Artifact:** Commits `7f86a55`, `600ce07`, `c8209f6`; PRD §6.6
+  amendment; `extension/src/lib/oauth-config.ts`; `manifest.config.ts`.
+- **Lesson (for coaching):** The strongest decisions carry **two**
+  lines of reasoning — a principle line *and* a user-experience line.
+  The discovery and the principle can be the agent's; find the
+  user-visible line before locking, because that is what turns
+  "housekeeping" into a decision worth making now.
+
+## Entry 37 — Removing §5.9 and §5.7: PRD over-spec the native-architecture choice silently invalidated
+
+- **Session:** 8 (close-out, reviewing the scope-trim discussion).
+- **Moment:** Reviewing scope/feature surface after the trim.
+- **My input (owner):** Identified that §5.9 (Undo toast) and §5.7
+  (badge + cleanup-listening) are moot given OutboxIQ's
+  native-Schedule-Send architecture (chosen at the Session-2 spike), and
+  **removed both from product scope** (Entry-26-shaped removal, all
+  tiers) — §5.9 duplicates Gmail's own scheduled-send toast (violates
+  §8.1); §5.7's badge differentiates against an effectively empty set
+  post-install; §5.7's cleanup-listening is absorbed by Premium §13.
+- **What Claude Code would have done without it:** Owner-driven. The
+  native-architecture choice was made in Session 2; the PRD scope was
+  never reconciled against what that choice rendered unnecessary, and
+  Claude carried §5.9/§5.7 forward as in-scope across every session
+  (including this session's own "does §5.9/§5.7 need gmail.modify?"
+  framing — Claude was reasoning about *how to build* them, not whether
+  they should exist). Without the owner's review both would have
+  consumed implementation effort and kept distorting the scope/scope-
+  trim analysis. Bonus: their removal made the Entry-36 scope trim
+  *unconditionally* safe (no §5.9/§5.7 → no future Free v1 gmail.modify
+  need → the DOM-vs-API probe Claude would otherwise have proposed is
+  unnecessary).
+- **Outcome:** PRD §5.7/§5.9 amended (removed, not deferred); §8.11
+  superseded; §8.6 stale undo-toast sentence fixed; PRE_LAUNCH badge
+  artwork struck. Commit `600ce07`.
+- **Artifact:** Commit `600ce07`; PRD §5.7/§5.9/§8.6/§8.11 amendments;
+  `PRE_LAUNCH_CHECKLIST.md`; `notes/session-8-summary.md`.
+- **Lesson (for coaching):** PRD-vs-architecture divergence accumulates
+  silently — a feature can become unnecessary the moment an
+  architectural choice is made, years before anyone notices the spec
+  still lists it. A periodic "does the spec still match what this
+  architecture actually needs?" review is how you find the features
+  that quietly died.
+
 ---
 
 *New entries are appended at every session close-out, alongside the session
