@@ -14,7 +14,8 @@ All commands run from `extension/` (the only component with tooling so far; `bac
 
 - `npm install` — install dependencies (first-time setup).
 - `npm run dev` — Vite dev server with CRXJS hot-reload, for live development against Gmail.
-- `npm run build` — typecheck (`tsc --noEmit`) then production build to `extension/dist/` (the loadable unpacked extension).
+- `npm run build` — typecheck (`tsc --noEmit`) then production build to `extension/dist/` (the loadable unpacked extension). The DEV-only `__oqAuth` OAuth smoke harness is **stripped** from this build.
+- `npm run build:smoke` — same clean one-shot build **plus** the `__oqAuth` OAuth console harness (`OQ_SMOKE=1` → `vite.config.ts` `define` `__OQ_SMOKE__`). For the owner's hands-on OAuth verification (`research/oauth-smoke.md`). Do **not** use this for the shippable artifact — plain `npm run build` is the ship build (harness absent; verified by grepping `dist/assets` for `__oqAuth`).
 - `npm run typecheck` — type-check only, no build.
 - `npm run lint` — ESLint (typescript-eslint + react-hooks + react-refresh; Prettier-compatible).
 - `npm run format` / `npm run format:check` — Prettier (default config) write / check.
@@ -24,6 +25,8 @@ All commands run from `extension/` (the only component with tooling so far; `bac
 **Load the unpacked extension:** Chrome → `chrome://extensions` → enable Developer mode → "Load unpacked" → select `extension/dist/`.
 
 **Non-obvious gotchas (encoded here so future sessions don't rediscover them):**
+- **`npm run dev` corrupted `dist/` (Session 8).** A `npm run dev` run left `extension/dist/` containing `node_modules`, the `extension-key.pem`, the full source tree, and a recursively-nested `dist/dist/`, and the service worker would not open from `chrome://extensions`. A clean one-shot `npm run build` / `build:smoke` (with `publicDir:false`) does **not** do this — root cause in CRXJS dev mode not chased (the hands-on smoke path was moved off the dev server to `build:smoke` instead — Entry-25 "design for the real constraint"). Recovery: `rm -rf extension/dist` then a one-shot build; in Chrome **Remove** the old card and **Load unpacked** the fresh `dist/`. Prefer one-shot builds for hands-on verification; treat `npm run dev` as suspect until its dist output is re-validated.
+- **The service worker must `import "./oauth"`.** OAuth only runs where `chrome.identity` lives (the SW — §6.5). `src/background/oauth.ts` attaches the smoke harness and houses `getAccessToken()` **only when its module is loaded**; nothing else imports it yet, so `service-worker.ts` carries a deliberate side-effect `import "./oauth"`. Do not "tidy" it away as an unused import — removing it silently disables OAuth and the harness (the Session-8 bug that made `__oqAuth` undefined). The Phase-3 message bridge will add a named import alongside it.
 - `npm audit` flags 2 high-severity advisories in **dev-only** transitive deps (`rollup` via `@crxjs/vite-plugin`). `npm audit --omit=dev` is clean — nothing vulnerable ships in the extension. Do **not** run `npm audit fix --force` (it breaks the build). This is the accepted CRXJS community-plugin tax (a locked, eyes-open trade-off — see Locked tech decisions).
 - The build prints a benign CRXJS-on-Vite-8 warning ("Both `rollupOptions` and `rolldownOptions` … will be ignored"). Content scripts still build and wire up correctly; it is cosmetic and internal to CRXJS.
 - `vitest.config.ts` is intentionally excluded from `tsconfig.json`'s `include` (a Vite 8 ↔ Vitest-nested-Vite types skew, not a code defect). Test code under `src/` is still fully type-checked.

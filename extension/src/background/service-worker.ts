@@ -7,11 +7,18 @@
 //      installed but not onboarded, and Gmail is open" (incl. the dev reload
 //      button, which does NOT fire onInstalled).
 //   3. Clicking the toolbar icon — a guaranteed user-gesture fallback.
-// OAuth/token management and backend messaging are added just-in-time later.
 
 import { ONBOARDING_PAGE_PATH } from "../lib/constants";
 import { isOnboardingComplete } from "../lib/storage";
 import { MSG_OPEN_ONBOARDING, type RuntimeMessage } from "../lib/messages";
+// Free v1 OAuth (PRD §7.5). Side-effect import: loading the module in the
+// SERVICE-WORKER context is what makes OAuth actually run where
+// chrome.identity lives (§6.5 — never the page) and what attaches the
+// DEV/smoke `__oqAuth` console harness (research/oauth-smoke.md). The
+// content-script / onboarding → SW message bridge that *calls*
+// getAccessToken() is Phase 3 (added with its concrete consumer — no
+// speculative wiring now; YAGNI / owner-decisions-log Entry 22).
+import "./oauth";
 
 if (import.meta.env.DEV) {
   console.info("[OutboxIQ] service worker active");

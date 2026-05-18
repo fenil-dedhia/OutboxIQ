@@ -217,11 +217,14 @@ export async function invalidateStoredToken(): Promise<void> {
   }
 }
 
-// ── DEV-only hands-on harness (Entry 9) ────────────────────────────────────
+// ── Hands-on smoke harness (Entry 9) ───────────────────────────────────────
 // Lets the owner verify Phase 2 from the service-worker console without any
-// UI yet. Stripped from production builds (import.meta.env.DEV is false).
-// See research/oauth-smoke.md for the runbook.
-if (import.meta.env.DEV) {
+// UI yet. Present in `npm run dev` AND the dedicated `npm run build:smoke`
+// (a clean one-shot build — the CRXJS dev server proved too fragile for a
+// non-technical/remote run). DEAD-CODE-ELIMINATED from a plain
+// `npm run build`, so it can never reach a shippable artifact (both flags
+// are statically false there). See research/oauth-smoke.md for the runbook.
+if (import.meta.env.DEV || __OQ_SMOKE__) {
   (self as unknown as { __oqAuth?: Record<string, unknown> }).__oqAuth = {
     /** Force the interactive flow (account chooser + consent). */
     authorize: () => getAccessToken({ interactive: true }),

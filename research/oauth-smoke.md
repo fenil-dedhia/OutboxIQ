@@ -19,21 +19,33 @@ is stripped from production builds.
 
 ## Setup (once)
 
-> **Use `npm run dev`, NOT `npm run build`.** The `__oqAuth` helper is
-> **DEV-only** (it is deliberately stripped from production `build`
-> output so it can never ship). The dev server must stay running.
+> **Use the one-shot `npm run build:smoke`, NOT `npm run dev`.** The
+> CRXJS dev server was found to corrupt `dist/` (copying node_modules,
+> the .pem, and a recursively-nested dist/) and the service worker would
+> not open. `build:smoke` is a clean one-shot production-quality build
+> that *also* includes the `__oqAuth` harness (a plain `npm run build`
+> strips it, so it can never ship).
 
-1. In a Terminal window: `npm --prefix extension run dev`
-   **Leave this window open** for the whole test (it serves + rebuilds
-   the dev extension into `extension/dist/`).
-2. Chrome → `chrome://extensions` → Developer mode ON → **Load unpacked**
-   → select `extension/dist/` (or click the **↻ reload** icon on the
-   OutboxIQ card if it's already loaded from a previous session).
+1. In a Terminal, run these two lines (the first wipes any corrupt dist
+   from a previous `npm run dev`):
+
+   ```
+   rm -rf /Users/fenildedhia/Code/Projects/OutboxIQ/extension/dist
+   npm --prefix /Users/fenildedhia/Code/Projects/OutboxIQ/extension run build:smoke
+   ```
+
+   Wait for `✓ built`. No process stays running — you can close the
+   Terminal.
+2. Chrome → `chrome://extensions` → Developer mode ON. If an OutboxIQ
+   card is already there from before, click **Remove** first (the old
+   one points at the corrupt dist). Then **Load unpacked** → select
+   `/Users/fenildedhia/Code/Projects/OutboxIQ/extension/dist`.
 3. On the OutboxIQ card, click the blue **"service worker"** link
    (under "Inspect views") → DevTools opens → click its **Console**
-   tab. **Run every command below in that console.** If the link says
+   tab. **Run every command below in that console.** If it says
    "service worker (inactive)", click it — that wakes it and opens the
-   console.
+   console. (If clicking still does nothing, click the **↻ reload**
+   icon on the card once, then click the link again.)
 
 ---
 
