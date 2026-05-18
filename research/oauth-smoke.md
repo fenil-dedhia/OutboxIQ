@@ -107,17 +107,24 @@ A Google window opens. **Expected:**
 ❌ If `{ ok:false, reason:"denied" }` only when you actually clicked
    Allow → record it and stop (surface).
 
-### B. The token actually works (Calendar API)
+### B. The token actually works (People API — Free v1's only API)
 
 ```js
-await __oqAuth.testCalendar();
+await __oqAuth.testPeople("someone-in-your-contacts@example.com");
 ```
 
-**Expected:** `{ status: 200, body: { value: "America/New_York", … } }`
-(your real Calendar timezone). This proves the access token is valid
-against a real Google API — the Phase 3 dependency.
+(Session-8 update: the old `testCalendar` probe is gone — Calendar was
+removed from v1 scope, §5.1.3 amendment. People `searchContacts` is
+Free v1's only real Google call.)
 
-✅ Pass: `status: 200` and a plausible IANA `value`.
+**Expected:** `{ status: 200, body: { … } }` (a results object, possibly
+empty if that email isn't a contact — 200 is the pass signal). This
+proves the `contacts.readonly` token **and** the
+`people.googleapis.com` host permission both work — the Session-9
+cascade dependency.
+
+✅ Pass: `status: 200`. (401/403 ⇒ scope/consent problem; a network
+error ⇒ host-permission problem — report it.)
 
 ### C. Cached token is reused (no second prompt)
 
@@ -167,7 +174,7 @@ Chrome version:
 Account(s) used:
 
 A first authorize  :  PASS / FAIL  — notes:
-B testCalendar     :  PASS / FAIL  — tz returned:
+B testPeople       :  PASS / FAIL  — status:
 C cached reuse     :  PASS / FAIL
 D silent re-issue  :  PASS / FAIL
 E revoke degrade   :  PASS / FAIL

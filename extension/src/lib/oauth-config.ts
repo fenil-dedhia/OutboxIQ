@@ -67,18 +67,28 @@ export const OAUTH_REDIRECT_URI =
   "https://dicnmcmhapcfceodecocnkaacjdpplnm.chromiumapp.org/";
 
 /**
- * Minimum OAuth scopes (PRD §6.6). `directory.readonly` is intentionally
- * EXCLUDED here and from the consent screen — it is only needed for the
- * Workspace directory path, an additive task; adding it now would
- * needlessly broaden the consent screen. `gmail.compose`/`gmail.modify` are
- * Google "restricted" scopes (the deferred CASA pre-launch item — Free v1
- * still needs *a* CASA assessment; see PRE_LAUNCH_CHECKLIST.md); fully
- * functional under Testing mode with the test-user allowlist.
+ * Free v1 OAuth scope set — PRD §6.6 (Session-8 trim, Entry 36).
+ *
+ * Exactly ONE scope: `contacts.readonly` (the recipient lookup in §5.4 is
+ * Free v1's ONLY Google API call). It is a Google **"sensitive"** scope,
+ * NOT "restricted" — which is what may keep CASA off Free v1's launch
+ * path entirely (PRE_LAUNCH_CHECKLIST.md).
+ *
+ * Deliberately NOT requested (had zero Free v1 consumers — removed, not
+ * "minimised speculatively"): `gmail.compose`/`gmail.modify` (Schedule
+ * Send is DOM automation; the Gmail cancel path is Premium §13) and
+ * `calendar.settings.readonly` (the §5.1.3 amendment made browser tz the
+ * v1 source — no Calendar call). `directory.readonly` stays out too —
+ * only the deferred Workspace Directory path (§5.4.1 step 3) would add
+ * it, incrementally, for Workspace users.
+ *
+ * Adding ANY restricted scope back later is an explicit re-evaluation
+ * (consent-screen reconfig + a forced re-consent for every user) — never
+ * speculative. PREMIUM_NOTES: Premium v1's backend (§13) requests the
+ * Gmail scopes its server-side Unschedule-on-Reply needs; that is
+ * Premium-tier scope, never added to this Free v1 list.
  */
 export const OAUTH_SCOPES = [
-  "https://www.googleapis.com/auth/gmail.compose",
-  "https://www.googleapis.com/auth/gmail.modify",
-  "https://www.googleapis.com/auth/calendar.settings.readonly",
   "https://www.googleapis.com/auth/contacts.readonly",
 ] as const;
 

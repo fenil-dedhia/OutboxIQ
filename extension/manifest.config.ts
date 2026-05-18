@@ -50,13 +50,15 @@ export default defineManifest({
   permissions: ["storage", "identity"],
   // mail.google.com: the content-script origin; also lets the onboarding
   // page focus the user's Gmail tab on finish (PRD §5.1.4).
-  // googleapis.com: the Calendar / People API calls (PRD §7.4) the service
-  // worker makes with the OAuth access token. The OAuth redirect itself
-  // (https://<id>.chromiumapp.org/) is handled by chrome.identity and needs
-  // NO host permission. Scopes stay minimal (PRD §6.6) — these are origins,
-  // not data scopes.
+  // people.googleapis.com: Free v1's ONLY Google API call — the §5.4
+  // recipient lookup (people:searchContacts). NOTE: the People API is on
+  // `people.googleapis.com`, which `www.googleapis.com/*` does NOT cover
+  // (Session-8 close-out fix — the prior www.googleapis.com entry was for
+  // the now-removed Calendar call, §5.1.3 amendment). The OAuth redirect
+  // (https://<id>.chromiumapp.org/) is handled by chrome.identity and
+  // needs NO host permission. Minimal by design (PRD §6.1.1/§6.6).
   host_permissions: [
     "https://mail.google.com/*",
-    "https://www.googleapis.com/*",
+    "https://people.googleapis.com/*",
   ],
 });

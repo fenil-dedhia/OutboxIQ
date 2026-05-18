@@ -261,12 +261,21 @@ if (import.meta.env.DEV || __OQ_SMOKE__) {
       if (a) await setStoredAuth({ ...a, expiresAt: Date.now() - 1 });
       return getStoredAuth();
     },
-    /** Prove the token works: fetch the Calendar user-timezone endpoint. */
-    testCalendar: async () => {
+    /**
+     * Prove the token works against Free v1's ONLY real API — People
+     * `searchContacts` (Session-8 trim: Calendar scope/host removed, so
+     * the old testCalendar probe is gone). Pass any contact's email,
+     * e.g. `__oqAuth.testPeople("someone@example.com")`. status 200 ⇒
+     * the contacts.readonly token + people.googleapis.com host both work
+     * (the Session-9 cascade dependency).
+     */
+    testPeople: async (email = "") => {
       const t = await getAccessToken({ interactive: true });
       if (!t.ok) return t;
       const r = await fetch(
-        "https://www.googleapis.com/calendar/v3/users/me/settings/timezone",
+        "https://people.googleapis.com/v1/people:searchContacts" +
+          `?query=${encodeURIComponent(email)}` +
+          "&readMask=names,emailAddresses",
         { headers: { Authorization: `Bearer ${t.token}` } },
       );
       return { status: r.status, body: await r.json() };
