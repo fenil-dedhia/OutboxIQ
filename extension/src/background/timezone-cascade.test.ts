@@ -28,12 +28,18 @@ describe("resolveRecipientTimezone — Free v1 (cache → manual, no API)", () =
     });
   });
 
-  it("stale cache entry (> TTL) → manual_needed (re-ask)", async () => {
+  it("manual entries persist indefinitely (PRD §5.3.5 (j) / Entry 40)", async () => {
+    // Manual entries are user-entered data — they don't expire (§5.3.5
+    // (j)). The 90-day TTL is retained for "people_api" / "directory" /
+    // "cache" sources (Premium v1's automated cascade). Pre-Entry-40 the
+    // test asserted "manual_needed" past TTL; that expectation was
+    // implementation-aligned but spec-misaligned (PRD §5.4.1 has always
+    // said "cached forever per recipient" for manual selections).
     await setManualRecipientTimezone("old@example.com", "Europe/Berlin");
     const future = Date.now() + (CACHE_TTL_DAYS + 1) * 24 * 60 * 60 * 1000;
     expect(await resolveRecipientTimezone("old@example.com", future)).toEqual({
-      source: "manual_needed",
-      timezone: null,
+      source: "cache",
+      timezone: "Europe/Berlin",
     });
   });
 

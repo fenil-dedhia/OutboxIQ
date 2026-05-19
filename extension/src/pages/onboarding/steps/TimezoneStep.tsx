@@ -1,6 +1,5 @@
-import { useMemo } from "react";
 import type { TimezoneSource } from "../../../lib/storage";
-import { getTimezoneList } from "../../../lib/timezones";
+import { TimezonePicker } from "../../../lib/components/TimezonePicker";
 
 interface Props {
   timezone: string;
@@ -21,26 +20,21 @@ function detectedLabel(source: TimezoneSource): string {
   return source === "manual" ? "Set by you" : "Detected from your browser";
 }
 
-// PRD §5.1 step 2: confirm or override the detected timezone.
+// PRD §5.1.3 step 2: confirm or override the detected timezone. The
+// dropdown itself is the shared <TimezonePicker> (PRD §5.3.5 item (k) —
+// the §5.3.5 Optimize-for-X inline picker MUST use the same component).
 export function TimezoneStep({ timezone, timezoneSource, onChange }: Props) {
-  const zones = useMemo(() => getTimezoneList(), []);
-
   return (
     <section className="oq-step" aria-labelledby="oq-tz-title">
       <h1 id="oq-tz-title">Confirm your timezone</h1>
       <p className="oq-detected">{detectedLabel(timezoneSource)}</p>
-      <label className="oq-field">
+      <label className="oq-field" htmlFor="oq-tz-select">
         <span>Your timezone</span>
-        <select
+        <TimezonePicker
+          id="oq-tz-select"
           value={timezone}
-          onChange={(e) => onChange(e.target.value, "manual")}
-        >
-          {zones.map((z) => (
-            <option key={z} value={z}>
-              {z}
-            </option>
-          ))}
-        </select>
+          onChange={(tz) => onChange(tz, "manual")}
+        />
       </label>
       <p className="oq-help">
         This is the timezone we&rsquo;ll use when you don&rsquo;t specify one

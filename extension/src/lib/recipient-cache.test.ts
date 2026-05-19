@@ -55,8 +55,29 @@ describe("recipient-cache (PRD §5.4.1/§5.4.2)", () => {
     ).toBeNull();
   });
 
-  it("isCacheEntryFresh: unparseable timestamp is stale (re-resolve)", () => {
-    expect(isCacheEntryFresh({ resolvedAt: "not-a-date" }, T0)).toBe(false);
+  it("isCacheEntryFresh: unparseable timestamp on a non-manual entry is stale", () => {
+    expect(
+      isCacheEntryFresh({ resolvedAt: "not-a-date", source: "people_api" }, T0),
+    ).toBe(false);
+  });
+
+  it("manual entries are indefinitely fresh (PRD §5.3.5 (j))", async () => {
+    // Way past the 90-day TTL: a manual entry must still resolve.
+    await setManualRecipientTimezone("forever@example.com", "Asia/Tokyo");
+    const hit = await getCachedRecipient(
+      "forever@example.com",
+      T0 + 10 * 365 * DAY,
+    );
+    expect(hit?.timezone).toBe("Asia/Tokyo");
+    expect(hit?.source).toBe("manual");
+  });
+
+  it("isCacheEntryFresh: a manual entry with an unparseable timestamp is still fresh", () => {
+    // Spec §5.3.5 (j) treats manual entries as user-entered data; honour
+    // their intent even if the timestamp string is malformed.
+    expect(
+      isCacheEntryFresh({ resolvedAt: "not-a-date", source: "manual" }, T0),
+    ).toBe(true);
   });
 
   it("upsert replaces the prior entry for that email", async () => {

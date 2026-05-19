@@ -17,6 +17,7 @@ import { StrictMode } from "react";
 import { ScheduleModal } from "./ScheduleModal";
 import { ModalErrorBoundary } from "./ErrorBoundary";
 import { MODAL_CSS } from "./styles";
+import type { ComposeRecipient } from "../compose/compose-recipients";
 import type { LastScheduled, WorkingHours } from "../../lib/storage";
 
 const HOST_ID = "outboxiq-schedule-modal-host";
@@ -25,6 +26,10 @@ export interface OpenScheduleModalArgs {
   timezone: string;
   workingHours: WorkingHours;
   lastScheduled: LastScheduled | null;
+  /** PRD §5.3.5 (b): To+CC recipients from the compose at modal-open time
+   * (BCC excluded by `readComposeRecipients`). Empty → §5.3.5 section
+   * hidden, modal still usable via Quick Options / Pick Custom. */
+  recipients: ComposeRecipient[];
   onScheduled: (v: LastScheduled) => void;
   /** A render-time throw in the modal hands off to Gmail's native scheduler
    * so the user is never stranded (PRD §5.2.3). See ErrorBoundary.tsx. */
@@ -68,6 +73,7 @@ export function openScheduleModal(args: OpenScheduleModalArgs): void {
           timezone={args.timezone}
           workingHours={args.workingHours}
           lastScheduled={args.lastScheduled}
+          recipients={args.recipients}
           onScheduled={args.onScheduled}
           onClose={close}
         />

@@ -8,15 +8,24 @@
 //
 // In scope: §5.3.1 layout, §5.3.2 header + timezone subtitle, §5.3.3 Quick
 // Options + "Last scheduled time" row (§5.3.3 amendment), §5.3.4 custom
-// picker ("Pick custom"), and the §5.3.6 → §5.5 check. Per the locked
-// decision (CLAUDE.md "Locked product decisions", Session 5.5) the
-// **Schedule Send** path only warns on **absolute-limit** violations:
-// scheduling outside one's working hours to hit a recipient's window is
-// Fashionably Late's core use case, so warning on it trains dismissal. Working-
-// hours violations still get computed by checkWorkingHours (consumed by
-// §5.5.1 regular-Send and future §5.3.5) — Schedule Send just doesn't act
-// on them. Deferred (owner-directed): §5.3.5 Optimize-for-recipient +
-// §5.3.7; §5.5.1 regular-Send trigger (Session 5.6).
+// picker ("Pick custom"), §5.3.5 Optimize-for-X (Session 10 — items a–n),
+// and the §5.3.6 → §5.5 check.
+//
+// §5.5 trigger split (Locked product decisions / Entry 40):
+//   • **Quick Options / Pick Custom / Last scheduled time** → §5.5 warns on
+//     **Default-boundaries** violations (Entry 40 Case 2 — manual selection).
+//   • **§5.3.5 Optimize-for-X-computed times** → §5.5 warning SUPPRESSED
+//     (Entry 40 Case 1 — algorithmic, feature-mediated intent). The
+//     four-step engagement (open modal → check Optimize → pick recipient
+//     → pick timing) constitutes explicit intent; surfacing the warning at
+//     the *result* of that engagement would train users to dismiss it.
+//   • Working-hours violations on Schedule Send remain ignored (the core
+//     use case is deliberate off-hours scheduling — Entry 21); they are
+//     still computed by checkWorkingHours and consumed by §5.5.1.
+//
+// Implementation: Optimize is routed through `commitOptimize()` which
+// computes the send time then calls `run()` directly (no `gate()`). Every
+// other path goes through `gate()` so the warning fires as before.
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -46,6 +55,10 @@ import {
   openNativeScheduleDialog,
 } from "./schedule-actions";
 import { WorkingHoursWarning } from "./WorkingHoursWarning";
+import { OptimizeSection, type OptimizeChoice } from "./OptimizeSection";
+import { computeOptimizeSendTime } from "../../lib/schedule/optimize-time";
+import { setManualRecipientTimezone } from "../../lib/recipient-cache";
+import type { ComposeRecipient } from "../compose/compose-recipients";
 import type { LastScheduled, WorkingHours } from "../../lib/storage";
 
 type Status =
@@ -62,10 +75,15 @@ type Selection =
 export interface ScheduleModalProps {
   /** The user's configured IANA timezone (PRD §7.2 user.timezone). */
   timezone: string;
-  /** The user's working hours + absolute limits (PRD §7.2). §5.5 input. */
+  /** The user's working hours + Default boundaries (PRD §7.2). §5.5 input. */
   workingHours: WorkingHours;
   /** Last time scheduled via Fashionably Late, or null (PRD §5.3.3 amendment). */
   lastScheduled: LastScheduled | null;
+  /** Compose's current To+CC recipients (PRD §5.3.5 (b); BCC excluded).
+   * Empty when the user opened Schedule Send with no recipients yet, or
+   * when DOM read failed (§6.7 fail-open). Empty → Optimize section is
+   * hidden so the user can still use Quick Options / Pick Custom. */
+  recipients: ComposeRecipient[];
   /** Persist a freshly-scheduled time so it becomes "Last scheduled time". */
   onScheduled: (v: LastScheduled) => void;
   onClose: () => void;
@@ -94,6 +112,7 @@ export function ScheduleModal({
   timezone,
   workingHours,
   lastScheduled,
+  recipients,
   onScheduled,
   onClose,
 }: ScheduleModalProps) {
@@ -102,6 +121,14 @@ export function ScheduleModal({
   const [time, setTime] = useState("");
   const [selection, setSelection] = useState<Selection | null>(null);
   const [warning, setWarning] = useState<PendingWarning | null>(null);
+  // §5.3.5 Optimize-for-X state. When non-null the user has a complete
+  // Optimize choice (recipient + tz + timing); the Schedule button reads
+  // EITHER this OR `selection`, and commits via `commitOptimize` (which
+  // bypasses §5.5 per Entry 40 Case 1).
+  const [optimize, setOptimize] = useState<OptimizeChoice | null>(null);
+  // Bumped each time the user touches a preset / custom row so the
+  // OptimizeSection clears its own checkbox (one-decision-at-a-time, §8.7).
+  const [optimizeReset, setOptimizeReset] = useState(0);
   const cardRef = useRef<HTMLDivElement>(null);
   // Latest `warning` for the keydown handler without re-subscribing or a
   // state-updater side effect (StrictMode-safe).
@@ -138,13 +165,20 @@ export function ScheduleModal({
     return () => document.removeEventListener("keydown", onKey, true);
   }, [onClose]);
 
+  // Touching a preset / custom / last-row → disengage Optimize so the two
+  // can't be simultaneously "ready". One-decision-at-a-time (§8.7).
+  function pickSelection(s: Selection): void {
+    setSelection(s);
+    setOptimizeReset((n) => n + 1);
+  }
+
   // Editing the custom inputs picks "custom" when both are valid; if they
   // become invalid and custom was the active choice, the selection clears.
   function updateCustom(nextDate: string, nextTime: string): void {
     setDate(nextDate);
     setTime(nextTime);
     const wall = parsePickerInputs(nextDate, nextTime);
-    if (wall) setSelection({ kind: "custom", wall });
+    if (wall) pickSelection({ kind: "custom", wall });
     else setSelection((s) => (s && s.kind === "custom" ? null : s));
   }
 
@@ -237,8 +271,57 @@ export function ScheduleModal({
     setWarning({ verdict, proceed: { action, remember }, snap });
   }
 
+  // §5.3.5 Optimize-for-X commit path. Bypasses gate() per Entry 40 Case 1:
+  // an Optimize-computed time crossing the user's Default boundaries is the
+  // intended output of the feature; surfacing the §5.5 warning at the result
+  // of the four-step engagement would train users to dismiss the modal
+  // (extending Entry 21's "warnings fire for unintended actions, not the
+  // core use case" line of reasoning). Working-hours and Default-boundaries
+  // calc still runs unconditionally elsewhere — only the trigger predicate
+  // narrows here; the warning is not invoked.
+  //
+  // Cache write: only when the user picked the tz manually via the inline
+  // picker AND left "Remember…" checked (spec (i)/(j)). Cache hits aren't
+  // re-written; an unchecked Remember leaves the cache untouched.
+  function commitOptimize(c: OptimizeChoice): void {
+    const result = computeOptimizeSendTime(
+      new Date(),
+      timezone,
+      c.recipientTz,
+      c.timing,
+    );
+    const f = formatForGmail(result.userWall);
+    const remember: LastScheduled = {
+      display: f.display,
+      gmailDate: f.gmailDate,
+      gmailTime: f.gmailTime,
+    };
+    void run(async () => {
+      if (!c.cacheHit && c.rememberTz) {
+        // Best-effort persistence; never block the schedule on a cache write.
+        try {
+          await setManualRecipientTimezone(
+            c.recipientEmail,
+            c.recipientTz,
+            c.recipientName,
+          );
+        } catch {
+          /* §5.3.5 (j) is best-effort; scheduling proceeds regardless */
+        }
+      }
+      await scheduleAt({ gmailDate: f.gmailDate, gmailTime: f.gmailTime });
+    }, remember);
+  }
+
   // The single end-of-workflow commit (the primary "Schedule" button).
+  // Optimize wins over selection when both are present (defensive — the
+  // pickSelection / OptimizeSection engagement contract makes them
+  // mutually exclusive in steady state).
   function commit(): void {
+    if (optimize) {
+      commitOptimize(optimize);
+      return;
+    }
     if (!selection) return;
     if (selection.kind === "last") {
       if (!lastScheduled) return;
@@ -341,7 +424,7 @@ export function ScheduleModal({
               }
               aria-pressed={selection?.kind === "last"}
               disabled={busy}
-              onClick={() => setSelection({ kind: "last" })}
+              onClick={() => pickSelection({ kind: "last" })}
             >
               <span>Last scheduled time</span>
               <span className="when">{lastScheduled.display}</span>
@@ -357,7 +440,7 @@ export function ScheduleModal({
             className={"preset" + (presetSelected(p) ? " selected" : "")}
             aria-pressed={presetSelected(p)}
             disabled={busy}
-            onClick={() => setSelection({ kind: "preset", preset: p })}
+            onClick={() => pickSelection({ kind: "preset", preset: p })}
           >
             <span>{p.label}</span>
             <span className="when">{p.display}</span>
@@ -386,6 +469,15 @@ export function ScheduleModal({
           />
         </div>
 
+        <OptimizeSection
+          recipients={recipients}
+          userTimezone={timezone}
+          onChange={setOptimize}
+          onEngage={() => setSelection(null)}
+          resetSignal={optimizeReset}
+          disabled={busy}
+        />
+
         {status.kind === "busy" && (
           <p className="status">Opening Gmail&apos;s scheduler…</p>
         )}
@@ -401,7 +493,7 @@ export function ScheduleModal({
           </button>
           <button
             className="primary"
-            disabled={busy || !selection}
+            disabled={busy || (!selection && !optimize)}
             onClick={commit}
           >
             Schedule

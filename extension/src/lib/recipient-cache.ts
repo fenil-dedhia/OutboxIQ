@@ -11,8 +11,14 @@
 
 import { getState, setState, type RecipientCacheEntry } from "./storage";
 
-/** PRD §5.4.1 step 1: cached timezones are reused for 90 days. After that a
- * lookup is re-resolved (people may move; cheap to refresh, cached again). */
+/** PRD §5.4.1 step 1: auto-detected cached timezones are reused for 90 days
+ * (people may move; cheap to refresh, cached again). MANUAL entries are
+ * user-entered data and never expire — spec §5.3.5 (j), Entry 40: with
+ * auto-detection removed in Free v1 (Entry 39), the cache holds only
+ * user-typed timezones, which persist until the user clears them via the
+ * Settings panel (§5.8.2). The 90-day TTL is retained for "people_api" /
+ * "directory" / "cache" sources so Premium v1 ships with the original
+ * staleness semantics unchanged. */
 export const CACHE_TTL_DAYS = 90;
 const CACHE_TTL_MS = CACHE_TTL_DAYS * 24 * 60 * 60 * 1000;
 
@@ -22,9 +28,14 @@ function sameEmail(a: string, b: string): boolean {
 }
 
 export function isCacheEntryFresh(
-  entry: Pick<RecipientCacheEntry, "resolvedAt">,
+  entry: Pick<RecipientCacheEntry, "resolvedAt" | "source">,
   now: number,
 ): boolean {
+  // §5.3.5 (j): manual entries never expire — user-entered data, only
+  // cleared by the user (Settings §5.8.2). Treat a parseable timestamp
+  // as authoritative; `manual` entries with unparseable timestamps are
+  // still treated as fresh (the user's intent stands).
+  if (entry.source === "manual") return true;
   const t = Date.parse(entry.resolvedAt);
   if (Number.isNaN(t)) return false; // unparseable → treat as stale, re-resolve
   return now - t < CACHE_TTL_MS;

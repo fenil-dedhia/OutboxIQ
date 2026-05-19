@@ -14,6 +14,7 @@ import { getState, setLastScheduled } from "../lib/storage";
 import type { LastScheduled } from "../lib/storage";
 import { MSG_OPEN_ONBOARDING } from "../lib/messages";
 import { installComposeIntegration } from "./compose/compose-integration";
+import { readComposeRecipients } from "./compose/compose-recipients";
 import { openScheduleModal } from "./schedule-modal/mount";
 import { openNativeScheduleDialog } from "./schedule-modal/schedule-actions";
 import { installRegularSendGuard } from "./regular-send/regular-send-guard";
@@ -79,10 +80,16 @@ function handleScheduleSend(): void {
   void (async () => {
     try {
       const state = await getState();
+      // PRD §5.3.5 (b): snapshot the compose's To+CC at open time. BCC is
+      // excluded inside readComposeRecipients per spec; an empty array
+      // (no recipients yet OR §6.7 DOM-read fail-open) means the modal
+      // simply hides the Optimize section.
+      const recipients = readComposeRecipients();
       openScheduleModal({
         timezone: state.user.timezone,
         workingHours: state.workingHours,
         lastScheduled: state.lastScheduled,
+        recipients,
         onScheduled: persistLastScheduled,
         // Render-time throw inside the modal (async to this try/catch) —
         // ErrorBoundary tears the host down and routes here (§5.2.3).

@@ -77,4 +77,74 @@ button.secondary {
 button.secondary:hover, button.secondary:focus-visible {
   background: #f8fafe; border-color: #1a73e8; outline: none;
 }
+
+/* §5.3.5 Optimize-for-X section (locked items a–n, Session 10).
+   Visually integrated with Quick Options + Pick Custom; not a styled
+   island (§8.1 native feel). */
+.optimize { margin-top: 4px; }
+.optimize-engage {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 13px; color: #202124; cursor: pointer;
+  margin: 0 0 8px;
+}
+.optimize-engage input[type="checkbox"] {
+  width: 16px; height: 16px; accent-color: #1a73e8; cursor: pointer;
+}
+.optimize-recipient {
+  font: inherit; padding: 6px 8px; border: 1px solid #dadce0;
+  border-radius: 4px; color: #202124; background: #fff;
+  margin: 0 0 0 4px; max-width: 100%;
+}
+.optimize-recipient:disabled { background: #f8f9fa; color: #5f6368; }
+.optimize-body {
+  margin-top: 8px; padding: 10px 12px; background: #f8f9fa;
+  border-radius: 6px; border: 1px solid #e8eaed;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.optimize-timing-row {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  font-size: 13px; color: #202124;
+}
+.optimize-timing-label { color: #5f6368; font-size: 12px; }
+.optimize-timing {
+  font: inherit; padding: 6px 8px; border: 1px solid #dadce0;
+  border-radius: 4px; color: #202124; background: #fff; flex: 1 1 auto;
+  min-width: 200px;
+}
+.optimize-tooltip-btn {
+  font: inherit; width: 20px; height: 20px; line-height: 18px;
+  border-radius: 50%; border: 1px solid #dadce0; background: #fff;
+  color: #5f6368; cursor: pointer; padding: 0; font-style: italic;
+  font-weight: 600;
+}
+.optimize-tooltip-btn:hover, .optimize-tooltip-btn:focus-visible {
+  background: #e8f0fe; border-color: #1a73e8; color: #1a73e8; outline: none;
+}
+.optimize-tooltip {
+  font-size: 12px; color: #5f6368; margin: 0;
+  padding: 8px 10px; background: #fff; border-radius: 4px;
+  border: 1px solid #e8eaed; line-height: 1.5;
+}
+.optimize-tz {
+  display: flex; flex-direction: column; gap: 6px;
+}
+.optimize-tz-prompt {
+  font-size: 12px; color: #5f6368; margin: 0;
+}
+.optimize-tz-select {
+  font: inherit; padding: 6px 8px; border: 1px solid #dadce0;
+  border-radius: 4px; color: #202124; background: #fff; width: 100%;
+}
+.optimize-remember {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12px; color: #5f6368; cursor: pointer; margin-top: 2px;
+}
+.optimize-remember input[type="checkbox"] {
+  width: 14px; height: 14px; accent-color: #1a73e8; cursor: pointer;
+}
+.optimize-confirm {
+  font-size: 13px; color: #202124; margin: 2px 0 0;
+  padding: 8px 10px; background: #e8f0fe; border-radius: 4px;
+  border-left: 3px solid #1a73e8; line-height: 1.5;
+}
 `;
