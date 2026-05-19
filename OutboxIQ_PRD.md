@@ -227,6 +227,16 @@ A standard date and time picker for custom scheduling. Selected time is always i
 
 #### 5.3.5 OutboxIQ Optimize Section
 
+> **Entry-39 amendment (2026-05-19, owner-directed — Free v1 = zero
+> Google API; `notes/owner-decisions-log.md` Entry 39).** Free v1
+> resolves the recipient **from the Gmail compose DOM** (the To-field
+> chip — name when Gmail rendered one, else the bare email) and the
+> recipient's timezone via **cache → manual picker only** (no People
+> API). There is **no OAuth and no Google API call** in Free v1. The
+> dropdown/UX below stands; its data source is DOM + local cache +
+> §5.3.7 manual, not an API lookup. The API-backed variant is **Premium
+> v1** (built, preserved inert in `extension/src/premium-v1/`; §13).
+
 Below the standard options, a new section labeled "Optimize delivery for recipient" appears, containing:
 
 **Recipient dropdown:**
@@ -270,6 +280,14 @@ If the computed send time falls outside the user's configured working hours, a s
 
 #### 5.3.7 Recipient Timezone Fallback
 
+> **Entry-39 amendment (2026-05-19, owner-directed).** In Free v1 this
+> manual picker is the **primary** path, not a fallback: the §5.4.1
+> cascade is cache → manual, so any first-contact recipient lands here,
+> and the chosen zone is cached forever per recipient (so it appears
+> once per recipient). Same UI/copy; reframed as the normal flow. (The
+> "we couldn't *automatically* detect" framing is Premium-v1 wording —
+> §13; for Free v1 read it as the standard one-time prompt.)
+
 If the plugin cannot detect the recipient's timezone (see Section 5.4), an inline component appears asking the user to select it:
 
 - Copy: "We couldn't automatically detect [Recipient Name]'s timezone. Pick one to continue, or we'll use yours."
@@ -281,6 +299,21 @@ If the plugin cannot detect the recipient's timezone (see Section 5.4), an inlin
 ### 5.4 Recipient Timezone Detection (Technical Spec)
 
 #### 5.4.1 Cascading Detection Logic
+
+> **Entry-39 amendment (2026-05-19, owner-directed — supersedes the
+> cascade below FOR FREE v1).** Empirical Session-9 testing established
+> the People-API timezone hit-rate is effectively zero (Google exposes
+> no usable IANA tz; the single-digit estimate the Maps-removal
+> amendment relied on was, in practice, ~nil), while the recipient is
+> readable from the compose DOM. **Free v1's cascade is therefore just:
+> Step 1 local cache (≤90d) → Step 4 manual picker (§5.3.7), cached
+> forever.** No People API, no Workspace Directory, no OAuth, no Google
+> API of any kind. Steps 2–3 below (People `searchContacts`, Workspace
+> Directory) and all OAuth are **Premium v1** — built and preserved
+> inert in `extension/src/premium-v1/` (see its README; §13). The
+> `resolveRecipientTimezone()` contract Free v1 ships:
+> `{source:"cache"|"manual_needed"}`, purely on-device. The steps below
+> document the **Premium v1** full cascade (kept intact for wire-up).
 
 When a recipient is selected for optimization, the plugin executes the following cascade in order. The first method to return a valid IANA timezone wins.
 
@@ -764,9 +797,27 @@ Clicking "Undo" within the 7-second window cancels the scheduled email and reope
 
 ### 6.6 Minimum OAuth Scopes
 
-**Free v1 requests exactly one scope:**
+> **Entry-39 amendment (2026-05-19, owner-directed — RESOLVES the
+> "Open Session-10 question" the Entry-38 text below raised; supersedes
+> the scope list for Free v1).** **Free v1 requests ZERO OAuth scopes
+> and performs NO OAuth flow.** The empirical near-zero People hit-rate
+> made `contacts.readonly` not worth its sensitive-scope cost, and DOM
+> recipient-read removed the only reason to call People at all — so the
+> owner dropped *all* Google API dependency from Free v1. Net effect
+> (the upside the question flagged, now banked): Free v1 is an
+> **all-on-device, no-OAuth, no-API** extension — **no CASA, no
+> sensitive-scope consent-screen verification gate** (a major
+> pre-launch simplification). The three-scope set described below is
+> **Premium v1's** (`contacts.readonly` + `userinfo.email` + `openid`);
+> the OAuth implementation is built and preserved inert in
+> `extension/src/premium-v1/` (§13 / §7.5 Premium). The Session-8/9
+> amendments below are retained as accurate **Premium-v1** history
+> (Entry-4 discipline).
 
-- `https://www.googleapis.com/auth/contacts.readonly` (look up a recipient's contact record for timezone optimization — §5.4.1 step 2). This is a Google **"sensitive"** scope, **not** a "restricted" one.
+**Premium v1 requests three scopes** (Free v1: none — see the Entry-39 amendment above):
+
+- `https://www.googleapis.com/auth/contacts.readonly` (recipient contact lookup for timezone optimization — §5.4.1 Premium step 2). Google **"sensitive"**, **not** "restricted".
+- `https://www.googleapis.com/auth/userinfo.email` **and** `openid` (standard minimal OpenID identity set: the **ID token** `email` claim → `login_hint` so multi-account *silent* token renewal is invisible — §7.5 Premium). Both Google **"non-sensitive"**.
 
 Conditionally, **only** if/when the deferred Workspace Directory path (§5.4.1 step 3) is built, for Workspace users only:
 
@@ -803,6 +854,37 @@ Do **not** request `gmail.readonly` or any broader scope. Premium v1's backend (
 > reconfigured to this trimmed set (a Session-9 first-item owner task;
 > the OAuth *client* is unchanged). Recorded in
 > `notes/owner-decisions-log.md` (Session 8, Entry 36).
+
+> **Entry-6 amendment (2026-05-19 — Session 9, owner-directed; spec
+> follows an evidence-driven owner decision — refines, does NOT reverse,
+> Entry 36 above).** Session-9 hands-on verification (the committed
+> `__oqAuth.testPeopleMe` probe) established that a
+> `contacts.readonly`-**only** token receives **HTTP 403** from
+> `people/me?personFields=emailAddresses` — i.e. it **cannot** read the
+> authenticated user's own email. Google's `people.get` documentation
+> had listed `contacts.readonly` as sufficient; **live behaviour
+> contradicted the docs** (Entry-10 discipline — the reason the probe
+> exists, and why the clean full-revoke test mattered: the result is
+> trustworthy because the token was genuinely contacts-only). With no
+> contacts-only path to the user's own email, the `login_hint`
+> multi-account fix (§7.5; Entry 34→Entry 38) could not function. The
+> owner decided to **add one minimal scope**,
+> `https://www.googleapis.com/auth/userinfo.email`, rather than ship the
+> permanent multi-account re-prompt. This is **not a reversal of the
+> Entry-36 minimisation principle** — that principle forbids
+> *speculative / over-asking* scope; this is a **single, justified,
+> evidence-required** addition matching user intent ("know which account
+> you signed in with, to keep you signed in", §8.5). It is a Google
+> **non-sensitive** scope: it does **not** trigger CASA and does **not**
+> change the consent-verification tier (already set by the sensitive
+> `contacts.readonly`); the Entry-36 CASA reframe in
+> `PRE_LAUNCH_CHECKLIST.md` is **unaffected**. Cost: this amendment + a
+> one-time forced re-consent for all users (a scope *addition*, unlike
+> the Entry-36 removal, does require re-consent — `isAuthValid` already
+> enforces this). The GCP consent screen must have `userinfo.email`
+> **added** (a Session-9 owner task — the reverse of the Entry-36
+> removal; the OAuth *client* is still unchanged). Recorded in
+> `notes/owner-decisions-log.md` (Session 9, Entry 38).
 
 ### 6.7 Graceful Degradation
 
@@ -933,6 +1015,20 @@ Each API has its own quota and pricing. The plugin must respect rate limits and 
 
 ### 7.5 Authentication and Authorization
 
+> **Entry-39 amendment (2026-05-19, owner-directed — authoritative for
+> Free v1; supersedes every Free-v1 statement in this section).**
+> **Free v1 has NO authentication and NO authorization flow** — no
+> OAuth, no `chrome.identity`, no token, no Google API. Everything is
+> on-device (`chrome.storage.local`). The entire OAuth design in this
+> section (implicit grant, `id_token` `login_hint`, silent renewal,
+> scopes, CSRF/nonce, §6.5 token-handling) is now **Premium v1**: it
+> was fully built and hands-on-verified in Sessions 7–9 and is
+> **preserved intact, inert** in `extension/src/premium-v1/` (see that
+> README + §13.3), ready for Premium wire-up — *not deleted*. The
+> Session-7→9 amendments below are retained as accurate **Premium-v1**
+> design history (Entry-4 discipline); read every "the extension does
+> X with the token" as **Premium v1**, never Free v1.
+
 > **Tier-split amendment (2026-05-17, owner-directed — pre-Session-8,
 > after Entry 31; supersedes the original bullets below and *scopes* —
 > does not rewrite — the 2026-05-17/Entry-31 amendment that previously
@@ -1003,6 +1099,58 @@ Each API has its own quota and pricing. The plugin must respect rate limits and 
 > > through the **People API integration in §5.4 (Phase 3)**; the silent
 > > path incorporates it at that point. Recorded in
 > > `notes/owner-decisions-log.md` (Session 8).
+> >
+> > **Entry-6 amendment (2026-05-19 — Session 9; spec follows code,
+> > Entry-6/Entry-4 discipline — refines, does NOT reverse, the Session-8
+> > amendment above).** The `login_hint` incorporation is now
+> > **implemented**: `src/background/user-identity.ts` resolves the
+> > authenticated account's email from People `people/me`
+> > (`personFields=emailAddresses`) immediately after a grant, persists
+> > it to `StoredAuth.grantedEmail`, carries it across silent renewals,
+> > and the silent-only request sends it as `login_hint` (the
+> > interactive request still uses `prompt=select_account` with no hint —
+> > the multi-account *choice* guarantee is unchanged). **No OAuth scope
+> > was added** (§6.6 holds): Google's documented `people.get`
+> > authorization list includes `contacts.readonly`. One item remains
+> > **owner-run and empirical** (Entry-10 discipline — verify against
+> > live Google, not docs): whether a `contacts.readonly`-only token
+> > returns the `Source.type:ACCOUNT` login email. The implementation is
+> > **robust under both outcomes** — if it does not, `login_hint` is
+> > omitted and behaviour is *exactly* the Session-8 graceful re-prompt
+> > documented above (zero regression), and the contingent decision
+> > (adding the non-sensitive `openid`+`userinfo.email` identity scopes
+> > vs. accepting the permanent re-prompt) is **surfaced for an owner
+> > decision, not taken under build pressure** (Entry 15). Confirmed via
+> > the committed `__oqAuth.testPeopleMe` probe
+> > (`research/oauth-smoke.md` Phase 3). Recorded in
+> > `notes/session-9-summary.md`.
+> >
+> > **Entry-6 CORRECTION (2026-05-19, same session — supersedes the
+> > mechanism described in the amendment immediately above; that text is
+> > kept as the accurate-at-the-time record per Entry-4, but the
+> > `people/me` mechanism it describes was falsified hands-on and is NOT
+> > what shipped).** The empirical check it called for was run and
+> > **failed**: a token carrying `contacts.readonly` **and**
+> > `userinfo.email` + `openid` still received **HTTP 403** from People
+> > `people/me` — Google's `people.get` docs were wrong (third time this
+> > session; Entry-10). The **authoritative shipped mechanism** for Free
+> > v1 `login_hint`: the extension requests
+> > **`response_type=token id_token`** with a mandatory **`nonce`**;
+> > Google returns an OpenID **ID token in the same sign-in redirect**;
+> > its `email` claim — after `nonce`/`aud`/`iss` validation
+> > (proportionate, non-signature; rationale in `oauth.ts`) — is
+> > persisted to `StoredAuth.grantedEmail` and sent as `login_hint` on
+> > the silent-only renewal. The OAuth scope set is **three**:
+> > `contacts.readonly` + `userinfo.email` + **`openid`** (the last so
+> > the id_token is requested OIDC-correctly — same Entry-38 intent).
+> > **No People `people/me` call, no extra network round-trip, no new
+> > host permission;** the dead People-based `src/background/
+> > user-identity.ts` was **removed**. **Verified live, owner hands-on
+> > (Entry-10 satisfied):** account email resolved from the id_token;
+> > token expiry → **silent renewal with no account chooser** on a
+> > multi-account profile. The Entry-34 multi-account limitation is
+> > **closed**. Recorded in `notes/owner-decisions-log.md` Entry 38
+> > (resolution addendum) and `notes/session-9-summary.md`.
 > - Users revoke access at any time via Google account settings; with no
 >   stored refresh token, revocation simply causes the next token fetch
 >   to fail, degrading to the §6.7 fallbacks.
@@ -1179,6 +1327,21 @@ The following features and behaviors must **not** be implemented in v1. This lis
 ---
 
 ## 13. Premium v1 Scope (Tier-Gated — Deferred from Free v1, Not Out of Scope)
+
+> **Entry-39 addendum (2026-05-19, owner-directed — Premium's
+> client-side OAuth/People stack is now BUILT and PRESERVED).** Beyond
+> the backend Premium scope described below, note that Sessions 7–9
+> built and **hands-on-verified against live Google** the entire
+> client-side OAuth + People recipient-lookup + multi-account
+> `login_hint` (OpenID `id_token`) stack. When Free v1 dropped all
+> Google-API dependency (Entry 39), that work was **not discarded** —
+> it is preserved **intact, compilable, unit-tested, and inert** in
+> `extension/src/premium-v1/` (oauth, oauth-config, auth-token,
+> google-api, the full API cascade + tests + a README with wire-up
+> steps). Premium v1 therefore starts from a *verified* client-OAuth
+> base; its remaining net-new work is the backend Option-B exchange
+> (§13.3) + Unschedule-on-Reply, not re-building OAuth. Nothing in
+> `src/premium-v1/` is imported by any Free v1 entry point.
 
 > **Added 2026-05-17 (owner-directed — pre-Session-8, after Entry 31).
 > Tier-split decision; `notes/owner-decisions-log.md` Entry 32.**

@@ -12,7 +12,20 @@ Items that must be completed **before OutboxIQ Free v1 can be made publicly avai
 
 ## Google / OAuth
 
-### CASA security assessment — possibly NOT required for Free v1 (verify)
+### CASA security assessment — NOT required for Free v1 (RESOLVED, Entry 39)
+
+> **DEFINITIVE 2026-05-19 (owner-decisions-log Entry 39 — supersedes all
+> "verify whether…" framing below).** Free v1 requests **zero OAuth
+> scopes and makes no Google API call** (cascade is cache→manual,
+> recipient is DOM-read). CASA is triggered by *restricted* scopes and
+> the consent-screen verification by *sensitive* scopes — Free v1 has
+> **neither, nor any consent screen at all**. So **no CASA and no
+> sensitive-scope consent-screen verification gate apply to Free v1's
+> launch.** This removes the single largest pre-launch OAuth cost/lead
+> item. The OAuth stack (and therefore CASA Tier-2, consent
+> verification, etc.) is **Premium v1** scope — `PREMIUM_LAUNCH_CHECKLIST.md`
+> + `extension/src/premium-v1/`. The reframed-but-now-moot Session-8/9
+> analysis below is retained as Premium-v1 history (Entry-4 discipline).
 
 > **Materially reframed 2026-05-17 (Session 8 scope trim, Entry 36 —
 > supersedes the Entry-32 "Free v1 still needs *a* CASA assessment"
@@ -24,6 +37,28 @@ Items that must be completed **before OutboxIQ Free v1 can be made publicly avai
 > at all**, which would make the Testing→Production path materially
 > simpler and remove the single biggest pre-launch cost/lead-time item
 > from Free v1.
+>
+> **Session-9 update (2026-05-19, Entry 38 + CORRECTION) — no change to
+> this reframe; one HIGH-LEVERAGE open question added.** Free v1's scope
+> set is now **three**: `contacts.readonly` (sensitive) **+**
+> `userinfo.email` **+** `openid` (the latter two non-sensitive, added
+> for the `login_hint` id_token — PRD §6.6 / §7.5). Non-sensitive scopes
+> add **nothing** to CASA or the sensitive-scope consent-screen
+> verification (both driven solely by `contacts.readonly`) — so the
+> "possibly no CASA, otherwise just standard consent-screen
+> verification" conclusion above stands **unchanged**.
+>
+> **Open Session-10 question with direct pre-launch leverage
+> (owner-surfaced 2026-05-19):** `contacts.readonly` is the **only
+> sensitive scope**, and its real-world recipient-timezone hit-rate is
+> near-zero (§5.4.1 amendment — Google stores no usable IANA tz). If the
+> §5.3.5 build concludes it doesn't earn its place and it is dropped,
+> Free v1 becomes an **all-non-sensitive-scope app** — which may remove
+> the **consent-screen verification gate itself**, not just CASA (the
+> single largest remaining pre-launch OAuth item). This is **not decided
+> here** — it is the tracked headline decision for Session 10, to be made
+> *with* the feature build, not before. Flagged here because the answer
+> materially reshapes this checklist's OAuth section.
 
 - **The actual pre-launch task is now a verification, not an
   assessment:** confirm against Google's current OAuth-verification /

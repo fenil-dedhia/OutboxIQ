@@ -1276,6 +1276,158 @@ that preceded the §5.3.5/§5.4 build. They qualify; Entries 26 and 27.
   architecture actually needs?" review is how you find the features
   that quietly died.
 
+## Entry 38 — Adding `userinfo.email` after live testing falsified the docs-based scope assumption
+
+- **Session:** 9 (Phase-3 hands-on, the load-bearing check).
+- **Moment:** The committed `__oqAuth.testPeopleMe` probe, run by the
+  owner against live Google on a *cleanly* contacts-only token (the
+  owner did a full Google-account revoke first, on a flagged concern,
+  so the result couldn't be a false pass from a lingering Session-8
+  broad grant), returned **HTTP 403**: `contacts.readonly` cannot read
+  the user's own email via `people/me`. Google's `people.get`
+  documentation had listed `contacts.readonly` as sufficient — the
+  docs were wrong. This left the `login_hint` multi-account fix
+  (Entry 34) non-functional without a decision.
+- **My input (owner):** Chose to **add the minimal non-sensitive
+  `userinfo.email` scope** rather than ship the permanent multi-account
+  re-prompt — explicitly reaffirming that this refines, not reverses,
+  the Entry-36 minimisation principle (the principle forbids
+  *speculative* scope; this is *evidence-required* and intent-matching).
+  Also drove the rigour that made the finding trustworthy: questioned
+  why no consent screen reappeared, which surfaced the lingering-grant
+  risk and led to the full-revoke clean re-test.
+- **What Claude Code would have done without it:** Joint, split
+  honestly. Claude's contributions: building the probe instead of
+  trusting the docs (Entry-9/10 discipline), catching that
+  `__oqAuth.clear()` doesn't revoke the Google-side grant and that
+  `include_granted_scopes=true` could mask the answer (so it
+  recommended the full revoke), the robust-either-way implementation
+  that made a 403 a zero-regression non-event, and presenting the
+  two-option decision with Option A recommended. The **decision itself
+  was the owner's** — Claude explicitly did not take it (the prompt
+  forbade a unilateral scope add; Entry 15). Not a case of the owner
+  overriding Claude: Claude recommended A, the owner concurred and
+  owned it. The load-bearing owner act was the *rigour* (revoke-first)
+  that made the evidence trustworthy and the *authority* to amend the
+  Entry-36 lock.
+- **Outcome:** `OAUTH_SCOPES` → `contacts.readonly` + `userinfo.email`;
+  PRD §6.6 Entry-6 amendment; `oauth-config.ts` / `user-identity.ts`
+  headers updated; CLAUDE.md / PRE_LAUNCH / session-9 summary synced;
+  145 tests still green (scope rippled dynamically, no code logic
+  change — the Entry-25 robust design absorbed it). Owner re-confirms
+  the 403→200 flip hands-on via `testPeopleMe` after adding the scope
+  in GCP.
+- **Artifact:** `extension/src/lib/oauth-config.ts`;
+  `extension/src/background/user-identity.ts`; PRD §6.6 Session-9
+  amendment; `PRE_LAUNCH_CHECKLIST.md`; `notes/session-9-summary.md`;
+  the Session-9 screenshots (GCP Data Access; the contacts-only consent
+  screen; the 200/403 console).
+- **Lesson (for coaching):** Documentation is a hypothesis, not
+  ground truth — a committed probe + a *clean* test environment is what
+  turns it into a fact. The owner's instinct to ask "why didn't it ask
+  me?" was the highest-leverage move of the session: it exposed that
+  the test would otherwise have silently lied. And a scope-minimisation
+  *principle* is not a scope-count *target* — adding one well-evidenced,
+  intent-matching scope is consistent with minimisation, not a breach
+  of it; say so explicitly so a future session doesn't read Entry 36
+  as forbidding it.
+- **Resolution addendum (2026-05-19, same session — Entry-4 discipline:
+  the decision above stands; this records what implementing it actually
+  revealed).** Adding `userinfo.email` was **necessary but NOT
+  sufficient**: hands-on, People `people/me` returned **403 even with
+  `userinfo.email` + `openid` + `email` in the token** (proven via
+  `getStored().scopes`). People is simply the wrong API for the caller's
+  own email — Google's docs misled a *third* time. The correct,
+  OIDC-canonical source is the **ID token that already rides in the
+  sign-in redirect**: switched to `response_type=token id_token` + a
+  mandatory `nonce`, added `openid` to the scope set (so the id_token is
+  requested correctly — same Entry-38 intent, not a new decision), and
+  read/validated the `email` claim (nonce/aud/iss checks; proportionate,
+  non-signature — documented in `oauth.ts`). **No `people/me`, no extra
+  network call, no new host permission.** The dead People-based
+  `user-identity.ts` (+ tests) was **removed** (Entry-22 / Session-8
+  precedent — not kept "for a maybe"). **Verified live, owner hands-on:**
+  `whoami()` → `grantedEmail` resolved; `expireNow()`+`silent()` →
+  multi-account silent renewal with **no account chooser**. The
+  Entry-34 limitation is closed. The owner's follow-up question — "do we
+  still need `contacts.readonly` at all, given its near-zero timezone
+  hit rate?" — is **surfaced and tracked as the headline Session-10
+  decision** (potential upside: an all-non-sensitive-scope app, which
+  may remove the consent-screen verification gate entirely); it is
+  deliberately **NOT decided here** (end-of-session momentum is the
+  wrong place for a launch-shaping scope call — the recurring lesson of
+  this very session).
+- **Lesson addendum (for coaching):** "Add the obviously-correct scope"
+  was right *and* still not the fix — the failure had two independent
+  causes (insufficient scope **and** wrong API/endpoint), and fixing
+  only the visible one left the bug. When a docs-based assumption is
+  falsified, distrust the *whole* approach it sat under, not just the
+  one parameter you changed. And when the fix lands, the next sharp
+  question ("then why do we still need the *other* scope?") is a gift —
+  capture it, don't answer it tired.
+
+## Entry 39 — Free v1 drops ALL Google API: API-first PRD vs. DOM-first reality
+
+- **Session:** 9 (end, immediately after Entry 38's fix landed
+  verified-live; the owner chose to act on the question Entry 38 surfaced
+  rather than defer it to Session 10).
+- **Moment:** Entry 38's "do we still need `contacts.readonly`?" was
+  framed as a Session-10 decision. The owner closed it now: the empirical
+  evidence was already conclusive (People timezone hit-rate ≈ nil — the
+  §5.4.1 Maps-removal amendment's "single-digit %" was, in live testing,
+  effectively zero), and the recipient is **readable from the Gmail
+  compose DOM** without any API. So the *entire* Google-API dependency in
+  Free v1 existed to power a step that almost never fires.
+- **My input (owner):** Decided **Free v1 ships with zero OAuth and zero
+  Google API** — cascade collapses to cache → manual; the recipient name
+  comes from the compose DOM. Directed that Sessions 7–9's OAuth/People/
+  `login_hint` work be **preserved cleanly as inert Premium v1
+  infrastructure, not deleted and not commented-out**. Imposed the
+  execution discipline (bounded phases, green checkpoints, stop-and-split
+  on any surprise) and the timing rationale (do it now, before any
+  §5.3.5 UI is built on the soon-to-be-removed infra).
+- **What Claude Code would have done without it:** Owner-driven and
+  logged honestly *against* Claude. Across Sessions 7–9 Claude built the
+  entire OAuth/People stack faithfully to the PRD's API-first §5.4.1 —
+  and even *surfaced* the near-zero hit-rate as an honest caveat
+  (Session-8/9) — but treated it as a documentation footnote, never as
+  "then the API itself may be unnecessary." Claude was reasoning about
+  *how to make the API path work* (three scope/endpoint iterations)
+  while the owner asked *whether the API path should exist*. Without the
+  owner, Free v1 ships with an OAuth consent screen, `identity` +
+  googleapis host permissions, and a CASA/consent-verification pre-launch
+  gate — all to power a feature that resolves to the manual picker
+  ~always. The simplification, the preservation pattern, and the timing
+  were all the owner's; Claude's contribution was clean execution and
+  the evidence that made the call obvious in hindsight.
+- **Outcome:** OAuth/People/auth-token/oauth-config + the full API
+  cascade + tests moved (history-preserving `git mv`) to
+  `extension/src/premium-v1/` with a wire-up README; Free v1
+  `timezone-cascade.ts` rewritten to cache→manual; `service-worker.ts`
+  de-OAuthed; manifest reduced to `permissions:["storage"]` +
+  `host_permissions:["https://mail.google.com/*"]`, no `oauth2` key.
+  Build/typecheck/lint/format green; 143 tests (premium-v1 inert but
+  still tested); zero Free v1 → premium-v1 imports (audited). PRD
+  §5.3.5/§5.3.7/§5.4.1/§6.6/§7.5/§13 amended (Entry-4 discipline);
+  CLAUDE.md net **−5.8k** (stale Free-v1-OAuth detail → Premium
+  pointers); the now-inverted "SW must import oauth" gotcha fixed.
+- **Artifact:** `extension/src/premium-v1/` (+ `README.md`);
+  `extension/src/background/timezone-cascade.ts`,
+  `service-worker.ts`, `manifest.config.ts`; PRD §5.3.5/§5.3.7/§5.4.1/
+  §6.6/§7.5/§13 Entry-39 amendments; `CLAUDE.md`;
+  `notes/session-9-summary.md`.
+- **Lesson (for coaching):** The deepest miss isn't a wrong answer
+  inside the frame — it's not questioning the frame. A spec that says
+  "call API X to get data Y" silently presumes Y isn't already in front
+  of you; when the implementer keeps optimizing *the API call* while the
+  data sits in the DOM, that's frame-lock. The owner's repeated "do we
+  even need this?" beat three rounds of "how do we make this work."
+  Corollary on craft: deleting working, *verified* code is wrong;
+  isolating it inert (named, compilable, tested, un-imported) preserves
+  the sunk value for the tier that needs it without taxing the tier that
+  doesn't — "not deleted, not wired" is a first-class outcome, not a
+  hedge.
+
 ---
 
 *New entries are appended at every session close-out, alongside the session
