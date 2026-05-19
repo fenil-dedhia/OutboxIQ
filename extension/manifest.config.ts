@@ -1,15 +1,13 @@
 import { defineManifest } from "@crxjs/vite-plugin";
 
-// MV3 manifest. Session 8 wired Free v1 OAuth (PRD §7.5 implicit grant) +
-// the timezone cascade, so `identity` and the googleapis host permissions
-// are now requested (no longer "just-in-time / not yet"). OAuth scopes live
-// in src/lib/oauth-config.ts, NOT the manifest `oauth2` key (that key only
-// drives the unused chrome.identity.getAuthToken path — see the
-// oauth-config.ts header for why we use a Web-app client + launchWebAuthFlow).
-//
-// Web-Store note (PRE_LAUNCH_CHECKLIST.md): adding `identity` + the
-// googleapis hosts widens the install-time permission prompt vs. the
-// onboarding-only baseline. Expected for this feature; tracked there.
+// MV3 manifest. **Free v1 holds NO OAuth and makes NO Google API calls**
+// (owner-decisions-log Entry 39): `identity` and the `people.googleapis.com`
+// host permission were removed — the recipient cascade is now cache→manual,
+// purely on-device. Minimal footprint: `storage` + the Gmail content-script
+// origin, nothing else. The OAuth/People infrastructure (which DID need
+// `identity` + that host) is preserved inert in `src/premium-v1/`; Premium
+// v1 re-adds these manifest entries when it wires that up. This is a
+// material install-prompt reduction vs. the Session-8 OAuth baseline.
 export default defineManifest({
   manifest_version: 3,
   name: "OutboxIQ",
@@ -45,20 +43,15 @@ export default defineManifest({
       run_at: "document_idle",
     },
   ],
-  // `identity` → chrome.identity.launchWebAuthFlow (Free v1 OAuth, PRD §7.5).
-  // Still NOT "tabs" (we never need every tab's URL/title).
-  permissions: ["storage", "identity"],
-  // mail.google.com: the content-script origin; also lets the onboarding
-  // page focus the user's Gmail tab on finish (PRD §5.1.4).
-  // people.googleapis.com: Free v1's ONLY Google API call — the §5.4
-  // recipient lookup (people:searchContacts). NOTE: the People API is on
-  // `people.googleapis.com`, which `www.googleapis.com/*` does NOT cover
-  // (Session-8 close-out fix — the prior www.googleapis.com entry was for
-  // the now-removed Calendar call, §5.1.3 amendment). The OAuth redirect
-  // (https://<id>.chromiumapp.org/) is handled by chrome.identity and
-  // needs NO host permission. Minimal by design (PRD §6.1.1/§6.6).
-  host_permissions: [
-    "https://mail.google.com/*",
-    "https://people.googleapis.com/*",
-  ],
+  // `storage` only. NO `identity` (Free v1 has no OAuth — Entry 39), NO
+  // `tabs`. Premium v1 re-adds `identity` for its OAuth (preserved in
+  // src/premium-v1/); not requested here.
+  permissions: ["storage"],
+  // mail.google.com ONLY: the content-script origin; also lets the
+  // onboarding page focus the user's Gmail tab on finish (PRD §5.1.4).
+  // `people.googleapis.com` was REMOVED — Free v1 makes no Google API
+  // call (Entry 39; cascade is cache→manual). Premium v1 re-adds the
+  // People host when it wires up src/premium-v1/. Minimal by design
+  // (PRD §6.1.1) — this is now the smallest the extension can be.
+  host_permissions: ["https://mail.google.com/*"],
 });

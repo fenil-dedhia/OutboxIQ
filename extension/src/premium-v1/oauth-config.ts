@@ -67,29 +67,49 @@ export const OAUTH_REDIRECT_URI =
   "https://dicnmcmhapcfceodecocnkaacjdpplnm.chromiumapp.org/";
 
 /**
- * Free v1 OAuth scope set — PRD §6.6 (Session-8 trim, Entry 36).
+ * Free v1 OAuth scope set — PRD §6.6 (Session-8 trim Entry 36; Session-9
+ * `userinfo.email` addition, owner-decisions-log Entry 38).
  *
- * Exactly ONE scope: `contacts.readonly` (the recipient lookup in §5.4 is
- * Free v1's ONLY Google API call). It is a Google **"sensitive"** scope,
- * NOT "restricted" — which is what may keep CASA off Free v1's launch
- * path entirely (PRE_LAUNCH_CHECKLIST.md).
+ * THREE scopes:
+ *  1. `contacts.readonly` — the §5.4 recipient lookup (People
+ *     `searchContacts`). Google **"sensitive"**, NOT "restricted".
+ *  2. `userinfo.email` + 3. `openid` — together the **standard minimal
+ *     OpenID identity set**, used to receive an **ID token in the
+ *     sign-in redirect** whose `email` claim is the authenticated
+ *     account's email, for `login_hint` so multi-account *silent* token
+ *     renewal is invisible (Entry 34 limitation → Entry 38). Both Google
+ *     **"non-sensitive"**. Session-9 hands-on PROVED People `people/me`
+ *     returns 403 for the caller's own email even WITH `userinfo.email`
+ *     (Google's docs were wrong — Entry-10, third time); the id_token
+ *     path is the OIDC-correct source and needs **no extra API call and
+ *     no new host permission** (the token arrives in the existing
+ *     `chromiumapp.org` redirect). `openid` is added so the id_token is
+ *     requested OIDC-correctly rather than relying on Google implicitly
+ *     adding it — same Entry-38 decision, correctly implemented.
  *
- * Deliberately NOT requested (had zero Free v1 consumers — removed, not
- * "minimised speculatively"): `gmail.compose`/`gmail.modify` (Schedule
- * Send is DOM automation; the Gmail cancel path is Premium §13) and
- * `calendar.settings.readonly` (the §5.1.3 amendment made browser tz the
- * v1 source — no Calendar call). `directory.readonly` stays out too —
- * only the deferred Workspace Directory path (§5.4.1 step 3) would add
- * it, incrementally, for Workspace users.
+ * All three are sensitive-or-lighter; **none is restricted**, so the CASA
+ * posture is unchanged — `contacts.readonly` already drives the
+ * sensitive-scope consent-screen verification; non-sensitive scopes add
+ * nothing to that (PRE_LAUNCH_CHECKLIST.md). The identity-scope addition
+ * is **evidence-driven, not speculative** (the owner-decided Entry-38
+ * response to the proven 403), not a relaxation of the Entry-36
+ * minimisation principle (which forbids *over-asking*, not a justified
+ * intent-matching addition).
  *
- * Adding ANY restricted scope back later is an explicit re-evaluation
- * (consent-screen reconfig + a forced re-consent for every user) — never
- * speculative. PREMIUM_NOTES: Premium v1's backend (§13) requests the
- * Gmail scopes its server-side Unschedule-on-Reply needs; that is
- * Premium-tier scope, never added to this Free v1 list.
+ * Still deliberately NOT requested (zero Free v1 consumers):
+ * `gmail.compose`/`gmail.modify` (Schedule Send is DOM automation; Gmail
+ * cancel is Premium §13), `calendar.settings.readonly` (§5.1.3 amendment
+ * — browser tz is the v1 source), `directory.readonly` (only the
+ * deferred Workspace Directory path, §5.4.1 step 3, would add it,
+ * incrementally, for Workspace users). Adding any **restricted** scope
+ * later is an explicit re-evaluation, never speculative. PREMIUM_NOTES:
+ * Premium v1's backend (§13) requests the Gmail scopes its server-side
+ * Unschedule-on-Reply needs — Premium-tier, never added to this list.
  */
 export const OAUTH_SCOPES = [
   "https://www.googleapis.com/auth/contacts.readonly",
+  "https://www.googleapis.com/auth/userinfo.email",
+  "openid",
 ] as const;
 
 export type OAuthScope = (typeof OAUTH_SCOPES)[number];

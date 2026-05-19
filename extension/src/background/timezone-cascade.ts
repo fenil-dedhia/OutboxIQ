@@ -1,65 +1,48 @@
-// PRD §5.4.1 cascading recipient-timezone detection. SERVICE WORKER side
-// (People needs the token — §6.5). This is THE contract Session 9's
-// §5.3.5 "Optimize for recipient" UI consumes; the prompt is explicit that
-// cascade logic must not leak into UI code, so it lives here and is reached
-// only via the message bridge (MSG_RESOLVE_RECIPIENT_TZ).
+// PRD §5.4.1 recipient-timezone resolution — FREE v1 (zero Google API).
 //
-// Cascade (first hit wins), per the §5.4.1 amendment (no Maps; Directory is
-// step 3):
-//   1. Local cache (fresh ≤90d)            → source "cache"
-//   2. Google People searchContacts        → source "people_api" (cached)
-//   3. Workspace Directory                 → source "directory"  (cached)
-//   4. Nothing → ask the user (§5.3.7)     → source "manual_needed"
+// Free v1 makes **no Google API calls and holds no OAuth scopes** (owner
+// decision, owner-decisions-log Entry 39): empirical testing proved the
+// People `people/me`/`searchContacts` path could not reliably yield
+// recipient timezones (single-digit hit rate; the PRD §5.4.1 amendment),
+// while the recipient itself is readable from the Gmail compose DOM. So the
+// cascade collapses to its two reliable, on-device steps:
 //
-// Every automated step degrades on failure to the NEXT step, never throws,
-// never blocks (§6.7). A returned "manual_needed" is the signal for the
-// §5.3.7 inline picker; once the user picks, setManualRecipientTimezone
-// caches it so this returns "cache" forever after (§5.4.1 step 4).
+//   1. Local cache (fresh ≤90d, §5.4.2)        → source "cache"
+//   2. Nothing cached → ask the user (§5.3.7)   → source "manual_needed"
+//
+// The §5.3.5 "Optimize for recipient" UI (Session 10) reads the recipient
+// from the compose DOM and, on "manual_needed", shows the §5.3.7 picker;
+// the chosen zone is cached (recipient-cache `setManualRecipientTimezone`)
+// so it returns "cache" forever after. Never throws, never blocks (§6.7).
+//
+// PREMIUM v1: the API-backed cascade (cache → People → Workspace Directory
+// → manual), the OAuth flow, and login_hint are **built and preserved,
+// inert**, in `src/premium-v1/` (see that directory's README). Premium
+// re-introduces an automated step *before* "manual_needed"; this Free v1
+// contract is the exact shape it slots back into. Nothing here imports
+// `src/premium-v1/` and nothing there is wired into a Free v1 entry point.
 
-import { getCachedRecipient, setCachedRecipient } from "../lib/recipient-cache";
-import { searchContactTimezone } from "./google-api";
+import { getCachedRecipient } from "../lib/recipient-cache";
 
+/** Free v1 outcomes only: a cache hit, or "ask the user" (§5.3.7). The
+ * Premium API sources ("people_api"/"directory") are not produced here. */
 export type RecipientTimezone =
-  | { source: "cache" | "people_api" | "directory"; timezone: string }
+  | { source: "cache"; timezone: string }
   | { source: "manual_needed"; timezone: null };
 
 /**
- * Resolve a recipient's IANA timezone via the §5.4.1 cascade.
+ * Resolve a recipient's IANA timezone — Free v1 cache-or-manual (§5.4.1).
  *
  * `now` is injectable for deterministic cache-TTL tests (house pattern).
- * Recipient lookups run NON-interactively by design: they happen when the
- * user opens Schedule Send mid-compose, where popping a Google consent
- * screen would be hostile (§8 / §5.2.3). No token ⇒ People is skipped ⇒
- * "manual_needed" (the §6.7-correct degradation), not a blocked flow.
+ * No network, no token, no service-worker-only constraint — pure local
+ * storage; a cache miss is the normal first-contact case and simply
+ * signals the §5.3.7 manual picker (not an error — §6.7).
  */
 export async function resolveRecipientTimezone(
   email: string,
   now: number = Date.now(),
 ): Promise<RecipientTimezone> {
-  // Step 1 — local cache.
   const cached = await getCachedRecipient(email, now);
   if (cached) return { source: "cache", timezone: cached.timezone };
-
-  // Step 2 — Google People API.
-  const people = await searchContactTimezone(email, false);
-  if (people.ok && people.timezone) {
-    await setCachedRecipient({
-      email,
-      name: people.name,
-      timezone: people.timezone,
-      source: "people_api",
-    });
-    return { source: "people_api", timezone: people.timezone };
-  }
-
-  // Step 3 — Workspace Directory.
-  // DEFERRED this session (owner: "include only if it lands with margin";
-  // it did not — Phase 2 consumed the budget). The cascade's seam is here:
-  // a future `searchDirectoryTimezone(email)` slots in exactly at this
-  // point, caching with source "directory", before falling through. Not
-  // stubbed (YAGNI / no speculative dead code — Entry 22). Tracked as a
-  // small additive follow-up; PRD §5.4.1 step 3 remains spec, unbuilt.
-
-  // Step 4 — nothing automated resolved it: signal the §5.3.7 manual picker.
   return { source: "manual_needed", timezone: null };
 }

@@ -16,7 +16,7 @@
 // Premium v1's refresh token lives encrypted on the backend (PRD §13.3),
 // never here — do not add refresh-token fields to StoredAuth speculatively.
 
-import { STORAGE_KEY_AUTH } from "./constants";
+import { STORAGE_KEY_AUTH } from "../lib/constants";
 
 export interface StoredAuth {
   /** Google OAuth 2.0 bearer access token. */

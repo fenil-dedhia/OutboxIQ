@@ -16,13 +16,16 @@ import {
   type RuntimeMessage,
   type ResolveRecipientTzResponse,
 } from "../lib/messages";
-// Free v1 OAuth (PRD §7.5). Side-effect import: loading the module in the
-// SERVICE-WORKER context is what makes OAuth actually run where
-// chrome.identity lives (§6.5 — never the page) and what attaches the
-// DEV/smoke `__oqAuth` console harness (research/oauth-smoke.md).
-import "./oauth";
-// PRD §5.4 recipient-timezone cascade (SW-side — needs the token). The
-// Session-9 §5.3.5 modal reaches it ONLY through the message handler below.
+// Free v1 has NO OAuth (owner-decisions-log Entry 39): no `import "./oauth"`,
+// no chrome.identity, no Google API. The OAuth/People infrastructure is
+// preserved inert in `src/premium-v1/` (see that README) and is deliberately
+// NOT imported here — service-worker.ts is a Free v1 entry point.
+//
+// PRD §5.4 recipient-timezone resolution — Free v1 is cache → manual,
+// purely local (no token, no network). Kept reachable via the message
+// handler below for the §5.3.5 modal (Session 10); the handler is now
+// token-free. (A later simplification could resolve this in-content and
+// drop the bridge entirely — a §5.3.5 design call, not done here.)
 import { resolveRecipientTimezone } from "./timezone-cascade";
 
 if (import.meta.env.DEV) {
