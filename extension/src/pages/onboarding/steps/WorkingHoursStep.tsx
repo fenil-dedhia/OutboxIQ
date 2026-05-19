@@ -38,8 +38,8 @@ export function WorkingHoursStep({ workingHours, onChange }: Props) {
         <legend>Working days and times</legend>
         <p className="oq-help">
           When you&rsquo;d normally send &mdash; your regular send-time pattern,
-          in your local time. If you click Send outside these hours, OutboxIQ
-          will gently confirm before sending.
+          in your local time. If you click Send outside these hours, Fashionably
+          Late will gently confirm before sending.
         </p>
         {WEEKDAYS.map((day) => {
           const d = workingHours[day];
@@ -90,9 +90,9 @@ export function WorkingHoursStep({ workingHours, onChange }: Props) {
       <fieldset className="oq-bounds">
         <legend>Hard limits (your local time)</legend>
         <p className="oq-help">
-          A hard floor and ceiling in your own local time. OutboxIQ will never
-          schedule a send before the earliest or after the latest, even when
-          optimizing for a recipient&rsquo;s timezone.
+          A hard floor and ceiling in your own local time. Fashionably Late will
+          never schedule a send before the earliest or after the latest, even
+          when optimizing for a recipient&rsquo;s timezone.
         </p>
         <label className="oq-field">
           <span>Earliest I&rsquo;d ever send an email</span>

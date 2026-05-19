@@ -56,7 +56,10 @@ export function useOnboarding(): UseOnboarding {
     if (!isWorkingHoursValid(draft.workingHours)) return;
     saveOnboardingDraft(draft).catch((err: unknown) => {
       // No user-facing UI yet; just don't leave an unhandled rejection.
-      console.error("[OutboxIQ] failed to persist onboarding draft:", err);
+      console.error(
+        "[Fashionably Late] failed to persist onboarding draft:",
+        err,
+      );
     });
   }, [draft]);
 

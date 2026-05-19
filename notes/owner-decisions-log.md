@@ -1523,6 +1523,95 @@ that preceded the §5.3.5/§5.4 build. They qualify; Entries 26 and 27.
   next reader what the rule actually is, which matters when the next
   reader will design a feature that interacts with it.
 
+## Entry 41 — Product rename: OutboxIQ → Fashionably Late (Entry 30 paid off)
+
+- **Session:** 9 (immediately after the Phase-G spec-lock + Default-
+  boundaries rename landed on `origin/main` — same "context is fresh,
+  no Session-10 UI built on top yet" timing rationale as Entries
+  39/40; the right window to land a brand change.)
+- **Moment:** Owner returned from extended positioning reflection
+  (multiple chats across name candidates) with the rename decision
+  locked. Domain secured, Chrome Web Store availability checked,
+  trademark cleared *before* asking for the implementation pass.
+- **My input (owner):** Made the call: **"OutboxIQ" → "Fashionably
+  Late"**. The original Entry-1 name set the positioning around the
+  outbox rather than the calendar — that reasoning held and still
+  holds; the original name was *not wrong*. But nine sessions of
+  implementation surfaced product realities the original name didn't
+  fully anticipate (the DOM-first vs. API-first pattern; the §5.3.5
+  feature-mediated-override pattern; the broader-than-just-outbox
+  positioning possibilities the owner was considering). The new name
+  captures the actual value — sending at the *right* time, often
+  *later* than the user's immediate impulse — memorably and slightly
+  playfully, while sidestepping the Entry-1 calendar-confusion risk
+  entirely (no "schedule"/"outbox" framing that could be misread as
+  calendar-adjacent). Also imposed the implementation discipline:
+  historical artifacts preserved verbatim (Entry-4); forward-looking
+  artifacts and user-visible strings renamed; Entry-30 brand-
+  independent identifiers stay frozen; GCP-side rename deferred to
+  Premium-v1 kickoff; GitHub repo rename owner's separate call later.
+- **What Claude Code would have done without it:** Owner-driven
+  entirely. No frame in the implementation context invited
+  questioning the name — by every metric Claude could see, "OutboxIQ"
+  was a working name doing its job: brand-independent identifiers
+  decoupled cleanly (Entry 30), no PRD section needed it changed, no
+  technical pressure existed. Claude's contribution was, at most,
+  Entry 30's earlier defensive work (also owner-prompted — "what
+  would a rename touch?") that made *this* rename mechanically clean;
+  the *decision* and the *new name* were the owner's. Without the
+  owner's positioning reflection, the product launches as "OutboxIQ"
+  — a defensible name, not the strongest one given how the value
+  proposition actually crystallized through nine sessions.
+- **Outcome (Entry-30 paid off — the rename was as cheap as that
+  framework predicted):** 41 forward-looking files bulk-renamed
+  case-sensitively (`OutboxIQ` → `Fashionably Late`); preserved
+  verbatim — `notes/session-*.md`, `notes/owner-decisions-log.md`
+  Entries 1–40, commit messages, LICENSE (no product-name reference),
+  every Entry-30 identifier (extension ID, storage keys, Client ID,
+  redirect URI, GCP project ID, GitHub repo URL/path,
+  `PRIVACY_POLICY_URL`). Verbatim locked-copy spec text (PRD §5.1.3
+  onboarding + §5.2.1 `SCHEDULE_SEND_LABEL`) renamed via explicit
+  PRD amendments per the Entry-30 "amendment, not silent edit"
+  discipline. npm package `outboxiq-extension` → `fashionably-late-extension`
+  (lockfile resynced). Brand-and-naming-history note at top of
+  `CLAUDE.md` so future readers (incl. future Claude Code sessions)
+  don't get confused by mixed references. GCP/OAuth-client rename
+  tracked in `PRE_LAUNCH_CHECKLIST.md` "Naming / rebrand readiness"
+  as the first task of Premium-v1 kickoff. Two classes of
+  bulk-sed collateral caught & reverted: filesystem paths /
+  GitHub URLs (`Projects/OutboxIQ/`, `github.com/fenil-dedhia/OutboxIQ/`,
+  `fenil-dedhia.github.io/OutboxIQ/privacy` — preserved per the
+  no-clone-reconfig + repo-rename-is-separate constraints) and
+  grammar artifacts ("an Fashionably Late" → "a Fashionably Late",
+  consonant-sound article flip).
+- **Artifact:** Single rename commit (this entry's landing commit);
+  PRD §5.1.3 / §5.2.1 Entry-41 amendments; `CLAUDE.md` top-of-file
+  naming-history note + general body refresh; `PRE_LAUNCH_CHECKLIST.md`
+  "Naming / rebrand readiness" Entry-41 update with the GCP-rename
+  deferral; this entry.
+- **Lesson (for coaching):** **Foresight architecture pays off
+  exactly when its premise comes true.** Entry 30 was set up in
+  Session 7 *because the owner asked a forward question* ("what
+  would a rename touch?"). That move looked, at the time, like
+  modest hygiene — a documented guardrail, no code churn. Two
+  sessions later, the question's premise materializes, and the
+  rename is cheap precisely because the guardrail held: 41 files
+  changed, zero stable identifiers touched, zero data orphaned,
+  zero token re-issues forced, zero GCP-side churn forced for Free
+  v1. The lesson generalises: when an owner asks "what would
+  change?", treating it as a request for *documented invariants*
+  (rather than immediate refactor) compounds — the invariant gets
+  hardened cheaply now, and the change it anticipated lands cheaply
+  later. Corollary on rename mechanics: case-sensitive sed
+  (`OutboxIQ` → `Fashionably Late` only, leaving lowercase
+  `outboxiq*` identifiers intact) is the right blunt tool when
+  identifiers were deliberately lowercased to be brand-independent;
+  the only collateral was filesystem-path / URL artifacts and the
+  "a"/"an" article flip, both caught by a post-rename grep audit
+  and reverted surgically. Worth recording: the rename's *biggest
+  win* wasn't the new name — it was confirming the Entry-30
+  framework worked in practice exactly as designed.
+
 ---
 
 *New entries are appended at every session close-out, alongside the session

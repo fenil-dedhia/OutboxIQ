@@ -1,6 +1,6 @@
-# OutboxIQ — Chrome Extension
+# Fashionably Late — Chrome Extension
 
-The browser-side of OutboxIQ. This is a Manifest V3 Chrome extension that runs inside the user's browser and integrates with Gmail.
+The browser-side of Fashionably Late. This is a Manifest V3 Chrome extension that runs inside the user's browser and integrates with Gmail.
 
 ## Status
 
@@ -16,4 +16,4 @@ v1 in development. No feature code yet — this folder currently contains only a
 - `src/lib/` — shared utilities (timezone resolution, working-hours logic, storage helpers).
 - `public/icons/` — extension icons (16, 48, 128 px).
 
-See [`../OutboxIQ_PRD.md`](../OutboxIQ_PRD.md) for the full spec.
+See [`../Fashionably Late_PRD.md`](../Fashionably Late_PRD.md) for the full spec.

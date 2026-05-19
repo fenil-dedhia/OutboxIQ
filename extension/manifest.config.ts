@@ -10,7 +10,7 @@ import { defineManifest } from "@crxjs/vite-plugin";
 // material install-prompt reduction vs. the Session-8 OAuth baseline.
 export default defineManifest({
   manifest_version: 3,
-  name: "OutboxIQ",
+  name: "Fashionably Late",
   version: "0.0.1",
   // Pins a STABLE unpacked-extension ID (dicnmcmhapcfceodecocnkaacjdpplnm).
   // Without this the dev ID changes every load, which would break the OAuth
@@ -29,7 +29,7 @@ export default defineManifest({
     128: "public/icons/icon-128.png",
   },
   action: {
-    default_title: "OutboxIQ",
+    default_title: "Fashionably Late",
   },
   options_page: "src/pages/settings/index.html",
   background: {

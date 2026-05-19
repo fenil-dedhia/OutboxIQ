@@ -1,10 +1,10 @@
-# OutboxIQ — Pre-Launch Checklist (Free v1)
+# Fashionably Late — Pre-Launch Checklist (Free v1)
 
-Items that must be completed **before OutboxIQ Free v1 can be made publicly available** (e.g., listed on the Chrome Web Store, or made available to users beyond an explicitly-allowlisted test group). This file is intentionally a living document — items get added as decisions are made during development.
+Items that must be completed **before Fashionably Late Free v1 can be made publicly available** (e.g., listed on the Chrome Web Store, or made available to users beyond an explicitly-allowlisted test group). This file is intentionally a living document — items get added as decisions are made during development.
 
 > **Status:** Free v1 is in active development. None of the items below are blocking day-to-day feature work, but several have multi-week lead times, so they must be tracked.
 
-> **Tier split (2026-05-17, owner-directed — `notes/owner-decisions-log.md` Entry 32).** OutboxIQ ships as two tiers of the same generation: **Free v1** (extension-only, no backend, the public-launch target — *this checklist*) and **Premium v1** (extension + backend, paid, built later — **`PREMIUM_LAUNCH_CHECKLIST.md`**). **This file now tracks Free v1 launch gates only.** Backend-dependent gates (CASA **Tier 2**, all Infrastructure, the online→offline OAuth switch, backend-processing legal language, Free→Premium migration, billing) moved to the Premium checklist. Two important non-obvious carry-overs that stay **here** because they still gate Free v1:
+> **Tier split (2026-05-17, owner-directed — `notes/owner-decisions-log.md` Entry 32).** Fashionably Late ships as two tiers of the same generation: **Free v1** (extension-only, no backend, the public-launch target — *this checklist*) and **Premium v1** (extension + backend, paid, built later — **`PREMIUM_LAUNCH_CHECKLIST.md`**). **This file now tracks Free v1 launch gates only.** Backend-dependent gates (CASA **Tier 2**, all Infrastructure, the online→offline OAuth switch, backend-processing legal language, Free→Premium migration, billing) moved to the Premium checklist. Two important non-obvious carry-overs that stay **here** because they still gate Free v1:
 > - **A CASA assessment is still Free-v1-blocking.** Only *Tier 2* moved. Free v1 keeps the **restricted** Gmail scopes (`gmail.compose`, `gmail.modify`), so it still needs *a* CASA assessment before public OAuth Production — plausibly **Tier 1** without a backend, tier-to-confirm. "No backend" ≠ "no assessment". (See "Google / OAuth" below.)
 > - **Premium v1 is a paid tier, not "v2".** The existing "v1 vs. v2 decisions" section is about *post-launch additive* directions (a later generation) — a distinct concept from the Premium tier. Don't conflate them.
 
@@ -112,7 +112,7 @@ Items that must be completed **before OutboxIQ Free v1 can be made publicly avai
 
 ## Legal
 
-- **Privacy Policy (Free v1 version).** Draft is intentionally deferred until Free v1 is feature-complete, and must accurately describe what Free v1 actually does: **local-first only — `chrome.storage.local`, no OutboxIQ server, no backend, no refresh token** (OAuth `access_type=online`, access tokens held transiently in the extension). There is **no backend data flow** to describe for Free v1, and **no Maps data flow** (Google Maps was removed from product scope — PRD §5.4.1 / §13.2). Per Entry 32 / PRD §6.1 amendment this is **correct legal framing for the data Free v1 touches, not a tiering of compliance** — Free v1 is fully GDPR-compliant on a naturally lighter posture. When drafted, host as `docs/privacy.md` on **GitHub Pages** from this same repository (rename-proof URL caveat under "Naming / rebrand readiness"). The OAuth consent screen, onboarding flow, and Settings panel hard-code the resulting stable URL.
+- **Privacy Policy (Free v1 version).** Draft is intentionally deferred until Free v1 is feature-complete, and must accurately describe what Free v1 actually does: **local-first only — `chrome.storage.local`, no Fashionably Late server, no backend, no refresh token** (OAuth `access_type=online`, access tokens held transiently in the extension). There is **no backend data flow** to describe for Free v1, and **no Maps data flow** (Google Maps was removed from product scope — PRD §5.4.1 / §13.2). Per Entry 32 / PRD §6.1 amendment this is **correct legal framing for the data Free v1 touches, not a tiering of compliance** — Free v1 is fully GDPR-compliant on a naturally lighter posture. When drafted, host as `docs/privacy.md` on **GitHub Pages** from this same repository (rename-proof URL caveat under "Naming / rebrand readiness"). The OAuth consent screen, onboarding flow, and Settings panel hard-code the resulting stable URL.
 - **Terms of Service (Free v1 version).** Same deferral and hosting plan: `docs/terms.md` on GitHub Pages.
 - **Premium v1 legal addendum.** The heavier Privacy Policy / ToS language covering **backend processing** (per-user-encrypted refresh tokens, active scheduled-message records, EU data residency, the Unschedule-on-Reply data flow) is a **Premium v1** gate — tracked in `PREMIUM_LAUNCH_CHECKLIST.md`. It is an addition layered on the Free v1 docs, not a rewrite.
 - **License review.** During development the repo is **all-rights-reserved / proprietary** (see `LICENSE` at repo root) — public for portfolio/evaluation visibility, but no reuse rights granted (changed from MIT on 2026-05-15). The long-term intent is a **royalty-on-commercial-use** model — free for personal/non-commercial use, paid for commercial use. Before public launch, pick the actual mechanism: custom license, dual-licensing, source-available license (Elastic v2, BUSL), or a paid hosted SaaS layer. If the project ever accepts outside contributions, settle inbound contribution terms (CLA or explicit license grant) *before* accepting them — all-rights-reserved gives contributors no default basis to contribute, so this can't be left implicit.
@@ -122,9 +122,9 @@ Items that must be completed **before OutboxIQ Free v1 can be made publicly avai
 
 ## Brand & Design
 
-- **Brand identity finalized.** Logo, color palette, typography direction. v1 development uses **placeholder icons** (a colored square with "OQ" text or similar minimal mark). PRD §8.1 ("native feel over branded feel") means OutboxIQ's in-Gmail surface intentionally does not lean on brand — brand mainly shows up in the Chrome Web Store listing, the OAuth consent screen, and the onboarding flow.
+- **Brand identity finalized.** Logo, color palette, typography direction. v1 development uses **placeholder icons** (a colored square with "OQ" text or similar minimal mark). PRD §8.1 ("native feel over branded feel") means Fashionably Late's in-Gmail surface intentionally does not lean on brand — brand mainly shows up in the Chrome Web Store listing, the OAuth consent screen, and the onboarding flow.
 - **Extension icons (16, 48, 128 PNG).** Production-quality artwork, replacing the placeholders in `extension/public/icons/`.
-- ~~**Scheduled-email badge artwork.**~~ **Removed (2026-05-17, Session 8):** the §5.7.2 OutboxIQ badge was removed from product scope (see the PRD §5.7 amendment / owner-decisions-log Entry 37) — post-install it differentiates against an empty set. No badge artwork is needed. (Struck through, not deleted, so the scope-change is on the record.)
+- ~~**Scheduled-email badge artwork.**~~ **Removed (2026-05-17, Session 8):** the §5.7.2 Fashionably Late badge was removed from product scope (see the PRD §5.7 amendment / owner-decisions-log Entry 37) — post-install it differentiates against an empty set. No badge artwork is needed. (Struck through, not deleted, so the scope-change is on the record.)
 - **OAuth consent screen logo.** 120×120 minimum, follows Google's OAuth branding requirements.
 - **Chrome Web Store listing assets.** Promotional images (440×280 small tile, 920×680 marquee), screenshots (1280×800 or 640×400, up to 5), short description, detailed description, support email.
 - **Trigger:** before Chrome Web Store submission. Fenil intends to commission or design these assets — does not need to happen during feature development.
@@ -169,10 +169,10 @@ Items that must be completed **before OutboxIQ Free v1 can be made publicly avai
 
 ### Google Workspace compatibility — Schedule Send
 
-Verify that OutboxIQ's UI-automated Schedule Send works on Google Workspace accounts, not only on consumer Gmail.
+Verify that Fashionably Late's UI-automated Schedule Send works on Google Workspace accounts, not only on consumer Gmail.
 
-- **Why this matters:** a large share of OutboxIQ's target users (knowledge workers, salespeople, recruiters, consultants) are on Workspace, often inside admin-controlled tenants. A failure mode where the extension silently breaks on Workspace would hit a meaningful slice of the user base.
-- **What to verify:** that Gmail's Schedule Send UI is present, functional, and DOM-driveable on Workspace accounts; that Workspace admins cannot disable scheduled sending in a way that breaks OutboxIQ without a clear error; that the `SCHEDULED` label and `messages.delete` cancellation pathway (per `research/scheduled-send-api-spike.md` Open Question 1) behave identically on Workspace.
+- **Why this matters:** a large share of Fashionably Late's target users (knowledge workers, salespeople, recruiters, consultants) are on Workspace, often inside admin-controlled tenants. A failure mode where the extension silently breaks on Workspace would hit a meaningful slice of the user base.
+- **What to verify:** that Gmail's Schedule Send UI is present, functional, and DOM-driveable on Workspace accounts; that Workspace admins cannot disable scheduled sending in a way that breaks Fashionably Late without a clear error; that the `SCHEDULED` label and `messages.delete` cancellation pathway (per `research/scheduled-send-api-spike.md` Open Question 1) behave identically on Workspace.
 - **How to verify:** hands-on test on a Workspace account in a controlled domain. Re-test after any major Gmail UI update.
 - **Trigger:** before Chrome Web Store submission, and after any major Gmail UI change.
 - **Reference:** `research/scheduled-send-api-spike.md` Open Question 4.
@@ -188,9 +188,9 @@ Verify that OutboxIQ's UI-automated Schedule Send works on Google Workspace acco
 > context, **not** a correction of that judgment. The safety net below is
 > the accepted v1 behaviour.
 
-OutboxIQ's scheduling path cannot currently tell which compose window the user acted on when **two or more compose windows are open in the same Gmail tab**. The native driver in `extension/src/lib/schedule/schedule-actions.ts` resolves the Send chevron via a global `document.querySelector(SEL_CHEVRON)`, which deterministically targets the **leftmost** compose — i.e., it would silently schedule the *wrong email*. Confirmed by hands-on smoke test (Session 5, Scenario 4).
+Fashionably Late's scheduling path cannot currently tell which compose window the user acted on when **two or more compose windows are open in the same Gmail tab**. The native driver in `extension/src/lib/schedule/schedule-actions.ts` resolves the Send chevron via a global `document.querySelector(SEL_CHEVRON)`, which deterministically targets the **leftmost** compose — i.e., it would silently schedule the *wrong email*. Confirmed by hands-on smoke test (Session 5, Scenario 4).
 
-- **v1 status — accepted behaviour (graceful degradation), not just an interim.** The safety net (`extension/src/content/compose/compose-integration.ts`, `multipleComposeWindows()`; shared `composeCount()` in `gmail-recipe.ts`): when ≥2 compose chevrons are detected, OutboxIQ does **not** open its modal and hands off to Gmail's native Schedule Send on the real (compose-scoped) menuItem, so Gmail schedules the correct email. §5.5.1's regular-Send guard inherits the same net (≥2 composes → fall through to native Send). Multi-compose users do not get OutboxIQ's enhanced modal — they get **native Gmail, working correctly**. Given how uncommon multi-compose is in the target use, that is **acceptable public-launch behaviour for v1** (reasoning in the v1-vs-v2 entry below), not merely a dev/test stopgap.
+- **v1 status — accepted behaviour (graceful degradation), not just an interim.** The safety net (`extension/src/content/compose/compose-integration.ts`, `multipleComposeWindows()`; shared `composeCount()` in `gmail-recipe.ts`): when ≥2 compose chevrons are detected, Fashionably Late does **not** open its modal and hands off to Gmail's native Schedule Send on the real (compose-scoped) menuItem, so Gmail schedules the correct email. §5.5.1's regular-Send guard inherits the same net (≥2 composes → fall through to native Send). Multi-compose users do not get Fashionably Late's enhanced modal — they get **native Gmail, working correctly**. Given how uncommon multi-compose is in the target use, that is **acceptable public-launch behaviour for v1** (reasoning in the v1-vs-v2 entry below), not merely a dev/test stopgap.
 - **What the full fix would need (a v2 session — scope it properly there):** thread a compose context from the intercepted `menuItem` through `compose-integration.ts → content-script.ts → mount.tsx → schedule-actions.ts`, and re-scope every global Gmail DOM query (chevron, dialog) to that compose. **Known hard part — the detached-popup anchor problem:** Gmail's Schedule menu is a popup it (re)creates near `<body>`, likely *not* inside the originating compose's DOM subtree, so `menuItem.closest(composeSelector)` will not reach it. A reliable "which compose owns this menu" anchor must be found first (a mini-probe, like the Session 4 pick-date-time probe). This touches `gmail-recipe.ts` (the single point of failure), so it must be re-verified via the probe in new / inline-reply / pop-out / multi-compose contexts.
 - **Trigger:** v2 / post-launch — revisit with real usage signal, as an explicit additive decision. **Not** a Chrome-Web-Store-submission gate.
 - **Reference:** the "v1 vs. v2 decisions" entry below; `notes/owner-decisions-log.md` Entry 27 (reframing) and Entry 18 (the original silent-vs-visible-bug decision); `notes/session-5-summary.md` (Scenario 4 result).
@@ -215,7 +215,7 @@ re-litigated mid-build and are revisited intentionally post-launch.
 
 ### Network-effect features — deferred to v2 (decided Session 5.5)
 
-Working-hours sharing between OutboxIQ users, reply-time prediction, and
+Working-hours sharing between Fashionably Late users, reply-time prediction, and
 cross-user send-time coordination are **not v1**. Gating single-user
 optimization on mutual adoption would compromise the single-user experience
 for a sharing incentive — poor B2B SaaS design (the product must be fully
@@ -233,11 +233,11 @@ feel compelled to relitigate it (Entry 22 discipline):
 
 - The Session 5 safety net already converts the only dangerous failure (a
   *silent wrong-email* send) into graceful degradation: with ≥2 composes
-  open, OutboxIQ steps aside and Gmail's **native** Schedule Send / Send
+  open, Fashionably Late steps aside and Gmail's **native** Schedule Send / Send
   handles the correct email. Users still act on the right email; they just
-  don't get OutboxIQ's enhanced modal in that case.
-- Multi-compose is **uncommon** in OutboxIQ's target use — the vast
-  majority of compose interactions are single-compose, where OutboxIQ
+  don't get Fashionably Late's enhanced modal in that case.
+- Multi-compose is **uncommon** in Fashionably Late's target use — the vast
+  majority of compose interactions are single-compose, where Fashionably Late
   works fully. The full fix is a substantial engineering investment
   (re-scoping every global Gmail DOM query, plus a fresh mini-probe of the
   single-point-of-failure `gmail-recipe.ts`) for a small UX improvement on
@@ -299,7 +299,39 @@ work (they don't block it) and *before* naming (they inform it).
 
 ## Naming / rebrand readiness
 
-The product brand name ("OutboxIQ") may change before launch. The
+> **Entry-41 update (2026-05-19, owner-directed) — the rename CONTEMPLATED
+> in Session 7 HAPPENED.** The product was renamed from **"OutboxIQ"**
+> (Sessions 1–9) to **"Fashionably Late"** before public launch. The
+> Entry-30 brand-independent-identifier framework — set up in Session 7
+> specifically to make this rename clean — did exactly what it was for:
+> the rename touched display copy, brand assets, and locked-copy PRD
+> spec text (verbatim onboarding copy + `SCHEDULE_SEND_LABEL`); it
+> touched **none** of the load-bearing identities below. They remain
+> the OutboxIQ-era values **and stay frozen** — see Entry 41 and
+> `CLAUDE.md` top-of-file brand-and-naming-history note.
+>
+> **GCP project + OAuth client name rename — DEFERRED to Premium v1
+> kickoff (owner-directed).** The GCP project (`outboxiq-dev`), OAuth
+> client display name, and consent-screen app name still say
+> "OutboxIQ". Free v1 makes no OAuth call (Entry 39), so the GCP-side
+> name is internal-only and does not gate Free v1's launch. **Premium
+> v1's first task when it begins is the GCP-side rename** (project
+> rename or new project + client/consent-screen rebranding). Tracked
+> here so it isn't forgotten when Premium v1 work starts. (The
+> Premium-v1-isolated code in `extension/src/premium-v1/` was renamed
+> with the rest of the codebase — only the GCP-side identifiers
+> remain.)
+>
+> **GitHub repo name rename — owner's separate call** (likely with
+> public-launch announcement). Not done in this rename pass to avoid
+> requiring local-clone reconfig + cross-reference URL updates.
+> Consequence: `github.com/fenil-dedhia/OutboxIQ` URLs (in
+> `extension/src/lib/constants.ts` `PRIVACY_POLICY_URL`, this file's
+> footnotes, and a handful of doc references) intentionally still use
+> the old name until the repo gets renamed — they are accurate to the
+> current repo path.
+
+The product brand name ("Fashionably Late") may change before launch. The
 rename-impact analysis (Session 7, owner-prompted) established that the
 **load-bearing technical identities are deliberately brand-independent and
 must stay frozen across any rebrand** — renaming them would buy nothing and
@@ -319,7 +351,7 @@ break identity/data/tokens:
   brand-independent identifiers regardless of the product name.
 
 A rebrand is therefore: **display copy + brand assets + a deliberate PRD /
-locked-copy amendment** (the verbatim `"…powered by OutboxIQ"` label and
+locked-copy amendment** (the verbatim `"…powered by Fashionably Late"` label and
 the verbatim onboarding privacy copy are product-locked spec text — changed
 via PRD amendment, not a find/replace), and nothing more.
 
@@ -344,7 +376,7 @@ well before the public-OAuth (Production) switch:
   takes calendar time — schedule it ahead of the Testing→Production gate,
   not at it.
 - **The branded-vs-neutral choice interacts with the open rename
-  question.** "Rename-proof" does **not** force committing to "OutboxIQ"
+  question.** "Rename-proof" does **not** force committing to "Fashionably Late"
   publicly — that is the point of choosing a **brand-neutral / stable**
   host (e.g. a name-independent domain, or GitHub Pages on a permanently
   named repo): it survives a rebrand precisely *because* it is not the

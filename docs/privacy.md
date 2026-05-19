@@ -1,8 +1,8 @@
-# OutboxIQ — Privacy Policy
+# Fashionably Late — Privacy Policy
 
 > **⚠️ PLACEHOLDER — not the real Privacy Policy.**
 >
-> OutboxIQ is in **pre-launch private testing**. It is **not** publicly
+> Fashionably Late is in **pre-launch private testing**. It is **not** publicly
 > available and is used only by an explicitly allow-listed set of test
 > users. This page exists solely so the Google OAuth consent screen has a
 > resolvable Privacy Policy URL during testing.
@@ -14,13 +14,13 @@
 
 ## What you should know during testing
 
-- OutboxIQ stores your settings (timezone, working hours, recipient
+- Fashionably Late stores your settings (timezone, working hours, recipient
   timezone cache) **locally in your browser**, not on a server.
 - It uses Google APIs only to read your calendar timezone, look up
   recipient contact info you already have, and create/cancel scheduled
   sends in your own Gmail. It does **not** read or store email content.
 - There is **no analytics and no telemetry** of any kind.
-- You can revoke OutboxIQ's Google access at any time from your Google
+- You can revoke Fashionably Late's Google access at any time from your Google
   Account permissions page.
 
 A complete, versioned policy will replace this page before any public

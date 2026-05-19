@@ -2,7 +2,7 @@
 // cross the boundary, so Gmail can neither break us nor be broken by us —
 // the isolation we chose in decision #2). Visually mirrors Gmail's native
 // scheduling modal (PRD §5.3.1 "preserve the visual style and dimensions")
-// rather than OutboxIQ branding (PRD §8.1 "native feel over branded feel").
+// rather than Fashionably Late branding (PRD §8.1 "native feel over branded feel").
 
 export const MODAL_CSS = `
 :host, * { box-sizing: border-box; }

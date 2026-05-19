@@ -50,7 +50,7 @@ export class ModalErrorBoundary extends Component<Props, State> {
     setTimeout(() => this.props.onError(error), 0);
     if (import.meta.env.DEV) {
       console.warn(
-        "[OutboxIQ] §5.3 modal render error → native fallback:",
+        "[Fashionably Late] §5.3 modal render error → native fallback:",
         error,
         info.componentStack,
       );

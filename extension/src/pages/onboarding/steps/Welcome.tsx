@@ -17,9 +17,9 @@ export function Welcome({
 }: Props) {
   return (
     <section className="oq-step" aria-labelledby="oq-welcome-title">
-      <h1 id="oq-welcome-title">Welcome to OutboxIQ Onboarding</h1>
+      <h1 id="oq-welcome-title">Welcome to Fashionably Late Onboarding</h1>
       <p className="oq-lede">
-        OutboxIQ helps your emails land at the right moment, in your
+        Fashionably Late helps your emails land at the right moment, in your
         recipients&rsquo; time, not yours. To power our intelligent features,
         we&rsquo;ll require information about your timezone and working hours.
       </p>
@@ -69,8 +69,8 @@ export function Welcome({
           onChange={(e) => onConsentChange(e.target.checked)}
         />
         <label htmlFor="oq-consent-checkbox">
-          I understand how OutboxIQ uses my data and agree to the Privacy
-          Policy.
+          I understand how Fashionably Late uses my data and agree to the
+          Privacy Policy.
         </label>
       </div>
       <p className="oq-consent-link">

@@ -429,6 +429,6 @@ if (import.meta.env.DEV || __OQ_SMOKE__) {
   // means Chrome is running stale/old code (Remove + reload — see
   // research/oauth-smoke.md). Unconditional within this block on purpose.
   console.info(
-    "[OutboxIQ] ✅ OAuth smoke harness ready — type __oqAuth in this console",
+    "[Fashionably Late] ✅ OAuth smoke harness ready — type __oqAuth in this console",
   );
 }

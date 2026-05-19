@@ -102,7 +102,7 @@ Gmail uses Google's `jsaction` event-delegation framework. The click handler is 
 End-to-end confirmed: chevron → menuitem → "Tomorrow morning" preset, with a real subject/body, produced a genuine native scheduled message in Gmail's Scheduled label.
 
 **Implementation notes:**
-- The user-activation requirement is *consistent with our UX* — the user always clicks OutboxIQ's own "Schedule Send" button first, supplying activation. Not a real constraint.
+- The user-activation requirement is *consistent with our UX* — the user always clicks Fashionably Late's own "Schedule Send" button first, supplying activation. Not a real constraint.
 - Empty subject/body triggers Gmail's native `window.confirm()`. A content script can't easily suppress a native confirm, but real users always have a composed email, so this won't normally fire. Noted, not a blocker.
 - The **"Pick date & time" custom path** (date/time inputs + confirm button) was **not** verified this session — only the preset path. Verify during §5.3 implementation (lower risk: same recipe plus form-field value setting).
 
@@ -111,7 +111,7 @@ End-to-end confirmed: chevron → menuitem → "Tomorrow morning" preset, with a
 ## Trade-offs accepted
 
 1. **DOM fragility on the scheduling action itself.** Gmail UI updates may periodically break the "schedule a send" flow. Mitigation: defensive selectors, a manual smoke test before each release, and a clear fallback to Gmail's own UI if our injection fails.
-2. **DOM fragility is a permanent operational cost, not a one-time implementation cost.** Realistically, every few months Gmail will push a UI update that may break our injection, and we will need to fix it quickly — likely within days, since a broken Schedule Send button is a complete-feature outage for OutboxIQ users. This is an ongoing maintenance commitment, not a one-off. We accept it explicitly here so it doesn't come as a surprise post-launch.
+2. **DOM fragility is a permanent operational cost, not a one-time implementation cost.** Realistically, every few months Gmail will push a UI update that may break our injection, and we will need to fix it quickly — likely within days, since a broken Schedule Send button is a complete-feature outage for Fashionably Late users. This is an ongoing maintenance commitment, not a one-off. We accept it explicitly here so it doesn't come as a surprise post-launch.
 3. **No standard API path.** We are building on undocumented surface area (Gmail's compose DOM and possibly the SCHEDULED system label). Google could break either at any time. We accept this as the price of the native-feel commitment.
 4. **The DOM-automation recipe is fragile and non-obvious.** It depends on Gmail's `jsaction` delegation continuing to hit-test by coordinates, on dispatching to the inner content element, and on the full event sequence. A Gmail refactor of its *event layer* (not just visual CSS) could break it in ways harder to fix than a selector change. The working recipe is documented in the Verification section so it isn't lost. (Unschedule-on-Reply is no longer conditional — OQ1 verified the API cancel path.)
 
@@ -133,7 +133,7 @@ Once a scheduled message exists, we need to find it in the Scheduled label DOM a
 
 ### 4. (Verify before public launch) Workspace vs. consumer differences
 
-Workspace tenants sometimes have admin-disabled features. Verify that Schedule Send is present, DOM-driveable, and not admin-disabled on Google Workspace accounts before we promise it to Workspace users. Many of our target users (knowledge workers, salespeople, recruiters, consultants) are on Workspace, so a failure mode where OutboxIQ silently breaks on Workspace would hit a large share of the user base.
+Workspace tenants sometimes have admin-disabled features. Verify that Schedule Send is present, DOM-driveable, and not admin-disabled on Google Workspace accounts before we promise it to Workspace users. Many of our target users (knowledge workers, salespeople, recruiters, consultants) are on Workspace, so a failure mode where Fashionably Late silently breaks on Workspace would hit a large share of the user base.
 
 Tracked in `PRE_LAUNCH_CHECKLIST.md` under "Compatibility & Verification" — verification is not blocking for v1 feature work on consumer Gmail, but must be completed before Chrome Web Store submission.
 

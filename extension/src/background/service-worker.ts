@@ -1,4 +1,4 @@
-// OutboxIQ service worker (PRD §7.1.1).
+// Fashionably Late service worker (PRD §7.1.1).
 //
 // Owns opening the onboarding tab (PRD §5.1.2). It has the chrome.tabs API and
 // SW-created tabs aren't popup-blocked. Triggered three ways for reliability:
@@ -29,7 +29,7 @@ import {
 import { resolveRecipientTimezone } from "./timezone-cascade";
 
 if (import.meta.env.DEV) {
-  console.info("[OutboxIQ] service worker active");
+  console.info("[Fashionably Late] service worker active");
 }
 
 // In-memory guard so multiple Gmail tabs / retries don't stack onboarding
@@ -45,7 +45,7 @@ async function openOnboarding(force: boolean): Promise<void> {
       url: chrome.runtime.getURL(ONBOARDING_PAGE_PATH),
     });
   } catch (err) {
-    console.warn("[OutboxIQ] could not open onboarding:", err);
+    console.warn("[Fashionably Late] could not open onboarding:", err);
   } finally {
     // Release shortly after, so a later legitimate reopen (e.g. the user
     // closed the tab without finishing) still works.

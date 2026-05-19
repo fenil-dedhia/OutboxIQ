@@ -145,7 +145,7 @@ either fails, the design does not hold — stop and re-clear.
   send handler then aborts on the missing recipient, so you observe the
   full event ordering with no email sent.
 - The script is `research/send-button-probe.js` — open it, Select All,
-  Copy. It defines `window.OutboxIQSendProbe` and prints usage on paste;
+  Copy. It defines `window.FashionablyLateSendProbe` and prints usage on paste;
   it does **nothing** until you call a function.
 
 ---
@@ -159,7 +159,7 @@ report it and stop** (the §5.5.1 risk does not tolerate improvisation).
 ### Step 1 — `discover()` (SAFE: dumps DOM, never sends)
 
 ```text
-OutboxIQSendProbe.discover()
+FashionablyLateSendProbe.discover()
 ```
 
 Run it **once with a single compose open**, then **again with two composes
@@ -171,7 +171,7 @@ button's `jsaction` / `aria-label` / `data-tooltip`, and the table.
 ### Step 2 — `watch()` (SAFE with empty-To: observe the event sequence)
 
 ```text
-OutboxIQSendProbe.watch()
+FashionablyLateSendProbe.watch()
 ```
 
 Then, while it's watching: **(a)** empty the To field and click **Send** —
@@ -179,12 +179,12 @@ observe the logged `CAPTURE`/`BUBBLE` sequence; **(b)** press
 **Ctrl+Enter** (or **⌘+Enter** on Mac) — observe the keyboard path. Copy
 every `[sendprobe]` line. The load-bearing facts: which event type Gmail
 acts on, and that a `CAPTURE`-phase line appears *before* any send.
-`OutboxIQSendProbe.stop()` ends it early.
+`FashionablyLateSendProbe.stop()` ends it early.
 
 ### Step 3 — `armSuppress()` (suppression test; throwaway account)
 
 ```text
-OutboxIQSendProbe.armSuppress()
+FashionablyLateSendProbe.armSuppress()
 ```
 
 With one fully-composed throwaway draft: click **Send** once (or press
@@ -196,14 +196,14 @@ listener can stop Gmail's Send.
 ### Step 4 — `testReplay()` (DESTRUCTIVE: sends a real email)
 
 ```text
-OutboxIQSendProbe.testReplay()
+FashionablyLateSendProbe.testReplay()
 ```
 
 On a fully-composed throwaway draft. Confirm whether the email sent. If it
 did **not** with the plain path, escalate:
 
 ```text
-OutboxIQSendProbe.testReplay({ full: true })
+FashionablyLateSendProbe.testReplay({ full: true })
 ```
 
 Report which path (plain vs full recipe) actually sent the email. This

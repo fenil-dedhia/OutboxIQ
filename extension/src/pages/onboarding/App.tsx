@@ -68,8 +68,8 @@ export function App() {
         <section className="oq-step" aria-labelledby="oq-done-title">
           <h1 id="oq-done-title">You&rsquo;re all set</h1>
           <p>
-            OutboxIQ is active. Head back to Gmail &mdash; your scheduling
-            preferences are saved on this device.
+            Fashionably Late is active. Head back to Gmail &mdash; your
+            scheduling preferences are saved on this device.
           </p>
           <div className="oq-actions">
             <button
@@ -97,7 +97,7 @@ export function App() {
     try {
       await finish();
     } catch (err) {
-      console.warn("[OutboxIQ] finish blocked:", err);
+      console.warn("[Fashionably Late] finish blocked:", err);
     }
   }
 

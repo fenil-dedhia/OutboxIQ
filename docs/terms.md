@@ -1,8 +1,8 @@
-# OutboxIQ — Terms of Service
+# Fashionably Late — Terms of Service
 
 > **⚠️ PLACEHOLDER — not the real Terms of Service.**
 >
-> OutboxIQ is in **pre-launch private testing**, used only by an explicitly
+> Fashionably Late is in **pre-launch private testing**, used only by an explicitly
 > allow-listed set of test users. This page exists solely so the Google
 > OAuth consent screen has a resolvable Terms of Service URL during testing.
 >
@@ -12,7 +12,7 @@
 
 ## During testing
 
-OutboxIQ is provided **as-is, with no warranty**, for evaluation by
+Fashionably Late is provided **as-is, with no warranty**, for evaluation by
 invited test users only. It is not a commercial offering, creates no
 service-level commitment, and may change or stop working at any time. By
 testing it you accept that it is unfinished software.

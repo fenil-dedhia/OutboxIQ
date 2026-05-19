@@ -1,5 +1,5 @@
 // ============================================================================
-// OutboxIQ — §5.5.1 regular-Send guard SMOKE-TEST HARNESS
+// Fashionably Late — §5.5.1 regular-Send guard SMOKE-TEST HARNESS
 //
 // Purpose: make the Session-7 Phase-1 hands-on smoke test of the regular-Send
 // guard DETERMINISTIC and RE-RUNNABLE. Unit tests (jsdom) prove the guard's
@@ -10,7 +10,7 @@
 // HOW TO RUN (non-technical, copy-paste — same shape as send-button-probe.js):
 //   1. Build + load the unpacked extension (extension/dist), complete real
 //      onboarding ONCE (any values — that exercises the onboarding path).
-//   2. chrome://extensions → OutboxIQ → "Inspect views: service worker".
+//   2. chrome://extensions → Fashionably Late → "Inspect views: service worker".
 //   3. Paste this WHOLE file into that service-worker console, press Enter.
 //   4. Run a scenario, e.g.:  await OQ_SMOKE.scenario('whBeforeStart')
 //   5. It prints exactly what you should see. RELOAD the Gmail tab (Cmd-R),
@@ -81,7 +81,7 @@
     const s = await get(STATE_KEY);
     if (!s) {
       throw new Error(
-        "No OutboxIQ state found. Load the extension and COMPLETE ONBOARDING first.",
+        "No Fashionably Late state found. Load the extension and COMPLETE ONBOARDING first.",
       );
     }
     if (!s.user || s.user.onboardingCompletedAt == null) {

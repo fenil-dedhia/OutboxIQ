@@ -12,7 +12,7 @@
 // decision (CLAUDE.md "Locked product decisions", Session 5.5) the
 // **Schedule Send** path only warns on **absolute-limit** violations:
 // scheduling outside one's working hours to hit a recipient's window is
-// OutboxIQ's core use case, so warning on it trains dismissal. Working-
+// Fashionably Late's core use case, so warning on it trains dismissal. Working-
 // hours violations still get computed by checkWorkingHours (consumed by
 // §5.5.1 regular-Send and future §5.3.5) — Schedule Send just doesn't act
 // on them. Deferred (owner-directed): §5.3.5 Optimize-for-recipient +
@@ -64,7 +64,7 @@ export interface ScheduleModalProps {
   timezone: string;
   /** The user's working hours + absolute limits (PRD §7.2). §5.5 input. */
   workingHours: WorkingHours;
-  /** Last time scheduled via OutboxIQ, or null (PRD §5.3.3 amendment). */
+  /** Last time scheduled via Fashionably Late, or null (PRD §5.3.3 amendment). */
   lastScheduled: LastScheduled | null;
   /** Persist a freshly-scheduled time so it becomes "Last scheduled time". */
   onScheduled: (v: LastScheduled) => void;
@@ -162,7 +162,10 @@ export function ScheduleModal({
       onClose();
     } catch (err) {
       if (import.meta.env.DEV) {
-        console.warn("[OutboxIQ] §5.3 scheduling failed → native:", err);
+        console.warn(
+          "[Fashionably Late] §5.3 scheduling failed → native:",
+          err,
+        );
       }
       try {
         await openNativeScheduleDialog();
@@ -324,7 +327,7 @@ export function ScheduleModal({
         tabIndex={-1}
         role="dialog"
         aria-modal="true"
-        aria-label="Schedule send with OutboxIQ"
+        aria-label="Schedule send with Fashionably Late"
       >
         <h1>When do you want to send this email?</h1>
         <p className="subtitle">{tzLabel.text}</p>

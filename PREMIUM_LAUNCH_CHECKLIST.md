@@ -1,6 +1,6 @@
-# OutboxIQ — Premium v1 Launch Checklist
+# Fashionably Late — Premium v1 Launch Checklist
 
-Gates that must be completed **before OutboxIQ *Premium v1* can be made
+Gates that must be completed **before Fashionably Late *Premium v1* can be made
 publicly available**. Premium v1 is the **extension + backend, paid** tier
 — a parallel tier of the *same* generation as Free v1, **not "v2"** and
 **not a sequential version**. It is built **after Free v1 launches and
@@ -8,7 +8,7 @@ validates demand**; a Free v1 user *upgrades* to Premium (no forced
 migration). This file is a living document.
 
 > **Origin (2026-05-17, owner-directed — `notes/owner-decisions-log.md`
-> Entry 32; PRD §13).** OutboxIQ was split into Free v1 (extension-only,
+> Entry 32; PRD §13).** Fashionably Late was split into Free v1 (extension-only,
 > no backend — the public-launch target, `PRE_LAUNCH_CHECKLIST.md`) and
 > Premium v1 (this file). Implementation work across Sessions 5–7
 > surfaced that the cost-to-ship of the full PRD scope (CASA Tier 2;
@@ -41,7 +41,7 @@ migration). This file is a living document.
 
 ## CASA security assessment — Tier 2 (required, deferred)
 
-Google classifies the Gmail scopes OutboxIQ uses (`gmail.compose`,
+Google classifies the Gmail scopes Fashionably Late uses (`gmail.compose`,
 `gmail.modify`) as **restricted scopes**. Any app requesting restricted
 scopes from users outside the test-user list must pass a CASA security
 assessment by a Google-approved third-party auditor (e.g., Bishop Fox,

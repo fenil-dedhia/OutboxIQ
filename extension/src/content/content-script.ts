@@ -1,4 +1,4 @@
-// OutboxIQ Gmail content script (PRD §7.1.2).
+// Fashionably Late Gmail content script (PRD §7.1.2).
 //
 // On Gmail load: if onboarding isn't complete, ask the service worker to open
 // it (and do nothing else — we must not enhance Gmail before the user has
@@ -66,7 +66,7 @@ function openNativeFallback(): void {
 function persistLastScheduled(v: LastScheduled): void {
   void setLastScheduled(v).catch((e) => {
     if (import.meta.env.DEV) {
-      console.warn("[OutboxIQ] persist lastScheduled failed:", e);
+      console.warn("[Fashionably Late] persist lastScheduled failed:", e);
     }
   });
 }
@@ -90,7 +90,7 @@ function handleScheduleSend(): void {
       });
     } catch (err) {
       if (import.meta.env.DEV) {
-        console.warn("[OutboxIQ] §5.3 open failed → native:", err);
+        console.warn("[Fashionably Late] §5.3 open failed → native:", err);
       }
       openNativeFallback();
     }
@@ -123,11 +123,11 @@ async function bootstrap(): Promise<void> {
     await requestOnboardingLaunch();
   } catch (err) {
     // Never block or break Gmail (PRD §6.7, §5.2.3) — fail silently.
-    console.warn("[OutboxIQ] content bootstrap skipped:", err);
+    console.warn("[Fashionably Late] content bootstrap skipped:", err);
   }
 }
 
 if (import.meta.env.DEV) {
-  console.info("[OutboxIQ] content script loaded");
+  console.info("[Fashionably Late] content script loaded");
 }
 void bootstrap();

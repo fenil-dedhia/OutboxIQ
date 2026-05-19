@@ -89,7 +89,9 @@ export async function schedulePreset(preset: SchedulePreset): Promise<void> {
       );
     }
     if (isDev()) {
-      console.info(`[OutboxIQ] §5.3 preset "${preset.id}" → row "${rowKey}"`);
+      console.info(
+        `[Fashionably Late] §5.3 preset "${preset.id}" → row "${rowKey}"`,
+      );
     }
     await fireFull(row, `preset ${preset.id}`);
   });
@@ -154,7 +156,7 @@ export async function scheduleAt(when: ScheduleAtStrings): Promise<void> {
     const dlg = findScheduleDialog();
     const confirm = dlg ? findConfirmButton(dlg) : null;
     if (!confirm) throw new Error("custom-path confirm button not found");
-    if (isDev()) console.info("[OutboxIQ] §5.3.4 custom-path confirm");
+    if (isDev()) console.info("[Fashionably Late] §5.3.4 custom-path confirm");
     await fireFull(confirm, "custom Schedule send");
   });
 }

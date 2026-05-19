@@ -4,8 +4,8 @@
 // `selector="scheduledSend"` menuitem (the only stable hook the spike found):
 //
 //   §5.2.1  Relabel the native "Schedule send" dropdown item to
-//           "Schedule Send (powered by OutboxIQ)". Cosmetic, best-effort.
-//   §5.2.2  Intercept its activation and open OutboxIQ's modal instead of
+//           "Schedule Send (powered by Fashionably Late)". Cosmetic, best-effort.
+//   §5.2.2  Intercept its activation and open Fashionably Late's modal instead of
 //           Gmail's native scheduling modal.
 //
 // §5.2.3 is the hard rule that shapes everything here: if anything we do
@@ -35,7 +35,7 @@ export interface ScheduleSendContext {
 }
 
 export interface ComposeIntegrationOptions {
-  /** Open the OutboxIQ modal (§5.3). Thrown errors trigger native fallback. */
+  /** Open the Fashionably Late modal (§5.3). Thrown errors trigger native fallback. */
   onScheduleSend: (ctx: ScheduleSendContext) => void;
 }
 
@@ -59,7 +59,7 @@ const isDev = (): boolean => import.meta.env.DEV;
 // shape → SKIP silently (a missing suffix is cosmetic; never break Gmail).
 //
 // THE LABEL IS REACTIVE TO COMPOSE COUNT. In multi-compose the safety net
-// hands Schedule Send to native, so the OutboxIQ label would be a lie —
+// hands Schedule Send to native, so the Fashionably Late label would be a lie —
 // the item must read Gmail's native text instead. This is driven by the
 // SAME predicate the safety net uses (multipleComposeWindows()), so the
 // visible label can never disagree with what a click actually does
@@ -76,8 +76,8 @@ const isDev = (): boolean => import.meta.env.DEV;
 // test, which is the load-bearing verification. Green jsdom ≠ verified.
 
 /** Pure decision: the label this menuitem should show right now. Single
- * compose → the OutboxIQ brand; multi-compose → Gmail's own original
- * (safety net is active, so OutboxIQ won't run — don't claim it will). */
+ * compose → the Fashionably Late brand; multi-compose → Gmail's own original
+ * (safety net is active, so Fashionably Late won't run — don't claim it will). */
 export function desiredScheduleLabel(
   multiCompose: boolean,
   originalLabel: string,
@@ -122,7 +122,7 @@ function applyScheduleSendLabel(menuItem: HTMLElement): void {
   if (!bestNode) {
     if (isDev()) {
       console.warn(
-        "[OutboxIQ] §5.2 relabel: no text node in scheduledSend item — " +
+        "[Fashionably Late] §5.2 relabel: no text node in scheduledSend item — " +
           "skipped (cosmetic; interception unaffected).",
       );
     }
@@ -156,7 +156,7 @@ function matchedScheduleItem(e: Event): HTMLElement | null {
 }
 
 /**
- * Run `fn` with our own capture interceptor disabled. Used whenever OutboxIQ
+ * Run `fn` with our own capture interceptor disabled. Used whenever Fashionably Late
  * itself drives Gmail's native Schedule UI (the modal's scheduling actions,
  * the §5.2.3 fallback) so the synthetic activation we generate is not
  * re-intercepted into an infinite loop.
@@ -201,7 +201,7 @@ async function fallbackToNative(menuItem: HTMLElement): Promise<void> {
 }
 
 // ---- Multi-compose safety net (Session 5 owner decision) -------------------
-// When two+ compose windows are open in the same document, OutboxIQ's
+// When two+ compose windows are open in the same document, Fashionably Late's
 // scheduling path cannot safely tell which one the user acted on: the native
 // driver in schedule-actions resolves the chevron via a global
 // `document.querySelector(SEL_CHEVRON)`, which deterministically targets the
@@ -257,7 +257,7 @@ function makeInterceptor(onScheduleSend: (ctx: ScheduleSendContext) => void) {
       // diagnostic line — not the DEV-gated debug noise; console output is
       // local, so no conflict with the zero-telemetry rule).
       console.info(
-        "[OutboxIQ] multi-compose detected, falling back to native Schedule Send",
+        "[Fashionably Late] multi-compose detected, falling back to native Schedule Send",
       );
       void fallbackToNative(menuItem);
       return;
@@ -269,7 +269,7 @@ function makeInterceptor(onScheduleSend: (ctx: ScheduleSendContext) => void) {
     } catch (err) {
       if (isDev()) {
         console.warn(
-          "[OutboxIQ] §5.2 modal open failed — falling back to native:",
+          "[Fashionably Late] §5.2 modal open failed — falling back to native:",
           err,
         );
       }
@@ -355,7 +355,10 @@ export function installComposeIntegration(
     applyLabelToAllMenuItems(); // menu may already be open at install time
   } catch (err) {
     if (isDev()) {
-      console.warn("[OutboxIQ] §5.2 install failed (Gmail unaffected):", err);
+      console.warn(
+        "[Fashionably Late] §5.2 install failed (Gmail unaffected):",
+        err,
+      );
     }
   }
 

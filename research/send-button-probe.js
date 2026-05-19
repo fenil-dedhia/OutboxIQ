@@ -1,4 +1,4 @@
-// OutboxIQ §5.5.1 "regular Send button" probe — RUNNABLE SCRIPT.
+// Fashionably Late §5.5.1 "regular Send button" probe — RUNNABLE SCRIPT.
 //
 // This is the single source of the probe script. The how-to-run, context,
 // safety notes, the planned interception design it gates, and the result log
@@ -15,7 +15,7 @@
 // the Send actually sends. None of that is verified yet (Entry-2/Entry-23
 // spike-gating). This probe answers it before any §5.5.1 code is written.
 //
-// Safe entry points: OutboxIQSendProbe.discover(), .watch().
+// Safe entry points: FashionablyLateSendProbe.discover(), .watch().
 // Suppression test (no email leaves, throwaway acct still advised): .armSuppress().
 // Destructive (sends a real email): .testReplay().
 // Nothing runs until you call one of those.
@@ -309,7 +309,7 @@
   // a full draft on a throwaway address to see the completed path.
   function watch({ seconds = 60 } = {}) {
     stop();
-    console.log(`%c[sendprobe] watch() — observing events for ${seconds}s (NOT suppressing — Send WILL proceed; use empty-To for a safe first run). Call OutboxIQSendProbe.stop() to end early.`, "font-weight:bold");
+    console.log(`%c[sendprobe] watch() — observing events for ${seconds}s (NOT suppressing — Send WILL proceed; use empty-To for a safe first run). Call FashionablyLateSendProbe.stop() to end early.`, "font-weight:bold");
     const chevrons = allChevrons();
     const sends = chevrons
       .map((c) => sendGroupFor(c).sendCandidates[0])
@@ -524,12 +524,12 @@
     console.log("%c[sendprobe] >>> CONFIRM: did the email send (toast + compose closed)? If NOT and you used plain, re-run testReplay({full:true}). Report which one worked.", "font-weight:bold");
   }
 
-  window.OutboxIQSendProbe = { discover, watch, stop, armSuppress, disarm, armBlockGesture, unblock, testReplay };
-  console.log("%c[sendprobe] OutboxIQ §5.5.1 Send-button probe loaded.", "font-weight:bold");
-  console.log("Step 1 (SAFE): OutboxIQSendProbe.discover()        — locate Send button + scope (run with 1 compose, then 2)");
-  console.log("Step 2 (SAFE): OutboxIQSendProbe.watch()           — observe the click & Ctrl/⌘+Enter event sequence (use empty-To)");
-  console.log("Step 3 (suppress test): OutboxIQSendProbe.armSuppress()     — one-shot: does capture-phase stop the FIRST event?");
-  console.log("Step 3b (DISAMBIGUATE): OutboxIQSendProbe.armBlockGesture() — blocks the WHOLE gesture: B (can't stop) vs C (one-shot too blunt)");
-  console.log("Step 4 (DESTRUCTIVE): OutboxIQSendProbe.testReplay()        — does replaying the Send actually send?");
-  console.log("Helpers: OutboxIQSendProbe.stop() / .disarm() / .unblock()");
+  window.FashionablyLateSendProbe = { discover, watch, stop, armSuppress, disarm, armBlockGesture, unblock, testReplay };
+  console.log("%c[sendprobe] Fashionably Late §5.5.1 Send-button probe loaded.", "font-weight:bold");
+  console.log("Step 1 (SAFE): FashionablyLateSendProbe.discover()        — locate Send button + scope (run with 1 compose, then 2)");
+  console.log("Step 2 (SAFE): FashionablyLateSendProbe.watch()           — observe the click & Ctrl/⌘+Enter event sequence (use empty-To)");
+  console.log("Step 3 (suppress test): FashionablyLateSendProbe.armSuppress()     — one-shot: does capture-phase stop the FIRST event?");
+  console.log("Step 3b (DISAMBIGUATE): FashionablyLateSendProbe.armBlockGesture() — blocks the WHOLE gesture: B (can't stop) vs C (one-shot too blunt)");
+  console.log("Step 4 (DESTRUCTIVE): FashionablyLateSendProbe.testReplay()        — does replaying the Send actually send?");
+  console.log("Helpers: FashionablyLateSendProbe.stop() / .disarm() / .unblock()");
 })();

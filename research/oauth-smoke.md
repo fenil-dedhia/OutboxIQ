@@ -100,14 +100,14 @@ pass artifact, and it sets up the Phase-3 re-confirm (403→200).
    ```
 
    Wait for `✓ built`. Nothing stays running; close the Terminal.
-2. Chrome → `chrome://extensions` → Developer mode ON. If an OutboxIQ
+2. Chrome → `chrome://extensions` → Developer mode ON. If a Fashionably Late
    card exists, **Remove** it first. **Load unpacked** →
    `/Users/fenildedhia/Code/Projects/OutboxIQ/extension/dist`.
 3. On the card, click the blue **"service worker"** link → DevTools →
    **Console** tab. **Run every `__oqAuth…` command in that console.**
    "service worker (inactive)" → click it to wake it. Look for the
    marker line first:
-   > `[OutboxIQ] ✅ OAuth smoke harness ready — type __oqAuth …`
+   > `[Fashionably Late] ✅ OAuth smoke harness ready — type __oqAuth …`
    Absent → stale worker: see the troubleshooting box at the end.
 
 ---
@@ -176,7 +176,7 @@ accounts are signed in.
 ### E. Revocation degrades cleanly
 
 ```js
-// Revoke "OutboxIQ" at https://myaccount.google.com/permissions, then:
+// Revoke "Fashionably Late" at https://myaccount.google.com/permissions, then:
 await __oqAuth.clear();
 await __oqAuth.silent();
 ```
@@ -354,11 +354,11 @@ hard). Resolve deterministically:
 
    Expect **✅ BUILD OK**. (Don't hand-paste a multi-command line — it
    wraps on copy and corrupts the check.)
-2. **Hard-reset Chrome:** `chrome://extensions` → OutboxIQ → **Remove**;
+2. **Hard-reset Chrome:** `chrome://extensions` → Fashionably Late → **Remove**;
    **fully quit Chrome (⌘Q)**; reopen → Developer mode ON → **Load
    unpacked** → `…/extension/dist`; click **service worker** →
    Console; click the card's **↻ reload** once, watch for the marker.
 3. **Marker present** → proceed. **Marker absent (with ✅ BUILD OK)** →
    wrong folder/profile: re-check the Load-unpacked path is exactly
-   `…/extension/dist` and there's no second OutboxIQ in another Chrome
+   `…/extension/dist` and there's no second Fashionably Late in another Chrome
    profile. Screenshot and send back.

@@ -1,8 +1,8 @@
 {
-  "name": "outboxiq-extension",
+  "name": "fashionably-late-extension",
   "private": true,
   "version": "0.0.1",
-  "description": "OutboxIQ — Chrome MV3 extension that enhances Gmail's Schedule Send.",
+  "description": "Fashionably Late — Chrome MV3 extension that enhances Gmail's Schedule Send.",
   "license": "UNLICENSED",
   "type": "module",
   "scripts": {

@@ -1,4 +1,4 @@
-# OutboxIQ — Product Requirements Document
+# Fashionably Late — Product Requirements Document
 
 **Version:** 1.0
 **Status:** Draft
@@ -9,14 +9,14 @@
 
 ## 1. Executive Summary
 
-OutboxIQ is a browser extension for Gmail that enhances the native "Schedule Send" feature with intelligent, data-backed send-time recommendations. It helps users maximize email visibility by suggesting optimal delivery times based on the recipient's timezone, automatically prompts users when they attempt to send emails outside their working hours, and cancels scheduled emails when a reply is received before delivery.
+Fashionably Late is a browser extension for Gmail that enhances the native "Schedule Send" feature with intelligent, data-backed send-time recommendations. It helps users maximize email visibility by suggesting optimal delivery times based on the recipient's timezone, automatically prompts users when they attempt to send emails outside their working hours, and cancels scheduled emails when a reply is received before delivery.
 
-The plugin extends Gmail's existing UX rather than replacing it. When installed, the native "Schedule send" dropdown is rebranded to "Schedule Send (powered by OutboxIQ)" and the modal that appears is enriched with new options, while preserving Gmail's familiar interaction patterns and the scheduled-emails view.
+The plugin extends Gmail's existing UX rather than replacing it. When installed, the native "Schedule send" dropdown is rebranded to "Schedule Send (powered by Fashionably Late)" and the modal that appears is enriched with new options, while preserving Gmail's familiar interaction patterns and the scheduled-emails view.
 
-OutboxIQ is privacy-first, GDPR-compliant, and local-first by default. The only feature that requires a backend service is Unschedule-on-Reply, which is implemented as a lightweight EU-hosted relay for Gmail push notifications.
+Fashionably Late is privacy-first, GDPR-compliant, and local-first by default. The only feature that requires a backend service is Unschedule-on-Reply, which is implemented as a lightweight EU-hosted relay for Gmail push notifications.
 
 > **Tier-split amendment (2026-05-17, owner-directed — pre-Session-8,
-> after Entry 31).** OutboxIQ ships as **two tiers of the same
+> after Entry 31).** Fashionably Late ships as **two tiers of the same
 > generation**: **Free v1** — extension-only, no backend, free, the
 > **public-launch target** — and **Premium v1** — extension + backend,
 > paid, built *after* Free v1 launches and validates demand. They are
@@ -71,7 +71,7 @@ deleted). §11 = never build; §13 = build, but in the Premium tier.
 - **Working Hours:** User-defined start and end times (per day of week) during which the user is comfortable sending emails, configured during onboarding.
 - **Auto-Reschedule Prompt:** A modal that appears when the user attempts to send an email outside their configured working hours, offering to delay delivery until the next working window.
 - **Unschedule-on-Reply:** A feature that automatically cancels a scheduled email if any recipient replies to the user before the scheduled send time.
-- **Scheduled Email Badge:** A small OutboxIQ visual indicator that appears on scheduled emails in Gmail's native Scheduled label, distinguishing emails scheduled via OutboxIQ from emails scheduled via Gmail's default UI.
+- **Scheduled Email Badge:** A small Fashionably Late visual indicator that appears on scheduled emails in Gmail's native Scheduled label, distinguishing emails scheduled via Fashionably Late from emails scheduled via Gmail's default UI.
 
 ---
 
@@ -85,20 +85,20 @@ Collect the user's timezone, working hours, and explicit GDPR consent. Communica
 
 #### 5.1.2 Trigger
 
-The onboarding flow opens automatically on install, and again on browser startup if it was never completed. It also opens when the user opens Gmail without having completed onboarding, and can be opened on demand from the OutboxIQ toolbar icon. (A manual relaunch entry point also belongs in the Settings panel — §5.8 — once that panel exists.) A completed-onboarding check guards every trigger, so an onboarded user is never re-prompted.
+The onboarding flow opens automatically on install, and again on browser startup if it was never completed. It also opens when the user opens Gmail without having completed onboarding, and can be opened on demand from the Fashionably Late toolbar icon. (A manual relaunch entry point also belongs in the Settings panel — §5.8 — once that panel exists.) A completed-onboarding check guards every trigger, so an onboarded user is never re-prompted.
 
 #### 5.1.3 Steps
 
 > **Restructure note (2026-05-15):** the original five steps were consolidated to three. The former Step 1 (welcome), Step 4 (transparency screen), and Step 5 (consent + finish) overlapped and are merged into a single Step 1; the verbatim transparency and consent copy is preserved unchanged. The timezone and working-hours steps are unchanged (renumbered).
 
 **Step 1: Welcome, transparency, and consent.**
-- Title: "Welcome to OutboxIQ Onboarding".
-- Brief explanation: "OutboxIQ helps your emails land at the right moment, in your recipients' time, not yours. To power our intelligent features, we'll require information about your timezone and working hours."
+- Title: "Welcome to Fashionably Late Onboarding".
+- Brief explanation: "Fashionably Late helps your emails land at the right moment, in your recipients' time, not yours. To power our intelligent features, we'll require information about your timezone and working hours."
 - A "Why do we need this information?" section presenting the transparency copy below.
-- A required consent checkbox: "I understand how OutboxIQ uses my data and agree to the Privacy Policy." The "Privacy Policy" link opens the full policy in a new tab.
+- A required consent checkbox: "I understand how Fashionably Late uses my data and agree to the Privacy Policy." The "Privacy Policy" link opens the full policy in a new tab.
 - A "Get Started" button that is **disabled until the consent checkbox is checked**. This is the consent gate: the flow cannot advance — and therefore onboarding cannot complete — without explicit consent.
 
-> **Why does OutboxIQ need this information?**
+> **Why does Fashionably Late need this information?**
 >
 > Google's APIs don't expose your working hours to third-party plugins, and we can't always determine a recipient's timezone automatically. To power our smart scheduling features, we need to ask you directly.
 >
@@ -111,6 +111,16 @@ The onboarding flow opens automatically on install, and again on browser startup
 > - Send emails at the optimal moment for each recipient, automatically.
 > - Avoid sending after-hours emails that hurt your professional brand.
 > - Cancel scheduled emails when someone replies, so you never send a stale message.
+
+> **Entry-41 amendment (2026-05-19, owner-directed — product rename;
+> Entry-30 discipline: verbatim locked-copy changed via amendment, NOT
+> silent find/replace).** The §5.1.3 Step-1 verbatim copy above —
+> Title, brief explanation, the "Why does …" transparency block, the
+> consent-checkbox label — references **"Fashionably Late"** (was
+> **"OutboxIQ"** through Session 9). The product was renamed from
+> OutboxIQ → Fashionably Late before public launch
+> (owner-decisions-log Entry 41; `notes/naming-history.md` /
+> `CLAUDE.md` top). All other locked-copy properties are unchanged.
 
 **Step 2: Timezone confirmation.**
 - The plugin pre-fills the user's timezone from the **browser** (`Intl.DateTimeFormat().resolvedOptions().timeZone`), labelled "Detected from your browser".
@@ -125,12 +135,12 @@ The onboarding flow opens automatically on install, and again on browser startup
 > timezone only as a §6.7 *fallback*. **For v1 there is no Calendar API
 > call in onboarding at all — the browser timezone is THE source, full
 > stop.** Honest rationale: the original PRD assumed Calendar was the more
-> *authoritative* source; on reflection it is not, for OutboxIQ's use
+> *authoritative* source; on reflection it is not, for Fashionably Late's use
 > case. The browser reads the **OS timezone, which auto-updates as the
-> user travels** — exactly the "current working context" OutboxIQ
+> user travels** — exactly the "current working context" Fashionably Late
 > schedules against. Google Calendar's timezone is a **manually
 > configured preference that does not auto-update with location**, so it
-> is *stale* precisely for the travelling-user cases OutboxIQ exists to
+> is *stale* precisely for the travelling-user cases Fashionably Late exists to
 > serve. Calendar is only arguably-better for edge users who deliberately
 > pin a laptop timezone regardless of travel (VPN/power users) — and those
 > users are the ones most likely to set an explicit override anyway. So
@@ -173,18 +183,26 @@ The onboarding flow opens automatically on install, and again on browser startup
 
 #### 5.2.1 Visual Changes
 
-When the user opens a Gmail compose window with OutboxIQ installed, the plugin makes the following modifications:
+When the user opens a Gmail compose window with Fashionably Late installed, the plugin makes the following modifications:
 
-1. The native "Send" button's dropdown caret continues to function, but the label inside the dropdown menu changes from "Schedule send" to "Schedule Send (powered by OutboxIQ)."
+1. The native "Send" button's dropdown caret continues to function, but the label inside the dropdown menu changes from "Schedule send" to "Schedule Send (powered by Fashionably Late)."
 2. No other visual changes are made to the compose window itself.
+
+> **Entry-41 amendment (2026-05-19, owner-directed — product rename;
+> Entry-30 discipline).** The §5.2.1 verbatim relabel string — the
+> single branded surface in compose per §8.1 — reads **"Schedule Send
+> (powered by Fashionably Late)"** (was "powered by OutboxIQ" through
+> Session 9). Implemented as `SCHEDULE_SEND_LABEL` in
+> `extension/src/lib/constants.ts`. Same locked-copy contract, new
+> brand. Owner-decisions-log Entry 41.
 
 #### 5.2.2 Click Behavior
 
-When the user clicks "Schedule Send (powered by OutboxIQ)", the OutboxIQ-enhanced modal appears (Section 5.3) instead of Gmail's native scheduling modal.
+When the user clicks "Schedule Send (powered by Fashionably Late)", the Fashionably Late-enhanced modal appears (Section 5.3) instead of Gmail's native scheduling modal.
 
 #### 5.2.3 Fallback Behavior
 
-If the OutboxIQ extension fails to load or encounters an error, Gmail's native Schedule Send must continue to function normally. The plugin must never block or interfere with native Gmail functionality.
+If the Fashionably Late extension fails to load or encounters an error, Gmail's native Schedule Send must continue to function normally. The plugin must never block or interfere with native Gmail functionality.
 
 ---
 
@@ -209,15 +227,15 @@ Three preset options matching Gmail's native pattern:
 These dates and times update dynamically based on the current day of the week.
 
 > **Amendment (2026-05-16, owner-directed):** when the user has scheduled at
-> least once via OutboxIQ, the modal also shows a **"Last scheduled time"**
+> least once via Fashionably Late, the modal also shows a **"Last scheduled time"**
 > row at the top (above the three presets), mirroring the equivalent row in
 > Gmail's own native dialog (PRD §8.1 native feel). This was not in the
 > original 3-preset spec; added so repeat users don't lose Gmail's
-> "same time as last time" affordance. Implementation detail: OutboxIQ
+> "same time as last time" affordance. Implementation detail: Fashionably Late
 > remembers the time **it** scheduled (stored locally per PRD §7.2 —
 > `lastScheduled`, schema v2), rather than scraping Gmail's own value; this
 > keeps it local-first and avoids extra Gmail interaction. It therefore
-> reflects the last OutboxIQ-scheduled time, which can differ from Gmail's
+> reflects the last Fashionably Late-scheduled time, which can differ from Gmail's
 > global memory (e.g., if the user also scheduled directly via Gmail).
 > Clicking it schedules at that exact time via the §5.3.4 custom path.
 
@@ -227,7 +245,7 @@ A standard date and time picker for custom scheduling. Selected time is always i
 
 > **Amendment (2026-05-16, owner-directed):** this section is labelled **"Pick custom"** in the UI (with the timezone abbreviation retained for the §5.3.4 "clearly labeled" requirement). Also, the modal's interaction model is **select-then-confirm**: choosing a Quick Option, the "Last scheduled time" row, or entering a custom date+time only *selects* it (visually highlighted; modal stays open). Nothing is scheduled until the user clicks the single primary **"Schedule"** button, which is disabled until a choice is made and which both schedules and closes the modal. This is consistent with §5.3.5's "Clicking 'Schedule' … submits" wording (it replaces an earlier click-a-row-fires-immediately behaviour).
 
-#### 5.3.5 OutboxIQ Optimize Section
+#### 5.3.5 Fashionably Late Optimize Section
 
 > **REWRITTEN 2026-05-19 (Session-9 close-out — Entry 39 OAuth removal +
 > Entry 40 spec lock; `notes/owner-decisions-log.md` Entries 38, 39, 40).**
@@ -239,7 +257,7 @@ A standard date and time picker for custom scheduling. Selected time is always i
 > the Session-5.5 "absolute limits remain the only hard constraint" design
 > commitment) is superseded in full. Items (a)–(n) below are owner-locked.
 
-**(a) Section presence and initial state.** Inside OutboxIQ's enhanced Schedule Send modal, below the standard options, an **"Optimize delivery for [recipient dropdown]"** section is visible whenever a compose has at least one To/CC recipient. The leading **checkbox starts UNCHECKED** on modal open — Optimize-for-X is opt-in per send.
+**(a) Section presence and initial state.** Inside Fashionably Late's enhanced Schedule Send modal, below the standard options, an **"Optimize delivery for [recipient dropdown]"** section is visible whenever a compose has at least one To/CC recipient. The leading **checkbox starts UNCHECKED** on modal open — Optimize-for-X is opt-in per send.
 
 **(b) Recipient dropdown — population from compose DOM.** Auto-populated from the Gmail compose **To: and CC:** fields. **BCC is excluded** (preserves the BCC privacy contract; §11). No People API, no autocomplete enrichment beyond what Gmail already rendered in the compose chips.
 
@@ -249,13 +267,13 @@ A standard date and time picker for custom scheduling. Selected time is always i
 - **Single recipient across To+CC:** that recipient is pre-selected; the Optimize **checkbox still starts unchecked** (engagement is explicit).
 - **Multiple recipients:** the dropdown shows the placeholder **"Choose recipient…"**; the modal's **Schedule button stays disabled** until the user explicitly selects one recipient to optimize for. Checkbox starts unchecked.
 
-**(e) Display names.** Display names come **from Gmail's compose DOM** (whatever Gmail's own autocomplete rendered into the chip). Recipients with Gmail history: name appears. **Never-emailed recipients: only the email appears.** There is **NO fallback name resolution** via People API or any other source — the email-as-display-name is the carried representation when a name isn't available. (Workspace directory autocomplete *may* surface a colleague's directory name into the chip; that is Gmail's behaviour, not OutboxIQ's lookup, and is tenant-config-dependent — `notes/session-9-summary.md` Phase A.)
+**(e) Display names.** Display names come **from Gmail's compose DOM** (whatever Gmail's own autocomplete rendered into the chip). Recipients with Gmail history: name appears. **Never-emailed recipients: only the email appears.** There is **NO fallback name resolution** via People API or any other source — the email-as-display-name is the carried representation when a name isn't available. (Workspace directory autocomplete *may* surface a colleague's directory name into the chip; that is Gmail's behaviour, not Fashionably Late's lookup, and is tenant-config-dependent — `notes/session-9-summary.md` Phase A.)
 
 **(f) Timing dropdown — two options.** Labelled **"Optimize timing for"**, with **exactly two** options (the original three narrowed to two — the "End of day (4:00 PM)" option is **dropped from product scope**, not deferred):
 - **"Morning peak (9:00 AM their time)"** — default.
 - **"Midday engagement (1:00 PM their time)"**.
 
-**(g) Timing tooltip.** A small info icon opens the tooltip: *"Morning typically sees the highest open rate. Midday catches recipients between meetings."* Framed as **based on general research, not OutboxIQ-specific tracking** — §11 items 2 / 3 / 13 / 20 (no email tracking, no analytics, no telemetry) remain binding; OutboxIQ does not measure recipient behaviour.
+**(g) Timing tooltip.** A small info icon opens the tooltip: *"Morning typically sees the highest open rate. Midday catches recipients between meetings."* Framed as **based on general research, not Fashionably Late-specific tracking** — §11 items 2 / 3 / 13 / 20 (no email tracking, no analytics, no telemetry) remain binding; Fashionably Late does not measure recipient behaviour.
 
 **(h) Timezone resolution — Case A (recipient already in cache).** Below the timing dropdown a confirmation line appears dynamically:
 
@@ -357,7 +375,7 @@ When a recipient is selected for optimization, the plugin executes the following
 > Step 6 (manual) becomes Step 4. Reasoning, recorded accurately: the
 > geocode/timezone steps only fired when the People API returned a contact
 > with a structured address but **no usable timezone** — a single-digit
-> percentage of recipient lookups in OutboxIQ's target use (knowledge
+> percentage of recipient lookups in Fashionably Late's target use (knowledge
 > workers emailing colleagues, clients, recruits, acquaintances). For that
 > small case, manual selection **cached forever per recipient** (Step 1)
 > is a fine one-time UX cost. The free Workspace Directory step already
@@ -435,7 +453,7 @@ When a recipient is selected for optimization, the plugin executes the following
 > **Amendment (2026-05-16, owner-directed — Session 5.5):** §5.5 enforcement
 > is **split by trigger**. **Schedule Send** raises the soft warning for
 > **absolute-limit violations only** — warning a user for *scheduling*
-> outside their working hours is warning them for OutboxIQ's core use case
+> outside their working hours is warning them for Fashionably Late's core use case
 > (e.g. scheduling 3 AM local to land in a recipient's 9 AM window). Doing
 > so trains users to dismiss the modal and destroys its value for the
 > absolute-limit cases where it actually matters. **Regular Send (§5.5.1)**
@@ -458,9 +476,9 @@ This modal appears when:
 > outside working hours) is **deferred to its own future session** and is
 > *not* implemented in v1's first §5.5 pass. Intercepting Gmail's primary
 > Send action is materially more invasive than the Schedule Send hook
-> OutboxIQ already owns and carries a direct §5.2.3 ("never block native
+> Fashionably Late already owns and carries a direct §5.2.3 ("never block native
 > Gmail") risk. v1 §5.5 therefore enforces only the **second** trigger: a
-> time the user explicitly picks via OutboxIQ's Schedule Send modal
+> time the user explicitly picks via Fashionably Late's Schedule Send modal
 > (preset, custom, or "Last scheduled time"). This bullet remains spec; it
 > is simply not yet built. Tracked in `notes/session-5-summary.md`.
 
@@ -607,7 +625,7 @@ The modal mirrors the visual style of Gmail's native modals (rounded corners, wh
 
 > **Tier-split amendment (2026-05-17, owner-directed — pre-Session-8,
 > after Entry 31).** Unschedule-on-Reply is **in Premium v1 scope, not
-> Free v1**. OutboxIQ now ships as two tiers of the same generation:
+> Free v1**. Fashionably Late now ships as two tiers of the same generation:
 > **Free v1** (extension-only, no backend, the public-launch target) and
 > **Premium v1** (extension + backend, paid, built after Free v1
 > validates demand). Unschedule-on-Reply is the only PRD-specified
@@ -629,12 +647,12 @@ The modal mirrors the visual style of Gmail's native modals (rounded corners, wh
 ### 5.7 Scheduled Emails View (Native Gmail Integration)
 
 > **Amendment (2026-05-17, owner-directed — Session 8; PRD-vs-architecture
-> correction, Entry-26-shaped REMOVAL, not a deferral).** The **OutboxIQ
+> correction, Entry-26-shaped REMOVAL, not a deferral).** The **Fashionably Late
 > badge** (§5.7.2.1) and its **hover tooltip** (§5.7.2.2) are **removed
-> from product scope entirely — all tiers**. Reasoning: once OutboxIQ is
+> from product scope entirely — all tiers**. Reasoning: once Fashionably Late is
 > installed, the Schedule Send chevron is rebranded and the user's natural
-> scheduling path *is* OutboxIQ's modal, so the set of "post-install
-> scheduled emails NOT created via OutboxIQ" is effectively empty — the
+> scheduling path *is* Fashionably Late's modal, so the set of "post-install
+> scheduled emails NOT created via Fashionably Late" is effectively empty — the
 > badge differentiates against nothing, and building it would add a
 > Gmail-DOM surface for no user value (and lean on brand inside Gmail,
 > against §8.1). This is the same shape as the Maps removal (Entry 26):
@@ -652,17 +670,17 @@ The modal mirrors the visual style of Gmail's native modals (rounded corners, wh
 
 #### 5.7.1 Approach
 
-OutboxIQ does **not** build a separate dashboard for scheduled emails. Instead, it leverages Gmail's native "Scheduled" label, which already provides:
+Fashionably Late does **not** build a separate dashboard for scheduled emails. Instead, it leverages Gmail's native "Scheduled" label, which already provides:
 - A list view of all scheduled emails.
 - The ability to click into a scheduled email to view its content.
 - A native "Cancel send" button on each scheduled email.
 - The ability to edit a scheduled email and reschedule it.
 
-#### 5.7.2 OutboxIQ Enhancements to the Native View
+#### 5.7.2 Fashionably Late Enhancements to the Native View
 
 The plugin adds the following minimal enhancements:
 
-1. **OutboxIQ badge:** A small icon (the OutboxIQ logo or a distinguishing visual marker) appears next to emails in the Scheduled label that were scheduled via OutboxIQ. Emails scheduled via Gmail's native UI do not show this badge.
+1. **Fashionably Late badge:** A small icon (the Fashionably Late logo or a distinguishing visual marker) appears next to emails in the Scheduled label that were scheduled via Fashionably Late. Emails scheduled via Gmail's native UI do not show this badge.
 
 2. **Hover tooltip on the badge:** When the user hovers over the badge, a tooltip displays the optimization details: "Optimized for [Recipient Name] — [Timing Option] in [Recipient Timezone]."
 
@@ -671,8 +689,8 @@ The plugin adds the following minimal enhancements:
 #### 5.7.3 Acceptance Criteria
 
 - The native Scheduled label continues to function exactly as it does today.
-- OutboxIQ-scheduled emails are visually distinguishable from Gmail-native scheduled emails.
-- Canceling a scheduled email via the native UI properly notifies the OutboxIQ backend (if applicable) so the push notification subscription can be cleaned up.
+- Fashionably Late-scheduled emails are visually distinguishable from Gmail-native scheduled emails.
+- Canceling a scheduled email via the native UI properly notifies the Fashionably Late backend (if applicable) so the push notification subscription can be cleaned up.
 
 ---
 
@@ -681,7 +699,7 @@ The plugin adds the following minimal enhancements:
 #### 5.8.1 Access
 
 Accessible via:
-- An OutboxIQ icon in the Chrome toolbar (or browser action button).
+- A Fashionably Late icon in the Chrome toolbar (or browser action button).
 - A "Settings" link inside the Schedule Send modal's overflow menu.
 - A direct link from the onboarding completion screen.
 
@@ -726,10 +744,10 @@ Accessible via:
 
 > **Amendment (2026-05-17, owner-directed — Session 8; Entry-26-shaped
 > REMOVAL, not a deferral — all tiers).** §5.9 is **removed from product
-> scope**. Because OutboxIQ schedules by driving **Gmail's own native
+> scope**. Because Fashionably Late schedules by driving **Gmail's own native
 > Schedule Send** (Session 2 spike architecture), Gmail's **own
 > scheduled-send confirmation toast already appears** and already carries
-> the native undo affordance. Building OutboxIQ's own 7-second toast on
+> the native undo affordance. Building Fashionably Late's own 7-second toast on
 > top of it would **duplicate native functionality and violate §8.1
 > ("native feel over branded feel")** — the §9.2 "schedule confirmation
 > toast" success metric and the §5.8.2 "Schedule confirmation toast"
@@ -742,7 +760,7 @@ Accessible via:
 
 #### 5.9.1 Behavior
 
-After the user successfully schedules an email via OutboxIQ, a toast notification appears at the bottom of the screen for 7 seconds:
+After the user successfully schedules an email via Fashionably Late, a toast notification appears at the bottom of the screen for 7 seconds:
 
 > "Email scheduled for [Date, Time, Timezone]. **Undo** | View"
 
@@ -784,7 +802,7 @@ Clicking "Undo" within the 7-second window cancels the scheduled email and reope
 > - **Free v1** processes **minimal personal data, fully local-first**:
 >   preferences, working hours, timezone, recipient cache, feature
 >   toggles — all in `chrome.storage.local`, nothing transmitted to any
->   OutboxIQ server (there is none). OAuth uses `access_type=online`
+>   Fashionably Late server (there is none). OAuth uses `access_type=online`
 >   (§7.5) so **no refresh token exists anywhere** and there is **no
 >   backend storage**. §6.1.1's "EU data residency / backend / per-user
 >   refresh-token encryption" bullet and §6.1.2's "Backend data … explicit
@@ -975,7 +993,7 @@ Do **not** request `gmail.readonly` or any broader scope. Premium v1's backend (
 The extension consists of:
 
 1. **Service worker:** Handles long-lived tasks like API calls, OAuth token management, and message passing between the content script and the backend.
-2. **Content script:** Injected into the Gmail tab. Detects compose windows, modifies the Schedule Send dropdown, renders the OutboxIQ modal, and listens for scheduling events.
+2. **Content script:** Injected into the Gmail tab. Detects compose windows, modifies the Schedule Send dropdown, renders the Fashionably Late modal, and listens for scheduling events.
 3. **Settings page:** A standalone HTML page accessible via the extension's options page or browser action popup.
 4. **Onboarding page:** A standalone HTML page shown on first install.
 
@@ -1030,7 +1048,7 @@ All local data is stored in the browser's extension storage. Suggested schema:
 }
 ```
 
-> **Implementation note:** the implemented `OutboxIQState` adds a top-level `schemaVersion` (currently **`2`**; `SCHEMA_VERSION` in `extension/src/lib/constants.ts`) and represents `consent` as **nullable** — it is `null` until the user completes onboarding (PRD §5.1), then set to the object shown above. The schema here describes the shape once consent exists.
+> **Implementation note:** the implemented `Fashionably LateState` adds a top-level `schemaVersion` (currently **`2`**; `SCHEMA_VERSION` in `extension/src/lib/constants.ts`) and represents `consent` as **nullable** — it is `null` until the user completes onboarding (PRD §5.1), then set to the object shown above. The schema here describes the shape once consent exists.
 >
 > **Schema v2 (2026-05-16):** added a nullable top-level `lastScheduled` (`{ display, gmailDate, gmailTime } | null`) — supports the §5.3.3 "Last scheduled time" amendment. Purely additive; the v1→v2 "migration" is just `getState()`'s default-merge resolving an absent key to `null` (no explicit version branch yet, per the migration convention in `CLAUDE.md`). Stores only pre-formatted time strings — never email content (§13.2.4, was §7.3.4).
 
@@ -1263,7 +1281,7 @@ Each API has its own quota and pricing. The plugin must respect rate limits and 
 
 ### 8.1 Native Feel Over Branded Feel
 
-OutboxIQ should look like a natural extension of Gmail, not a third-party plugin. Use Google's Material Design language, system fonts, and Gmail's color palette. The only place OutboxIQ branding appears prominently is in the Settings panel and the onboarding flow. Inside the compose window and the Schedule Send modal, the visual treatment matches Gmail's native components as closely as possible.
+Fashionably Late should look like a natural extension of Gmail, not a third-party plugin. Use Google's Material Design language, system fonts, and Gmail's color palette. The only place Fashionably Late branding appears prominently is in the Settings panel and the onboarding flow. Inside the compose window and the Schedule Send modal, the visual treatment matches Gmail's native components as closely as possible.
 
 ### 8.2 Progressive Disclosure
 
@@ -1283,7 +1301,7 @@ Whenever the plugin asks for data or makes a recommendation, a one-line explanat
 
 ### 8.6 Reversibility
 
-Every action has an undo or cancel path. Scheduled emails can be canceled or edited via Gmail's native UI (and **Gmail's own native scheduled-send toast** provides the immediate undo affordance — OutboxIQ's own 7-second toast was removed, see the §5.9 amendment). Destructive actions in Settings (clear cache, delete data) require explicit confirmation.
+Every action has an undo or cancel path. Scheduled emails can be canceled or edited via Gmail's native UI (and **Gmail's own native scheduled-send toast** provides the immediate undo affordance — Fashionably Late's own 7-second toast was removed, see the §5.9 amendment). Destructive actions in Settings (clear cache, delete data) require explicit confirmation.
 
 ### 8.7 Minimal Cognitive Load
 
@@ -1304,7 +1322,7 @@ First-time users see a friendly walkthrough, not a blank screen. The recipient t
 ### 8.11 Visual Distinguishability Without Clutter
 
 > **Superseded (2026-05-17, owner-directed — Session 8).** This section
-> described **only** the §5.7.2 OutboxIQ badge, which is **removed from
+> described **only** the §5.7.2 Fashionably Late badge, which is **removed from
 > product scope** (see the §5.7 amendment, Entry 37). No other visual
 > element depended on it, so the section is retired (heading kept for
 > stable §8 numbering / cross-references). The surviving "native feel,
@@ -1329,7 +1347,7 @@ Success metrics for v1 are tracked **qualitatively** through user feedback from 
 These are intentionally deferred and should not be addressed in v1:
 
 1. Should the three time slots become user-configurable in v2?
-2. Should the plugin track open rates of OutboxIQ-scheduled emails (opt-in only) to refine recommendations over time?
+2. Should the plugin track open rates of Fashionably Late-scheduled emails (opt-in only) to refine recommendations over time?
 3. Should holiday awareness be added in v2 by reading from the user's Google Calendar?
 4. Should multi-account support be added in v2?
 5. Should the plugin extend to other email clients (Outlook, Apple Mail) as a cross-client product?
@@ -1342,7 +1360,7 @@ The following features and behaviors must **not** be implemented in v1. This lis
 
 > **Tier-split note (2026-05-17, owner-directed — pre-Session-8, after
 > Entry 31).** **Items 1–20 below are out of scope for *all tiers* of
-> OutboxIQ** — Free v1 *and* Premium v1. They are forbidden
+> Fashionably Late** — Free v1 *and* Premium v1. They are forbidden
 > **product-wide and permanently**; "Premium" never reopens any of them.
 > This is categorically different from **Unschedule-on-Reply and the
 > backend service**, which are **in Premium v1 scope (§13), not out of
@@ -1354,11 +1372,11 @@ The following features and behaviors must **not** be implemented in v1. This lis
 > scope", and do not treat any §11 item as merely "Premium").
 
 1. **Manual delivery approval** workflows where the user must approve each scheduled email before send.
-2. **Email tracking, read receipts, or pixel-based open detection.** OutboxIQ does not track whether recipients have opened emails.
+2. **Email tracking, read receipts, or pixel-based open detection.** Fashionably Late does not track whether recipients have opened emails.
 3. **Cross-user recipient behavior analytics** or any form of engagement scoring built from aggregated user data.
 4. **AI-generated email content, subject line suggestions, tone analysis, or message rewriting** of any kind.
 5. **CRM integrations** (Salesforce, HubSpot, Pipedrive, etc.).
-6. **Mass email, newsletter, or campaign features.** OutboxIQ is for one-to-few personal and professional emails, not bulk outreach.
+6. **Mass email, newsletter, or campaign features.** Fashionably Late is for one-to-few personal and professional emails, not bulk outreach.
 7. **Email templates or snippet management.**
 8. **A/B testing of send times.**
 9. **Cross-account simultaneous orchestration.** Each Gmail account is treated independently. No multi-account dashboards or unified inboxes.
@@ -1368,7 +1386,7 @@ The following features and behaviors must **not** be implemented in v1. This lis
 13. **Analytics dashboards** showing open rates, click rates, engagement metrics, or recipient profiles.
 14. **Reading email body content** beyond what is required for compose-window injection. The plugin must not parse, store, or transmit email body text.
 15. **Notification preferences panel** with granular per-event notification toggles. A single global toggle for the schedule confirmation toast is sufficient.
-16. **Multi-account support** within a single Chrome profile. If users want to use OutboxIQ on multiple Gmail accounts, they can use separate Chrome profiles.
+16. **Multi-account support** within a single Chrome profile. If users want to use Fashionably Late on multiple Gmail accounts, they can use separate Chrome profiles.
 17. **Holiday awareness** that detects public holidays or out-of-office events on the target send date.
 18. **Separate scheduled emails dashboard.** Use Gmail's native Scheduled label, do not build a parallel view.
 19. **Firefox, Safari, or non-Chromium browser support.**
@@ -1407,7 +1425,7 @@ The following features and behaviors must **not** be implemented in v1. This lis
 > **Added 2026-05-17 (owner-directed — pre-Session-8, after Entry 31).
 > Tier-split decision; `notes/owner-decisions-log.md` Entry 32.**
 >
-> **What this section is.** OutboxIQ ships as **two tiers of the same
+> **What this section is.** Fashionably Late ships as **two tiers of the same
 > generation** (see the §1 amendment): **Free v1** (extension-only, no
 > backend, free — the public-launch target) and **Premium v1**
 > (extension + backend, paid — built *after* Free v1 launches and
@@ -1445,7 +1463,7 @@ The following features and behaviors must **not** be implemented in v1. This lis
 
 #### 13.1.1 Behavior
 
-When a user schedules an email via OutboxIQ and a recipient replies before the scheduled send time, the scheduled email is automatically canceled. The user receives a notification:
+When a user schedules an email via Fashionably Late and a recipient replies before the scheduled send time, the scheduled email is automatically canceled. The user receives a notification:
 
 > "Your scheduled email to [Recipient Name] was canceled because they replied. View the reply and decide what to send next."
 
@@ -1456,7 +1474,7 @@ This applies to emails with multiple recipients as well. If any one recipient re
 This is the only feature requiring a backend service.
 
 **Architecture:**
-1. When the user schedules an email via OutboxIQ, the extension registers the scheduled message ID and thread ID with the OutboxIQ backend.
+1. When the user schedules an email via Fashionably Late, the extension registers the scheduled message ID and thread ID with the Fashionably Late backend.
 2. The backend subscribes to Gmail push notifications for the user's inbox via Google Cloud Pub/Sub.
 3. When a new message arrives in a watched thread, Google publishes a notification to the backend.
 4. The backend checks whether the new message is from a recipient of any pending scheduled email.
@@ -1492,7 +1510,7 @@ This is the only feature requiring a backend service.
 
 The backend serves **exactly one purpose**:
 
-1. **Unschedule-on-Reply relay.** Subscribes to Gmail push notifications via Google Cloud Pub/Sub, detects when a recipient replies to a thread that has a pending OutboxIQ-scheduled email, and cancels the scheduled send. See Section 13.1 (formerly §5.6).
+1. **Unschedule-on-Reply relay.** Subscribes to Gmail push notifications via Google Cloud Pub/Sub, detects when a recipient replies to a thread that has a pending Fashionably Late-scheduled email, and cancels the scheduled send. See Section 13.1 (formerly §5.6).
 
 > **Amendment (2026-05-16 — owner-directed):** the former second purpose
 > ("Maps API proxy for recipient timezone resolution") is **removed from

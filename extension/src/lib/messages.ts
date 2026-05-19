@@ -2,7 +2,7 @@
 // Content scripts can't open extension tabs (no chrome.tabs), so they ask the
 // service worker to do it.
 
-export const MSG_OPEN_ONBOARDING = "OUTBOXIQ_OPEN_ONBOARDING" as const;
+export const MSG_OPEN_ONBOARDING = "FASHIONABLY_LATE_OPEN_ONBOARDING" as const;
 
 export interface OpenOnboardingMessage {
   type: typeof MSG_OPEN_ONBOARDING;
@@ -15,7 +15,7 @@ export interface OpenOnboardingMessage {
 // (defined here, not imported from background/, to keep the lib→background
 // layering one-directional).
 export const MSG_RESOLVE_RECIPIENT_TZ =
-  "OUTBOXIQ_RESOLVE_RECIPIENT_TZ" as const;
+  "FASHIONABLY_LATE_RESOLVE_RECIPIENT_TZ" as const;
 
 export interface ResolveRecipientTzMessage {
   type: typeof MSG_RESOLVE_RECIPIENT_TZ;

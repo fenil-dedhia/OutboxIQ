@@ -1,12 +1,12 @@
-// OutboxIQ "Pick date & time" probe — RUNNABLE SCRIPT.
+// Fashionably Late "Pick date & time" probe — RUNNABLE SCRIPT.
 //
 // This is the single source of the probe script. The how-to-run, context,
 // safety notes, and result log live in pick-date-time-probe.md (which points
 // here). To use: open it, Select All, Copy, paste into Gmail's DevTools
 // console (see the .md for full step-by-step instructions).
 //
-// Safe entry points: OutboxIQProbe.discover(), OutboxIQProbe.anchorCheck().
-// Destructive (creates a real scheduled email): OutboxIQProbe.live(...).
+// Safe entry points: FashionablyLateProbe.discover(), FashionablyLateProbe.anchorCheck().
+// Destructive (creates a real scheduled email): FashionablyLateProbe.live(...).
 // Nothing runs until you call one of those.
 
 (() => {
@@ -348,9 +348,9 @@
     return { ok: true, visible };
   }
 
-  window.OutboxIQProbe = { discover, anchorCheck, live };
-  console.log("%c[probe] OutboxIQ pick-date-time probe loaded.", "font-weight:bold");
-  console.log('Run: OutboxIQProbe.discover()  (safe — custom-path + relabel-target dump)');
-  console.log('Run: OutboxIQProbe.anchorCheck()  (safe — once per compose context: new / reply / pop-out)');
-  console.log('Then: OutboxIQProbe.live({ date:"2026-12-31", time:"9:00 AM", confirm:false })  (sets values; confirm:true schedules for real)');
+  window.FashionablyLateProbe = { discover, anchorCheck, live };
+  console.log("%c[probe] Fashionably Late pick-date-time probe loaded.", "font-weight:bold");
+  console.log('Run: FashionablyLateProbe.discover()  (safe — custom-path + relabel-target dump)');
+  console.log('Run: FashionablyLateProbe.anchorCheck()  (safe — once per compose context: new / reply / pop-out)');
+  console.log('Then: FashionablyLateProbe.live({ date:"2026-12-31", time:"9:00 AM", confirm:false })  (sets values; confirm:true schedules for real)');
 })();

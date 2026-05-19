@@ -168,7 +168,10 @@ async function doSnap(
     }
   } catch (err) {
     if (isDev()) {
-      console.warn("[OutboxIQ] §5.5.1 snap failed → native scheduler:", err);
+      console.warn(
+        "[Fashionably Late] §5.5.1 snap failed → native scheduler:",
+        err,
+      );
     }
     // The user chose to RESCHEDULE, not send now. Failing toward an immediate
     // send would deliver exactly what they asked to delay — so the only safe
@@ -282,7 +285,10 @@ function makeHandler(opts: RegularSendGuardOptions, s: GuardState) {
       // Synchronous mount failure: same hole as a render throw. The user
       // clicked Send — honour it.
       if (isDev()) {
-        console.warn("[OutboxIQ] §5.5.1 modal mount failed → send:", err);
+        console.warn(
+          "[Fashionably Late] §5.5.1 modal mount failed → send:",
+          err,
+        );
       }
       releaseModal(s);
       void replayNativeSend(s, sendBtn);
@@ -310,7 +316,10 @@ export function installRegularSendGuard(
     }
   } catch (err) {
     if (isDev()) {
-      console.warn("[OutboxIQ] §5.5.1 install failed (Gmail unaffected):", err);
+      console.warn(
+        "[Fashionably Late] §5.5.1 install failed (Gmail unaffected):",
+        err,
+      );
     }
   }
   return (): void => {

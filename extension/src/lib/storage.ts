@@ -106,7 +106,7 @@ export interface Consent {
 }
 
 /**
- * The time the user last scheduled THROUGH OutboxIQ (PRD §5.3.3 amendment,
+ * The time the user last scheduled THROUGH Fashionably Late (PRD §5.3.3 amendment,
  * 2026-05-16 — mirrors Gmail's native "Last scheduled time" row). We store
  * what we scheduled rather than scraping Gmail's own value: local-first,
  * no extra Gmail interaction, only a timestamp (no email content). The
@@ -131,7 +131,7 @@ export interface OutboxIQState {
   recipientCache: RecipientCacheEntry[];
   /** Null until the user consents in onboarding (PRD §5.1 step 5). */
   consent: Consent | null;
-  /** Null until the user schedules at least once via OutboxIQ (§5.3.3). */
+  /** Null until the user schedules at least once via Fashionably Late (§5.3.3). */
   lastScheduled: LastScheduled | null;
 }
 
@@ -216,7 +216,7 @@ export async function setState(state: OutboxIQState): Promise<void> {
   await rawSet(STORAGE_KEY_STATE, state);
 }
 
-/** Record the time just scheduled via OutboxIQ (PRD §5.3.3 amendment). */
+/** Record the time just scheduled via Fashionably Late (PRD §5.3.3 amendment). */
 export async function setLastScheduled(value: LastScheduled): Promise<void> {
   const state = await getState();
   await setState({ ...state, lastScheduled: value });

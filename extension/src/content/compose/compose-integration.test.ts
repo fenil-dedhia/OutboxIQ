@@ -71,7 +71,7 @@ describe("§5.2.1 relabel", () => {
     expect(item.textContent).toBe(SCHEDULE_SEND_LABEL);
   });
 
-  it("multi-compose: leaves Gmail's native text (no OutboxIQ relabel)", () => {
+  it("multi-compose: leaves Gmail's native text (no Fashionably Late relabel)", () => {
     document.body.appendChild(makeChevron());
     document.body.appendChild(makeChevron()); // 2 composes
     const item = makeScheduleMenuItem();
@@ -89,7 +89,7 @@ describe("§5.2.1 relabel", () => {
     const item = makeScheduleMenuItem();
     document.body.appendChild(item);
     teardown = installComposeIntegration({ onScheduleSend: vi.fn() });
-    expect(item.textContent).toBe(SCHEDULE_SEND_LABEL); // single → OutboxIQ
+    expect(item.textContent).toBe(SCHEDULE_SEND_LABEL); // single → Fashionably Late
 
     document.body.appendChild(makeChevron()); // compose B opens → 2
     await tick();
@@ -97,9 +97,9 @@ describe("§5.2.1 relabel", () => {
   });
 
   // Smoke Bug 2 (Session 5.5): when the count drops back to 1 the surviving
-  // compose's label must revert to OutboxIQ — locale-safely (the captured
+  // compose's label must revert to Fashionably Late — locale-safely (the captured
   // original, not a hardcoded string).
-  it("restores OutboxIQ when compose count drops to 1 (reactive — Bug 2)", async () => {
+  it("restores Fashionably Late when compose count drops to 1 (reactive — Bug 2)", async () => {
     document.body.appendChild(makeChevron());
     const c2 = makeChevron();
     document.body.appendChild(c2); // 2 composes
@@ -138,7 +138,7 @@ describe("§5.2.1 relabel", () => {
 });
 
 describe("§5.2.2 interception", () => {
-  it("intercepts activation of the scheduledSend item and opens OutboxIQ", () => {
+  it("intercepts activation of the scheduledSend item and opens Fashionably Late", () => {
     let received: HTMLElement | null = null;
     const onScheduleSend = vi.fn((ctx: { menuItem: HTMLElement }) => {
       received = ctx.menuItem;
@@ -202,7 +202,7 @@ describe("§5.2.2 interception", () => {
     await new Promise((r) => setTimeout(r, 200));
   });
 
-  it("multi-compose: hands off to native instead of opening OutboxIQ (Session 5 safety net)", async () => {
+  it("multi-compose: hands off to native instead of opening Fashionably Late (Session 5 safety net)", async () => {
     const onScheduleSend = vi.fn();
     // Two composes → two chevrons → ambiguous; must NOT open our modal.
     document.body.appendChild(makeChevron());
@@ -221,7 +221,7 @@ describe("§5.2.2 interception", () => {
     await new Promise((r) => setTimeout(r, 200));
   });
 
-  it("single compose still opens OutboxIQ (safety net does not over-fire)", () => {
+  it("single compose still opens Fashionably Late (safety net does not over-fire)", () => {
     const onScheduleSend = vi.fn();
     document.body.appendChild(makeChevron()); // exactly one compose
     const item = makeScheduleMenuItem();
@@ -248,7 +248,7 @@ describe("§5.2.2 interception", () => {
 });
 
 describe("desiredScheduleLabel (pure decision)", () => {
-  it("single compose → the OutboxIQ brand label", () => {
+  it("single compose → the Fashionably Late brand label", () => {
     expect(desiredScheduleLabel(false, "Schedule send")).toBe(
       SCHEDULE_SEND_LABEL,
     );

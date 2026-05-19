@@ -33,7 +33,7 @@ That is exactly the gap Entry 10 is about.
 3. Open Gmail. Onboarding opens. **Complete it for real** (any values — this
    also smoke-tests the onboarding path). This is required: the guard only
    installs after onboarding (`onboardingCompletedAt` set).
-4. `chrome://extensions` → OutboxIQ → **"Inspect views: service worker"**.
+4. `chrome://extensions` → Fashionably Late → **"Inspect views: service worker"**.
    In that console, paste the **whole** of `research/regular-send-smoke.js`,
    press Enter. You should see `[OQ_SMOKE] ready.`
 

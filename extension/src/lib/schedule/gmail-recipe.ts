@@ -179,7 +179,7 @@ function innerTarget(el: Element): Element {
   if (hit && (hit === el || el.contains(hit))) return hit;
   if (dev() && hit) {
     console.info(
-      `[OutboxIQ] recipe innerTarget: hit-test escaped target ` +
+      `[Fashionably Late] recipe innerTarget: hit-test escaped target ` +
         `(<${hit.tagName.toLowerCase()} class="${hit.className}">) — ` +
         `dispatching on the element itself`,
     );
@@ -249,7 +249,7 @@ export async function fireFull(el: Element, why: string): Promise<void> {
   for (const ev of seq) t.dispatchEvent(ev);
   if (dev()) {
     console.info(
-      `[OutboxIQ] recipe fireFull → ${why}: <${t.tagName.toLowerCase()}>`,
+      `[Fashionably Late] recipe fireFull → ${why}: <${t.tagName.toLowerCase()}>`,
     );
   }
   await sleep(120);
@@ -262,7 +262,7 @@ export async function firePlain(el: Element, why: string): Promise<void> {
   for (const type of ["mousedown", "mouseup", "click"]) {
     el.dispatchEvent(mkMouse(type, cx, cy, true));
   }
-  if (dev()) console.info(`[OutboxIQ] recipe firePlain → ${why}`);
+  if (dev()) console.info(`[Fashionably Late] recipe firePlain → ${why}`);
   await sleep(120);
 }
 
