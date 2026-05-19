@@ -1612,6 +1612,19 @@ that preceded the §5.3.5/§5.4 build. They qualify; Entries 26 and 27.
   win* wasn't the new name — it was confirming the Entry-30
   framework worked in practice exactly as designed.
 
+Session 10 — no entries this session.
+
+(The session was pure implementation against the Entry-40 locked §5.3.5
+spec + the Phase-1 Default-boundaries spec-code alignment also tracked
+in the Entry-40 close-out. No owner trajectory input during execution;
+the architectural choices made by Claude — locale-independent compose
+`input[name="to"|"cc"]` anchors with fail-open semantics, the
+`commitOptimize`-bypasses-`gate` seam for the §5.5 Case-1 exception,
+making `recipient-cache.isCacheEntryFresh` source-aware for spec (j) —
+were spec-faithful implementation details, not new directional calls.
+The session-10 prompt itself explicitly flagged "no entries this
+session" as the acceptable outcome under this shape.)
+
 ---
 
 *New entries are appended at every session close-out, alongside the session
