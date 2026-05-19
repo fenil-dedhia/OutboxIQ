@@ -17,7 +17,7 @@ export function Welcome({
 }: Props) {
   return (
     <section className="oq-step" aria-labelledby="oq-welcome-title">
-      <h1 id="oq-welcome-title">Welcome to Fashionably Late Onboarding</h1>
+      <h1 id="oq-welcome-title">Welcome to Fashionably Late</h1>
       <p className="oq-lede">
         Fashionably Late helps your emails land at the right moment, in your
         recipients&rsquo; time, not yours. To power our intelligent features,

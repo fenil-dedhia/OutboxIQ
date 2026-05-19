@@ -92,7 +92,7 @@ The onboarding flow opens automatically on install, and again on browser startup
 > **Restructure note (2026-05-15):** the original five steps were consolidated to three. The former Step 1 (welcome), Step 4 (transparency screen), and Step 5 (consent + finish) overlapped and are merged into a single Step 1; the verbatim transparency and consent copy is preserved unchanged. The timezone and working-hours steps are unchanged (renumbered).
 
 **Step 1: Welcome, transparency, and consent.**
-- Title: "Welcome to Fashionably Late Onboarding".
+- Title: "Welcome to Fashionably Late". (Was "Welcome to Fashionably Late Onboarding" through Entry 41; "Onboarding" trimmed 2026-05-19 — owner-directed; the "Step 1 of 3" progress indicator already conveys the onboarding context, so "Onboarding" in the H1 was bureaucratic ceremony.)
 - Brief explanation: "Fashionably Late helps your emails land at the right moment, in your recipients' time, not yours. To power our intelligent features, we'll require information about your timezone and working hours."
 - A "Why do we need this information?" section presenting the transparency copy below.
 - A required consent checkbox: "I understand how Fashionably Late uses my data and agree to the Privacy Policy." The "Privacy Policy" link opens the full policy in a new tab.
