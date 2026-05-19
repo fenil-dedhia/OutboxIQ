@@ -155,8 +155,10 @@ The onboarding flow opens automatically on install, and again on browser startup
 - The plugin presents an interface for configuring working days and per-day start/end times.
 - Default values: Monday through Friday, 9:00 AM to 5:00 PM.
 - The user can toggle individual days on or off and customize times per day.
-- Two optional fields: "Earliest I'd ever send an email" (default 7:00 AM) and "Latest I'd ever send an email" (default 7:00 PM). These act as absolute floors and ceilings regardless of recipient timezone.
+- Two optional fields under a **"Default boundaries"** group: **"Default boundaries — Earliest send"** (default 7:00 AM) and **"Default boundaries — Latest send"** (default 7:00 PM). Helper text: *"Times when you usually don't want emails going out. We'll check in if you schedule outside these hours — unless you're using Optimize-for-X, where we respect your choice to reach recipients in their working hours."* (Replaces the prior "absolute floors and ceilings" framing — see the Entry-40 amendment below; `notes/owner-decisions-log.md` Entry 40.)
 - A "Finish Setup" button completes onboarding. On completion the user is returned to their nearest open Gmail tab (the onboarding tab simply closes if no Gmail tab is open).
+
+> **Entry-40 amendment (2026-05-19, owner-directed).** The fields previously specified as "Earliest I'd ever send an email" / "Latest I'd ever send an email" — described as "absolute floors and ceilings" — are **renamed product-wide to "Default boundaries"** to honestly reflect their behaviour: they are *defaults* the product nudges around, **not** absolute hard rules. The §5.5 soft-warning trigger fires on Default-boundaries violations from Quick Options, Pick Custom, "Last scheduled time", and §5.5.1 regular Send — **but NOT when the violating time was computed by §5.3.5 Optimize-for-X** (the four-step engagement = explicit feature-mediated intent; Case 1 / Case 2 in `notes/owner-decisions-log.md` Entry 40). The §7.2 storage field names `absoluteEarliest`/`absoluteLatest` are kept as **stable internal identifiers** (CLAUDE.md "Locked tech decisions" / Entry-30 pattern: opaque internal names don't follow user-facing renames; renaming them would force a `SCHEMA_VERSION` bump with no user-facing benefit). The locked-copy onboarding strings (above) are spec text — the running UI implementation in `WorkingHoursStep.tsx` is tracked as a Session-10 spec-code alignment task (Phase G close-out).
 
 #### 5.1.4 Acceptance Criteria
 
@@ -227,72 +229,85 @@ A standard date and time picker for custom scheduling. Selected time is always i
 
 #### 5.3.5 OutboxIQ Optimize Section
 
-> **Entry-39 amendment (2026-05-19, owner-directed — Free v1 = zero
-> Google API; `notes/owner-decisions-log.md` Entry 39).** Free v1
-> resolves the recipient **from the Gmail compose DOM** (the To-field
-> chip — name when Gmail rendered one, else the bare email) and the
-> recipient's timezone via **cache → manual picker only** (no People
-> API). There is **no OAuth and no Google API call** in Free v1. The
-> dropdown/UX below stands; its data source is DOM + local cache +
-> §5.3.7 manual, not an API lookup. The API-backed variant is **Premium
-> v1** (built, preserved inert in `extension/src/premium-v1/`; §13).
+> **REWRITTEN 2026-05-19 (Session-9 close-out — Entry 39 OAuth removal +
+> Entry 40 spec lock; `notes/owner-decisions-log.md` Entries 38, 39, 40).**
+> The original §5.3.5 described an API-driven recipient/timezone cascade;
+> the implemented Free v1 design is **DOM-read recipient + manual timezone
+> picker, cached**. No OAuth, no People API, no network call in this path.
+> The locked UX below is the authoritative §5.3.5 for Session 10's build
+> — the prior body (preset+three-timings+API-detected timezone display +
+> the Session-5.5 "absolute limits remain the only hard constraint" design
+> commitment) is superseded in full. Items (a)–(n) below are owner-locked.
 
-Below the standard options, a new section labeled "Optimize delivery for recipient" appears, containing:
+**(a) Section presence and initial state.** Inside OutboxIQ's enhanced Schedule Send modal, below the standard options, an **"Optimize delivery for [recipient dropdown]"** section is visible whenever a compose has at least one To/CC recipient. The leading **checkbox starts UNCHECKED** on modal open — Optimize-for-X is opt-in per send.
 
-**Recipient dropdown:**
-- If exactly one email address is in the "To:" field, that recipient is auto-selected and the dropdown displays their name and email.
-- If multiple recipients are in the "To:" field, the dropdown defaults to a placeholder value of "Choose" prompting the user to select one recipient to optimize for.
-- The dropdown lists all recipients from the "To:" field. CC and BCC recipients are excluded for v1 to avoid clutter.
+**(b) Recipient dropdown — population from compose DOM.** Auto-populated from the Gmail compose **To: and CC:** fields. **BCC is excluded** (preserves the BCC privacy contract; §11). No People API, no autocomplete enrichment beyond what Gmail already rendered in the compose chips.
 
-**Timing dropdown:**
-- A second dropdown labeled "Optimize timing for" with three options:
-  - "Morning peak (9:00 AM their time)"
-  - "Midday engagement (1:00 PM their time)"
-  - "End of day (4:00 PM their time)"
-- Default: "Morning peak (9:00 AM their time)."
-- A small info icon next to the label opens a tooltip explaining: "These windows are based on aggregated research across millions of email opens. Morning typically sees the highest open rate, midday catches recipients between meetings, and end-of-day captures the pre-departure inbox check."
+**(c) Per-entry labelling.** Each entry is labelled with its field of origin: e.g. **"Sarah Chen (To)"**, **"Mike Johnson (CC)"**. The To-vs-CC distinction is made explicit in the optimization UI so the user always knows who they're targeting.
 
-**Recipient timezone display:**
-- Below the timing dropdown, a small line of text confirms the recipient's detected timezone: "We'll send this at 9:00 AM in [Recipient's Timezone Abbreviation] ([City/Region]). That's [Time] your time."
-- If the recipient's timezone could not be detected automatically, see Section 5.3.7.
+**(d) Default selection.**
+- **Single recipient across To+CC:** that recipient is pre-selected; the Optimize **checkbox still starts unchecked** (engagement is explicit).
+- **Multiple recipients:** the dropdown shows the placeholder **"Choose recipient…"**; the modal's **Schedule button stays disabled** until the user explicitly selects one recipient to optimize for. Checkbox starts unchecked.
 
-**Schedule button:**
-- Clicking "Schedule" computes the actual intended send time and then commits it as a **real, native Gmail scheduled send**. The user-facing behaviour is unchanged from the rest of this section; only the mechanism is specified here.
-- **Mechanism (corrected 2026-05-16 — supersedes the original Gmail-API description):** the Gmail API does **not** expose any way to *create* a scheduled send (`messages.send`/`drafts.send` both send immediately; no `scheduledTime`/`sendAt` parameter exists). This was established and verified in `research/scheduled-send-api-spike.md` (the original text here predated that spike). OutboxIQ instead drives **Gmail's own native Schedule Send UI** via a verified DOM-automation recipe (the spike's "Verification" section is canonical; the live recipe lives in `extension/src/lib/schedule/gmail-recipe.ts`). Quick Options map onto Gmail's native preset rows; a custom time uses Gmail's native "Pick date & time" path. This is what preserves the native Scheduled label (§5.7) and keeps email content on-device (§13.2.4, was §7.3.4 — moved by the tier split) with no backend-scope expansion — see the spike's recommendation for why this approach was chosen over the API/cron alternatives.
-- The Gmail API *is* still used for the **cancel** path (Unschedule-on-Reply, §5.6): `messages.list?q=in:scheduled` → `messages.trash` (also verified in the spike). Creation and cancellation use different mechanisms by necessity.
+**(e) Display names.** Display names come **from Gmail's compose DOM** (whatever Gmail's own autocomplete rendered into the chip). Recipients with Gmail history: name appears. **Never-emailed recipients: only the email appears.** There is **NO fallback name resolution** via People API or any other source — the email-as-display-name is the carried representation when a name isn't available. (Workspace directory autocomplete *may* surface a colleague's directory name into the chip; that is Gmail's behaviour, not OutboxIQ's lookup, and is tenant-config-dependent — `notes/session-9-summary.md` Phase A.)
 
-> **Design commitment (2026-05-16, owner-directed — Session 5.5):** the
-> working hours collected at onboarding are an **informational input to
-> §5.3.5 recipient-optimization recommendations** (a future session —
-> recipient-optimization is not yet built; Session 6 built §5.5.1). When
-> the recipient-optimal window allows latitude, the recommendation may
-> prefer a candidate that also falls within the sender's working hours.
-> This is **advisory only** — it never hard-blocks a recipient-optimized
-> time; absolute limits remain the *only* hard constraint. This is why the
-> §5.5 working-hours calculation is retained even though §5.5 Schedule
-> Send no longer warns on working-hours violations (see §5.5 amendment).
-> Captured now so Session 6 does not re-litigate whether working hours
-> have a role here.
+**(f) Timing dropdown — two options.** Labelled **"Optimize timing for"**, with **exactly two** options (the original three narrowed to two — the "End of day (4:00 PM)" option is **dropped from product scope**, not deferred):
+- **"Morning peak (9:00 AM their time)"** — default.
+- **"Midday engagement (1:00 PM their time)"**.
 
-#### 5.3.6 Working Hours Check
+**(g) Timing tooltip.** A small info icon opens the tooltip: *"Morning typically sees the highest open rate. Midday catches recipients between meetings."* Framed as **based on general research, not OutboxIQ-specific tracking** — §11 items 2 / 3 / 13 / 20 (no email tracking, no analytics, no telemetry) remain binding; OutboxIQ does not measure recipient behaviour.
 
-If the computed send time falls outside the user's configured working hours, a secondary modal appears (Section 5.5) before the email is actually scheduled.
+**(h) Timezone resolution — Case A (recipient already in cache).** Below the timing dropdown a confirmation line appears dynamically:
 
-#### 5.3.7 Recipient Timezone Fallback
+> *"We'll send this at 9:00 AM in PDT (Los Angeles). That's 12:00 PM your time."*
 
-> **Entry-39 amendment (2026-05-19, owner-directed).** In Free v1 this
-> manual picker is the **primary** path, not a fallback: the §5.4.1
-> cascade is cache → manual, so any first-contact recipient lands here,
-> and the chosen zone is cached forever per recipient (so it appears
-> once per recipient). Same UI/copy; reframed as the normal flow. (The
-> "we couldn't *automatically* detect" framing is Premium-v1 wording —
-> §13; for Free v1 read it as the standard one-time prompt.)
+User reviews → clicks **Schedule** → the native Gmail Schedule Send mechanism (DOM-automation recipe in `extension/src/lib/schedule/gmail-recipe.ts`) fires at the resolved time. The Gmail-API impossibility of programmatic scheduled-send creation (verified in `research/scheduled-send-api-spike.md`) and the DOM-automation mechanism it forced remain binding for §5.3.5 — the locked spec changes the *inputs* to that mechanism, not the mechanism.
 
-If the plugin cannot detect the recipient's timezone (see Section 5.4), an inline component appears asking the user to select it:
+**(i) Timezone resolution — Case B (cache miss → inline timezone picker).** When the user checks the Optimize checkbox and the recipient is not in the cache, an inline timezone picker appears within the Optimize section:
+- Picker text: *"What timezone is [Sarah Chen / email] in?"* (name where available per (e); else email.)
+- Timezone dropdown placeholder: **"Choose their timezone"**.
+- **Default selection: NONE** (placeholder only — explicitly **NOT** pre-selected to the user's own timezone, because the feature exists for cross-timezone optimization and a same-timezone default would let users click through with a meaningless optimization).
+- The **Schedule button stays disabled** until a timezone is explicitly selected.
+- When the user picks a timezone, the **(h) confirmation line updates in real time** showing both recipient time and user time.
+- A **"Remember for future emails to [name/email]"** checkbox sits directly below the timezone dropdown, **default checked** — cache persistence is the normal path.
 
-- Copy: "We couldn't automatically detect [Recipient Name]'s timezone. Pick one to continue, or we'll use yours."
-- A dropdown lists all IANA timezones with the user's own timezone pre-selected.
-- A note below: "We'll remember this for future emails to [Recipient Name]."
+**(j) Cache TTL for manual selections — indefinite.** Manual timezone selections are explicit user-entered data and **do not expire**. (Contrast with the original §5.4.2 90-day TTL, which was framed for *auto-detected* data. With auto-detection removed in Session 9, there is no auto-detected data in Free v1, and the TTL framing changes: **manual entries persist until the user clears them via the Settings panel** — §5.8.2 "Recipient Timezone Cache" bulk action.)
+
+**(k) Shared timezone picker component (binding architectural constraint).** The IANA timezone dropdown used in this Optimize-for-X inline picker (item i) **MUST be the same component implementation** used by onboarding (§5.1.3, Step 2). Both pickers share UI, behaviour, search interface, and content. Any improvement to one applies to the other automatically. This is a **binding architectural constraint, not guidance** — to prevent silent drift between the two pickers over the lifetime of the product. Session-10 implementation note: factor the timezone picker into a shared component on first use rather than duplicating.
+
+**(l) No "I don't know" hint or fallback heuristic.** If the user doesn't know the recipient's timezone, the correct product behaviour is to **not use Optimize-for-X for this send** — uncheck the Optimize checkbox and use Quick Options instead. The product does **not** engineer a workaround (an "I don't know" default, a "use my timezone" hint, or any heuristic guess) that would pollute the cache with low-quality timezone data and silently degrade future optimizations for that recipient.
+
+**(m) Multi-recipient unselected state.** When multiple recipients exist in To+CC and none is selected from the dropdown, the Optimize section shows the **"Choose recipient…"** placeholder and the checkbox is unchecked. If the user checks the checkbox without selecting a recipient, **Schedule stays disabled** (per (d)). No additional prompt copy is added — the inert state of the section is itself the gentle prompt; adding nudge copy would clutter §8.1's "native feel over branded feel" surface.
+
+**(n) Default-boundaries interaction — explicit exception (§5.5 / Entry 40).** A time computed by §5.3.5 Optimize-for-X is **exempt from the §5.5 Default-boundaries soft-warning** (Case 1 in the Entry-40 analysis). The user's four-step engagement — opened modal → engaged Optimize → picked recipient → picked timing — constitutes explicit feature-mediated intent; surfacing a "but you're sending outside your hours" warning at the *result* of that engagement is paternalistic and would train users to dismiss the modal (extending the Entry-21 line of reasoning). The §5.5 warning **still fires** for boundary violations from Quick Options, Pick Custom, "Last scheduled time", and §5.5.1 regular Send (Case 2) — the exception is **precisely scoped to the algorithmic, Optimize-for-X-mediated case**. See §5.5 (Entry-40 amendment) and `notes/owner-decisions-log.md` Entry 40.
+
+**Schedule button mechanism (unchanged — binding).** Clicking Schedule on an Optimize-for-X-computed time commits it as a **real, native Gmail scheduled send** via the same DOM-automation recipe used elsewhere in §5.3 (`extension/src/lib/schedule/gmail-recipe.ts`; Quick Options ride Gmail's preset rows, custom times ride Gmail's "Pick date & time" path). This preserves the native Scheduled label (§5.7) and keeps email content on-device. The Gmail API does **not** expose programmatic scheduled-send creation (verified in `research/scheduled-send-api-spike.md`). The Unschedule-on-Reply cancel path that *does* use the Gmail API (`messages.list?q=in:scheduled` → `messages.trash`) is **Premium v1** (§13.2 / §5.6) — Free v1 does not call the Gmail API at all (Entry 39).
+
+> **Design commitment — Default boundaries as informational input (refines the 2026-05-16/Session-5.5 commitment).** The user's working hours (§5.1.3) remain an **informational input** to §5.3.5 recipient recommendations: when the recipient-optimal window allows latitude, a candidate that also falls within the sender's working hours may be preferred. This is **advisory only** — it never hard-blocks a recipient-optimized time. The original 2026-05-16 statement that "*absolute limits remain the only hard constraint*" is **superseded by Entry 40**: under the rename + (n) exception, Default boundaries are also *not* a hard constraint for §5.3.5-computed times. The §5.5 calc still computes both rule types unconditionally; only the trigger predicate decides what to surface to the user (Entry 40 Case 1 vs Case 2).
+
+#### 5.3.6 Working Hours Check (Default-boundaries routing)
+
+If the computed send time falls outside the user's **Default boundaries** (§5.1.3 / §5.5), a §5.5 soft-warning modal may appear before the email is scheduled — **unless** the time was produced by §5.3.5 Optimize-for-X, in which case the warning is suppressed by design (item (n) above; Entry-40 Case 1). The §5.5 calculation runs unconditionally; only the trigger predicate is narrowed.
+
+#### 5.3.7 Recipient Timezone Picker (primary path in Free v1)
+
+> **REWRITTEN 2026-05-19 (Entries 39 + 40) — supersedes "Fallback"
+> framing.** The manual picker is the **primary** path for any
+> first-contact recipient in Free v1 (no API detection exists; §5.4.1
+> Free-v1 cascade is cache → manual). The locked UX is **§5.3.5 item
+> (i)** — inline picker within the Optimize-for-X section, "Choose
+> their timezone" placeholder with **no default pre-selection** (NOT
+> the user's own timezone — that would let users click through with a
+> meaningless optimization, item (l)), "Remember for future emails to
+> [name/email]" checkbox default-checked, manual selections cached
+> **indefinitely** per item (j). The original Free-v1 copy below
+> ("we couldn't automatically detect…", user's own timezone
+> pre-selected) is **explicitly superseded** by §5.3.5 (i)/(l) — it is
+> retained only as the **Premium-v1 wording** for the API-detection-
+> fails case (§13 / `src/premium-v1/`). For Free v1 there is no
+> "couldn't detect" — there is simply the normal first-contact picker.
+
+**Premium v1 fallback wording (historical / preserved for §13 wire-up):** if the API cannot detect the recipient's timezone (Premium-v1 cascade — §13), an inline component appears asking the user to select it. Copy: "We couldn't automatically detect [Recipient Name]'s timezone. Pick one to continue, or we'll use yours." Dropdown lists all IANA timezones with the user's own timezone pre-selected. Note: "We'll remember this for future emails to [Recipient Name]." (Free v1 uses the §5.3.5 (i) picker instead.)
 
 ---
 
@@ -369,7 +384,53 @@ When a recipient is selected for optimization, the plugin executes the following
 
 ---
 
-### 5.5 Auto-Reschedule on Outside Working Hours
+### 5.5 Default Boundaries Warning (was: "Auto-Reschedule on Outside Working Hours")
+
+> **Entry-40 amendment (2026-05-19, owner-directed — RENAME + new
+> Optimize-for-X exception; refines, does NOT invalidate, Entries 19, 20,
+> 21, 28; `notes/owner-decisions-log.md` Entry 40).** Two linked changes:
+>
+> **1. Rename.** What were specified as **"absolute limits"** / **"hard
+> limits"** throughout this section, §5.1.3, §5.8.2, and the warning
+> copy — labelled "the only hard constraint" in the prior §5.3.5 design
+> commitment — are renamed product-wide to **"Default boundaries"**.
+> Reason: feature should serve the mental model. They are *defaults the
+> product nudges around*, not absolute hard rules — exactly because the
+> Optimize-for-X feature **overrides them by design** for explicit
+> feature-mediated intent (item 2 below). "Absolute" / "hard" was
+> misleading labelling for a value that an explicit feature is built to
+> override. The new framing for **Default boundaries**: *times when the
+> user usually doesn't want emails going out; the product warns when
+> scheduling outside them; **exception:** Optimize-for-X-computed times
+> are automatically respected as overridden because the user's intent
+> there is explicit and feature-mediated.*
+>
+> **2. §5.5 trigger narrows to exclude Optimize-for-X-computed times.**
+> The soft-warning modal continues to fire on Default-boundaries
+> violations from: Quick Options, Pick Custom, the "Last scheduled
+> time" row, and §5.5.1 regular Send (**Case 2 — manual selection**).
+> The modal does **NOT** fire when the violating time was computed by
+> §5.3.5 Optimize-for-X (**Case 1 — algorithmic, feature-mediated**).
+> The exception is **precisely scoped** to the Optimize-for-X case:
+> if a user manually picks a Pick-Custom time that happens to cross
+> Default boundaries, the warning fires normally — only the
+> algorithmic case is exempted. This extends Entry 21's line of
+> reasoning (warnings fire for unintended actions, not the core use
+> case) to Default-boundaries violations specifically when they are a
+> consequence of using Optimize-for-X — the feature designed for
+> deliberate off-hours scheduling.
+>
+> **What is preserved (binding, do not re-litigate):** the locked
+> three-choice soft-warning pattern (Entry 19), the snap-target rules
+> (Entry 19/28), the `ensureFutureSnap` forward-roll (Entry 28), the
+> §5.5.1 split (Entry 21 — Schedule Send: Default-boundaries only;
+> regular Send: working-hours + Default-boundaries), the §5.5.3
+> calculation logic (unchanged — only the *consumer's* trigger
+> predicate narrows). The historical amendments below ("absolute
+> limits" / "hard" terminology) remain accurate-at-the-time records
+> per Entry-4; **read "absolute-limit violation" in them as
+> "Default-boundaries violation" going forward**, with the Case-1
+> Optimize-for-X exception layered on top.
 
 > **Amendment (2026-05-16, owner-directed — Session 5.5):** §5.5 enforcement
 > is **split by trigger**. **Schedule Send** raises the soft warning for
@@ -633,7 +694,7 @@ Accessible via:
 
 **Working Hours**
 - Per-day toggle and time pickers.
-- Earliest and latest absolute send times.
+- **Default boundaries** — earliest and latest send times outside which the product warns (overridable per §5.5; auto-overridden for §5.3.5 Optimize-for-X — see §5.5 Entry-40 amendment).
 - A "Reset to defaults" button.
 
 **Feature Toggles**

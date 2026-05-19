@@ -1428,6 +1428,101 @@ that preceded the §5.3.5/§5.4 build. They qualify; Entries 26 and 27.
   doesn't — "not deleted, not wired" is a first-class outcome, not a
   hedge.
 
+## Entry 40 — "Default boundaries" rename + §5.5 Optimize-for-X exception (extending Entry 21)
+
+- **Session:** 9 (Phase-G docs-only follow-on, immediately after the
+  Entry-39 OAuth pivot landed on `origin/main`). Owner chose to lock the
+  §5.3.5 UX *and* refine the §5.5 trigger *before* any §5.3.5 UI is
+  built — same "context is fresh; nothing layered on the soon-to-be-
+  changed surface yet" timing rationale as Entry 39.
+- **Moment:** Walking the §5.3.5 UX through end-to-end revealed a
+  trigger collision: a user who engages Optimize-for-X for a far-
+  timezone recipient (the feature's *core use case*) is, by design,
+  scheduling a time that crosses their own "absolute limits" — the
+  9 AM-in-PST send from a New York user lands at 6 AM local. Under
+  the existing §5.5 trigger logic (Entries 19/21 — Schedule Send
+  warns on absolute-limit violations), every successful Optimize-for-X
+  send would fire the soft-warning modal at the *result* of an
+  explicit four-step engagement (open modal → check Optimize → pick
+  recipient → pick timing). The owner observed this is the **same
+  failure mode Entry 21 caught** for working-hours-on-Schedule-Send,
+  one level deeper: it would train users to dismiss the warning, and
+  the warning's value for the cases it actually exists to catch
+  (Pick Custom at 3 AM by accident) would erode.
+- **My input (owner):** Stated the core insight as a product
+  principle — **"the feature should serve the mental model, not the
+  other way around"** — and made two linked, locked calls:
+  (1) The §5.5 trigger **narrows** to exclude Optimize-for-X-computed
+  times; the warning fires only for manual selection (Case 2). Locked.
+  (2) Calling the limits **"absolute" / "hard"** when an explicit,
+  by-design feature override exists is **misleading labelling**.
+  Rename them **"Default boundaries"** product-wide. Locked. Imposed
+  the docs-only constraint (no feature code in this commit), the
+  preserve-history rule (Entries 19/20/21/28 remain accurate-at-the-
+  time), and the timing rationale.
+- **What Claude Code would have done without it:** Genuinely joint,
+  but the load-bearing moves were the owner's. Claude built every
+  prior session's §5.5 work faithful to the Entry-19/21 lock and
+  would have built §5.3.5's UI on top of that lock in Session 10 —
+  meaning the trigger collision would have shipped, the warning
+  would have fired on every optimized send, and the resulting
+  "train users to dismiss the modal" failure mode would only have
+  been caught *after* user feedback (the worst place to catch it,
+  given §11's no-telemetry binding makes that signal hard to see).
+  Claude's contribution was: (a) precision-scoping the exception
+  (Case 1 *algorithmic* exempted vs. Case 2 *manual* still warns —
+  vs. the looser "Optimize-for-X disables §5.5" framing the owner
+  initially floated, which would have weakened the warning's
+  signal value for the Pick-Custom-at-3-AM case); (b) surfacing
+  the rename as the necessary honest-labelling companion to the
+  exception (without it, the spec would describe a "hard limit"
+  that an explicit feature was built to override — a contradiction
+  in the docs); (c) the "preserve internal `absoluteEarliest`/
+  `absoluteLatest` schema identifiers per Entry 30, rename only
+  user-facing copy" call to avoid a SCHEMA_VERSION bump for zero
+  user-facing benefit. Both lines of work get credit honestly: the
+  *core insight + locked direction* was owner; the *precision
+  scoping + surfaced corollaries* was Claude.
+- **Outcome:** PRD §5.3.5 fully rewritten to the locked UX spec
+  (items a–n); PRD §5.5 carries the Entry-40 amendment (rename +
+  Case 1/Case 2 exception + preserved Entry 19/20/21/28 locks);
+  PRD §5.1.3 Step 3 / §5.3.6 / §5.3.7 / §5.8.2 updated for the
+  rename + the exception's routing; CLAUDE.md "Locked product
+  decisions" gains the Entry-40 lock (refines, does not invalidate,
+  Entries 19/20/21/28); CLAUDE.md repo-status reflects Phase G;
+  internal `absoluteEarliest`/`absoluteLatest` schema fields and
+  test/JSDoc references **kept as stable identifiers** (Entry-30
+  pattern). One user-facing code-string alignment task surfaced
+  for Session 10: `WorkingHoursStep.tsx` onboarding labels still
+  read "Hard limits" / "Earliest I'd ever send an email" — tracked
+  in CLAUDE.md "Free v1 roadmap" as Session-10's spec-code
+  alignment first task (deferred from Phase G per the docs-only
+  constraint, not forgotten).
+- **Artifact:** PRD §5.1.3 / §5.3.5 / §5.3.6 / §5.3.7 / §5.5 / §5.8.2
+  Entry-40 amendments; CLAUDE.md "Locked product decisions" two new
+  bullets (rename+exception, §5.3.5 spec lock); CLAUDE.md repo
+  status; `notes/session-9-summary.md`.
+- **Lesson (for coaching):** Locked decisions can be **refined when
+  implementation reveals tension with the product's core use case**.
+  Entry 21 first taught this: a *valid rule* (warn on off-hours
+  send) can be *miscalibrated* when applied uniformly across triggers
+  that have radically different user-intent profiles (Schedule Send
+  with explicit time-pick vs. regular Send with implicit "now"). This
+  entry extends the lesson **one level deeper**: a *valid rule* (warn
+  on Default-boundaries violation) can be miscalibrated when the
+  violation is *itself the deliberate output of a feature you built
+  expressly to produce it*. The pattern: **when a warning fires on
+  the user's intended action through a feature you built explicitly
+  to enable that action, the warning is miscalibrated even when the
+  rule it enforces is otherwise valid.** The fix is not to delete the
+  rule; it is to **scope the trigger precisely** to the cases where
+  intent is *ambiguous* (Case 2 — manual selection) and *exempt* the
+  cases where intent is *explicit and feature-mediated* (Case 1 —
+  algorithmic). And: an honest *label* for the rule (Default
+  boundaries, not absolute limits) is doing real work — it tells the
+  next reader what the rule actually is, which matters when the next
+  reader will design a feature that interacts with it.
+
 ---
 
 *New entries are appended at every session close-out, alongside the session
