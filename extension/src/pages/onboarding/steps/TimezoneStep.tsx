@@ -31,7 +31,8 @@ function detectedLabel(source: TimezoneSource): string {
 // timezone AND their pinned timezones. The dropdowns are the shared
 // <TimezonePicker> (§5.3.5 item (k) — the §5.3.5 Optimize-for-X inline picker
 // MUST use the same component); the pinned set surfaces in every picker's
-// "Pinned" section.
+// "Pinned" section. The user's-own timezone is visually primary (it's the
+// required setting); pinned is the optional, secondary block below it.
 export function TimezoneStep({
   timezone,
   timezoneSource,
@@ -54,8 +55,14 @@ export function TimezoneStep({
     <section className="oq-step" aria-labelledby="oq-tz-title">
       <h1 id="oq-tz-title">Set up your timezones</h1>
 
-      <label className="oq-field" htmlFor="oq-tz-select">
-        <span>Your timezone</span>
+      {/* Primary, required setting — visually emphasised so it reads first. */}
+      <div className="oq-primary-tz">
+        <label
+          className="oq-field-label oq-field-label--primary"
+          htmlFor="oq-tz-select"
+        >
+          Your timezone
+        </label>
         <p className="oq-detected">{detectedLabel(timezoneSource)}</p>
         <TimezonePicker
           id="oq-tz-select"
@@ -64,7 +71,10 @@ export function TimezoneStep({
           pinnedIanaIds={pinned}
           onChange={(tz) => onChange(tz, "manual")}
         />
-      </label>
+        <p className="oq-help oq-help--tight">
+          Used by default when you don&rsquo;t pick a specific timezone.
+        </p>
+      </div>
 
       <div className="oq-pinned" aria-labelledby="oq-pinned-label">
         <span id="oq-pinned-label" className="oq-field-label">
@@ -103,7 +113,15 @@ export function TimezoneStep({
         {atCap ? (
           <p className="oq-pinned-max" role="status">
             Maximum {MAX_PINNED_TIMEZONES} pinned timezones. Remove one to add
-            another.
+            another, or{" "}
+            <button
+              type="button"
+              className="oq-linkbtn"
+              onClick={() => onPinnedChange([])}
+            >
+              remove all
+            </button>
+            .
           </p>
         ) : (
           <label className="oq-field" htmlFor="oq-pin-add">
@@ -117,22 +135,7 @@ export function TimezoneStep({
             />
           </label>
         )}
-
-        {pinned.length > 0 && (
-          <button
-            type="button"
-            className="oq-skip"
-            onClick={() => onPinnedChange([])}
-          >
-            Skip &mdash; no pinned timezones
-          </button>
-        )}
       </div>
-
-      <p className="oq-help">
-        We use your timezone when you don&rsquo;t specify one explicitly. You
-        can change any of this in Settings.
-      </p>
     </section>
   );
 }

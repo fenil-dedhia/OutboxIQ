@@ -64,18 +64,18 @@ describe("TimezoneStep — Pinned Timezones (PRD §5.1.3 Step 2)", () => {
     ).toBeInTheDocument();
   });
 
-  it("Skip clears all pins to an empty array", () => {
+  it("'remove all' (in the at-cap message) clears pins to an empty array", () => {
     const { onPinnedChange } = renderStep([...DEFAULT_PINNED_TIMEZONES]);
-    fireEvent.click(screen.getByRole("button", { name: /skip/i }));
+    fireEvent.click(screen.getByRole("button", { name: /remove all/i }));
     expect(onPinnedChange).toHaveBeenCalledWith([]);
   });
 
-  it("with no pins: no chips, no Skip, add picker available", () => {
+  it("with no pins: no chips, no 'remove all', add picker available", () => {
     renderStep([]);
     expect(screen.queryAllByRole("button", { name: /^Remove/ })).toHaveLength(
       0,
     );
-    expect(screen.queryByRole("button", { name: /skip/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /remove all/i })).toBeNull();
     expect(
       screen.getByRole("combobox", { name: /add a timezone/i }),
     ).toBeInTheDocument();

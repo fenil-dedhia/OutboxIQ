@@ -30,6 +30,13 @@ export function useOnboarding(): UseOnboarding {
   const [draft, setDraft] = useState<OnboardingDraft>(createDefaultDraft);
   // Avoid persisting the very first render before the stored draft loads.
   const hydrated = useRef(false);
+  // The draft as it was when the user ARRIVED at the current step. Back()
+  // restores it, so a step's settings only "stick" when the user clicks
+  // Continue — clicking Back discards that step's tentative edits (owner UX,
+  // Session 11; e.g. accidentally clearing the pre-selected pins then going
+  // Back must NOT lose the defaults). Memory-only: a hard refresh resumes from
+  // the persisted draft (§5.1.4), treating that as an implicit commit.
+  const stepEntrySnapshot = useRef<OnboardingDraft | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -63,10 +70,21 @@ export function useOnboarding(): UseOnboarding {
     });
   }, [draft]);
 
+  // Snapshot the draft on arrival at each step (only when stepIndex changes,
+  // not on every field edit), so back() can revert this step's tentative edits.
+  useEffect(() => {
+    stepEntrySnapshot.current = draft;
+    // Intentionally keyed on stepIndex only — capturing the whole draft as it
+    // is at step-entry; field edits within a step must NOT update the snapshot.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft.stepIndex]);
+
   const update = useCallback((patch: Partial<OnboardingDraft>) => {
     setDraft((d) => ({ ...d, ...patch }));
   }, []);
 
+  // Continue: commit this step's edits (they're already in `draft`) by simply
+  // advancing. The step-entry snapshot updates via the effect above.
   const next = useCallback(() => {
     setDraft((d) => ({
       ...d,
@@ -74,8 +92,13 @@ export function useOnboarding(): UseOnboarding {
     }));
   }, []);
 
+  // Back: restore the current step's on-entry snapshot (discard tentative
+  // edits) AND step back. Falls back to a plain decrement if no snapshot yet.
   const back = useCallback(() => {
-    setDraft((d) => ({ ...d, stepIndex: Math.max(d.stepIndex - 1, 0) }));
+    setDraft((d) => {
+      const snap = stepEntrySnapshot.current ?? d;
+      return { ...snap, stepIndex: Math.max(snap.stepIndex - 1, 0) };
+    });
   }, []);
 
   const finish = useCallback(async () => {

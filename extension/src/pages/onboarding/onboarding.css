@@ -115,6 +115,26 @@ select {
   margin-bottom: 6px;
 }
 
+/* The user's-own timezone is the required setting — emphasise it so the eye
+   lands here first, not on the colourful (optional) pinned chips below. */
+.oq-primary-tz {
+  background: #f7f9fc;
+  border: 1px solid var(--oq-border);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 8px 0 4px;
+}
+
+.oq-field-label--primary {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.oq-help--tight {
+  margin: 8px 0 0;
+}
+
 .oq-pinned {
   margin: 24px 0 8px;
   padding-top: 16px;
@@ -169,21 +189,19 @@ select {
   margin: 12px 0 4px;
 }
 
-.oq-skip {
-  display: inline-block;
-  margin-top: 8px;
-  padding: 4px 0;
+/* Inline link-style button — e.g. "remove all" inside the cap message. */
+.oq-linkbtn {
   border: 0;
   background: none;
+  padding: 0;
   color: #1a73e8;
   font: inherit;
-  font-size: 13px;
   cursor: pointer;
   text-decoration: underline;
 }
 
-.oq-skip:hover,
-.oq-skip:focus-visible {
+.oq-linkbtn:hover,
+.oq-linkbtn:focus-visible {
   color: #1b66c9;
   outline: none;
 }

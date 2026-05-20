@@ -56,4 +56,24 @@ describe("Onboarding flow (PRD §5.1, restructured 3-step)", () => {
       screen.getByRole("heading", { name: /working hours/i }),
     ).toBeInTheDocument();
   });
+
+  it("Back discards a step's tentative edits (commit-on-Continue, Session 11)", async () => {
+    render(<App />);
+    fireEvent.click(await screen.findByRole("checkbox")); // consent
+    fireEvent.click(screen.getByRole("button", { name: /get started/i })); // → step 2
+
+    // Step 2 lands at the 5-pin cap (the pre-selected defaults).
+    expect(screen.getAllByRole("button", { name: /^Remove/ })).toHaveLength(5);
+    // Clear them by mistake...
+    fireEvent.click(screen.getByRole("button", { name: /remove all/i }));
+    expect(screen.queryAllByRole("button", { name: /^Remove/ })).toHaveLength(
+      0,
+    );
+
+    // Back must NOT keep the destructive edit...
+    fireEvent.click(screen.getByRole("button", { name: /back/i }));
+    // ...so re-entering the step shows the defaults restored.
+    fireEvent.click(screen.getByRole("button", { name: /get started/i }));
+    expect(screen.getAllByRole("button", { name: /^Remove/ })).toHaveLength(5);
+  });
 });
