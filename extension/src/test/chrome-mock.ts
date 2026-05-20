@@ -24,6 +24,15 @@ export function installChromeMock(): void {
           delete store[key];
         },
       },
+      // chrome.storage.onChanged surface — content-script.ts subscribes to
+      // it for the post-Session-10 live-onboarding-upgrade path; config-
+      // cache.ts also uses it to keep the §5.5.1 snapshot fresh.
+      // Minimal addListener/removeListener pair; tests that need to fire
+      // a change can grab the listener list off the mock if they want.
+      onChanged: {
+        addListener: () => undefined,
+        removeListener: () => undefined,
+      },
     },
     runtime: {
       getURL: (path: string) => `chrome-extension://test/${path}`,

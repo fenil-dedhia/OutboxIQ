@@ -4,6 +4,15 @@
 // it (and do nothing else — we must not enhance Gmail before the user has
 // onboarded). If onboarding IS complete, install §5.2 compose integration.
 //
+// LIVE ONBOARDING-COMPLETE UPGRADE (added post-Session-10 hands-on):
+// `chrome.storage.onChanged` subscription means a Gmail tab that was open
+// BEFORE the user finished onboarding (in a separate tab) upgrades the
+// moment the onboarding "Finish Setup" write lands — no Gmail refresh
+// required. Same pattern `config-cache.ts` already uses to keep the §5.5.1
+// snapshot fresh. `integrationsInstalled` latches so the listener is a
+// no-op once integration is wired up (subsequent state changes are
+// already routed through `startConfigWatch`'s own listener).
+//
 // The storage check runs here directly (content scripts can read
 // chrome.storage); only the tab-open is delegated to the worker. The send is
 // retried because a cold-started MV3 worker may not have its listener attached
@@ -11,7 +20,8 @@
 // does not exist" warning.
 
 import { getState, setLastScheduled } from "../lib/storage";
-import type { LastScheduled } from "../lib/storage";
+import type { LastScheduled, OutboxIQState } from "../lib/storage";
+import { STORAGE_KEY_STATE } from "../lib/constants";
 import { MSG_OPEN_ONBOARDING } from "../lib/messages";
 import { installComposeIntegration } from "./compose/compose-integration";
 import { readComposeRecipients } from "./compose/compose-recipients";
@@ -104,29 +114,65 @@ function handleScheduleSend(): void {
   })();
 }
 
+// Latches the post-onboarding install so the storage listener can be a
+// no-op once integration is wired up. Module-scoped: one Gmail tab = one
+// content-script instance = one latch.
+let integrationsInstalled = false;
+
+/** Install §5.2 / §5.5.1 / §5.3 integrations against the just-read state.
+ * Idempotent — guarded by `integrationsInstalled`. Returns true iff this
+ * call performed the install (used by the bootstrap to gate the
+ * onboarding-launch fallback). */
+function enableIntegrationsIfOnboarded(state: OutboxIQState): boolean {
+  if (integrationsInstalled) return true;
+  if (state.user.onboardingCompletedAt === null) return false;
+  installComposeIntegration({ onScheduleSend: handleScheduleSend });
+  startConfigWatch({
+    timezone: state.user.timezone,
+    workingHours: state.workingHours,
+  });
+  installRegularSendGuard({ onScheduled: persistLastScheduled });
+  integrationsInstalled = true;
+  return true;
+}
+
+/** Re-read state and try to enable; the listener path (post-onboarding).
+ * Goes through getState() so default-merge / future schema migration
+ * applies — same discipline as config-cache.ts. */
+async function tryEnableIntegrations(): Promise<void> {
+  if (integrationsInstalled) return;
+  try {
+    const state = await getState();
+    enableIntegrationsIfOnboarded(state);
+  } catch {
+    /* §6.7 — never throw into Gmail; next storage change will retry */
+  }
+}
+
 async function bootstrap(): Promise<void> {
   try {
-    // One read: derive onboarding-complete AND seed the §5.5.1 config cache
-    // from the same snapshot (was two getState() calls via
-    // isOnboardingComplete()).
-    const state = await getState();
-    if (state.user.onboardingCompletedAt !== null) {
-      // PRD §5.2. Only after onboarding — pre-onboarding we leave Gmail
-      // entirely untouched. Note: a tab already open from before onboarding
-      // completed picks this up on its next Gmail load (acceptable MVP; a
-      // live re-check is deliberately not built — see session debrief).
-      installComposeIntegration({ onScheduleSend: handleScheduleSend });
-      // PRD §5.5.1 regular-Send guard. Seed the synchronous config snapshot
-      // from the state we already read, then keep it fresh on storage
-      // changes. The snap path persists "Last scheduled time" identically
-      // to the §5.3 path.
-      startConfigWatch({
-        timezone: state.user.timezone,
-        workingHours: state.workingHours,
+    // Subscribe FIRST. If we subscribed AFTER the initial getState() the
+    // onboarding-complete write could land in that window and we'd miss
+    // it (rare, but the listener is cheap). The latch keeps it idempotent
+    // — once integrations are installed the listener is a no-op.
+    try {
+      chrome.storage.onChanged.addListener((changes, area) => {
+        if (area !== "local") return;
+        if (!changes[STORAGE_KEY_STATE]) return;
+        void tryEnableIntegrations();
       });
-      installRegularSendGuard({ onScheduled: persistLastScheduled });
-      return;
+    } catch {
+      /* environments without chrome.storage.onChanged (tests) — initial
+       * read below still works; just no live-upgrade in that env */
     }
+
+    // One read: derive onboarding-complete AND seed the §5.5.1 config cache
+    // from the same snapshot.
+    const state = await getState();
+    if (enableIntegrationsIfOnboarded(state)) return;
+    // Not onboarded → open onboarding. The storage listener above will
+    // pick up "Finish Setup" the moment it writes — Gmail tab upgrades
+    // live, no refresh required.
     await requestOnboardingLaunch();
   } catch (err) {
     // Never block or break Gmail (PRD §6.7, §5.2.3) — fail silently.
