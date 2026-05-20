@@ -96,9 +96,11 @@ select {
 }
 
 /* The shared TimezonePicker (Session 11) is a self-styled combobox, not a
-   <select>; constrain its width to match the old dropdown. */
+   <select>. Wider than the old 320px dropdown so the long offset-labelled
+   group names ("(UTC-5:00) Eastern Time — New York, …") aren't cut off so
+   early (Session-12 owner UX); capped to fit within the primary-tz card. */
 .oq-tz-picker {
-  max-width: 320px;
+  max-width: 440px;
 }
 
 .oq-detected {

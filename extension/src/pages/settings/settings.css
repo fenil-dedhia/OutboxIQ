@@ -128,8 +128,10 @@ body {
   margin-bottom: 6px;
 }
 
+/* Wider than the cache-row picker so the long offset-labelled group names
+   show in full (the Profile page has room — Session-12 owner UX). */
 .fl-set-tz-picker {
-  max-width: 380px;
+  max-width: 560px;
 }
 
 .fl-set-empty {
