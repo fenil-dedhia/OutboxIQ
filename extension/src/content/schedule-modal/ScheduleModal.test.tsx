@@ -58,6 +58,7 @@ describe("ScheduleModal §5.5 trigger split (Entry 40)", () => {
         recipients={[sarah]}
         pinnedTimezones={[]}
         onScheduled={vi.fn()}
+        onOpenSettings={vi.fn()}
         onClose={vi.fn()}
       />,
     );
@@ -116,6 +117,7 @@ describe("ScheduleModal §5.5 trigger split (Entry 40)", () => {
         recipients={[sarah]}
         pinnedTimezones={[]}
         onScheduled={vi.fn()}
+        onOpenSettings={vi.fn()}
         onClose={vi.fn()}
       />,
     );

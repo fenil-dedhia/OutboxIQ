@@ -8,6 +8,15 @@ export interface OpenOnboardingMessage {
   type: typeof MSG_OPEN_ONBOARDING;
 }
 
+// PRD §5.8.1 access points. The Schedule Send modal's gear icon lives in the
+// content script (no chrome.tabs), so it asks the service worker to open the
+// Settings page; the onboarding completion screen reuses the same message.
+export const MSG_OPEN_SETTINGS = "FASHIONABLY_LATE_OPEN_SETTINGS" as const;
+
+export interface OpenSettingsMessage {
+  type: typeof MSG_OPEN_SETTINGS;
+}
+
 // PRD §5.4 recipient-timezone cascade. The Session-9 §5.3.5 modal lives in
 // the content script and CANNOT call the SW-side cascade directly (the
 // token must stay in the SW — §6.5), so this message IS the Session-9
@@ -26,4 +35,7 @@ export type ResolveRecipientTzResponse =
   | { source: "cache" | "people_api" | "directory"; timezone: string }
   | { source: "manual_needed"; timezone: null };
 
-export type RuntimeMessage = OpenOnboardingMessage | ResolveRecipientTzMessage;
+export type RuntimeMessage =
+  | OpenOnboardingMessage
+  | OpenSettingsMessage
+  | ResolveRecipientTzMessage;

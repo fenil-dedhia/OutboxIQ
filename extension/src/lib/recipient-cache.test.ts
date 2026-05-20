@@ -5,6 +5,7 @@ import {
   getCachedRecipient,
   isCacheEntryFresh,
   listCachedRecipients,
+  removeCachedRecipient,
   setCachedRecipient,
   setManualRecipientTimezone,
 } from "./recipient-cache";
@@ -102,5 +103,50 @@ describe("recipient-cache (PRD §5.4.1/§5.4.2)", () => {
     expect((await listCachedRecipients()).length).toBeGreaterThan(0);
     await clearRecipientCache();
     expect(await listCachedRecipients()).toEqual([]);
+  });
+
+  // PRD §5.8.2 per-row delete (Session 12).
+  it("removeCachedRecipient deletes one entry (case-insensitive), keeps others", async () => {
+    await setManualRecipientTimezone("Keep@example.com", "UTC", "Keep");
+    await setManualRecipientTimezone("drop@example.com", "Asia/Tokyo", "Drop");
+    await removeCachedRecipient("DROP@example.com"); // different case
+    const all = await listCachedRecipients();
+    expect(all).toHaveLength(1);
+    expect(all[0]!.email).toBe("Keep@example.com");
+  });
+
+  it("removeCachedRecipient is a no-op for an unknown email", async () => {
+    await setManualRecipientTimezone("only@example.com", "UTC");
+    await removeCachedRecipient("ghost@example.com");
+    expect(await listCachedRecipients()).toHaveLength(1);
+  });
+
+  // PRD §5.8.2 "edit timezone" semantics (Session 12): the Settings edit is an
+  // upsert that KEEPS the email + original resolvedAt (a correction, not a
+  // re-resolution) and forces source "manual".
+  it("edit-timezone upsert preserves email + resolvedAt and forces manual", async () => {
+    const resolvedAt = new Date(T0).toISOString();
+    await setCachedRecipient({
+      email: "edit@example.com",
+      name: "Edna",
+      timezone: "America/New_York",
+      source: "people_api", // simulate a legacy/leaked non-manual source
+      resolvedAt,
+    });
+    // The hook's editCacheTimezone re-adds with the SAME resolvedAt + manual.
+    await setCachedRecipient({
+      email: "edit@example.com",
+      name: "Edna",
+      timezone: "Europe/Berlin",
+      source: "manual",
+      resolvedAt,
+    });
+    const all = await listCachedRecipients();
+    const forEdit = all.filter((e) => e.email === "edit@example.com");
+    expect(forEdit).toHaveLength(1); // not duplicated
+    expect(forEdit[0]!.timezone).toBe("Europe/Berlin"); // new tz
+    expect(forEdit[0]!.resolvedAt).toBe(resolvedAt); // date preserved
+    expect(forEdit[0]!.source).toBe("manual"); // normalised
+    expect(forEdit[0]!.name).toBe("Edna"); // identity kept
   });
 });

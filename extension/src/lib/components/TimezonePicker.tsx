@@ -111,26 +111,41 @@ export function TimezonePicker({
   // an entry appears in exactly one (no duplication). `optionEntries` is the
   // flat, keyboard-navigable sequence (pinned first, then the rest), and every
   // option's id/highlight indexes into it.
-  const pinnedIdSet = useMemo(() => {
-    if (!pinnedIanaIds || pinnedIanaIds.length === 0) return null;
-    const entries = resolvePinnedEntries(pinnedIanaIds);
-    return entries.length
-      ? new Set(entries.map((e) => e.ianaIdentifier))
-      : null;
-  }, [pinnedIanaIds]);
+  //
+  // Pinned entries render in the USER'S pinned order (resolvePinnedEntries
+  // preserves `pinnedIanaIds` order as of Session 12 — the §5.8.2 reorder
+  // controls make that order authoritative); "All timezones" stays in the
+  // dataset's west→east offset order.
+  const pinnedEntries = useMemo(
+    () =>
+      pinnedIanaIds && pinnedIanaIds.length
+        ? resolvePinnedEntries(pinnedIanaIds)
+        : [],
+    [pinnedIanaIds],
+  );
+  const pinnedIdSet = useMemo(
+    () =>
+      pinnedEntries.length
+        ? new Set(pinnedEntries.map((e) => e.ianaIdentifier))
+        : null,
+    [pinnedEntries],
+  );
 
   const { pinnedMatches, allMatches, optionEntries } = useMemo(() => {
     if (!pinnedIdSet) {
       return { pinnedMatches: [], allMatches: results, optionEntries: results };
     }
-    const pinned = results.filter((e) => pinnedIdSet.has(e.ianaIdentifier));
+    // Pinned section = the pinned entries that match the current query, in
+    // pinned-array order (NOT dataset order). "All" = matching non-pinned.
+    const resultIds = new Set(results.map((e) => e.ianaIdentifier));
+    const pinned = pinnedEntries.filter((e) => resultIds.has(e.ianaIdentifier));
     const rest = results.filter((e) => !pinnedIdSet.has(e.ianaIdentifier));
     return {
       pinnedMatches: pinned,
       allMatches: rest,
       optionEntries: [...pinned, ...rest],
     };
-  }, [results, pinnedIdSet]);
+  }, [results, pinnedIdSet, pinnedEntries]);
 
   // Trigger text: the resolved group label; else the raw stored id (unknown
   // zone — surfaced, not hidden); else the placeholder.

@@ -18,8 +18,21 @@ export const MODAL_CSS = `
   padding: 20px 24px 16px; max-height: calc(100vh - 48px); overflow:auto;
 }
 .card:focus { outline: none; }
+/* Header row: title/subtitle on the left, the §5.8.1 settings gear top-right.
+   align-items:flex-start keeps the gear level with the title's first line. */
+.modal-header { display: flex; align-items: flex-start; gap: 8px; }
+.modal-header-text { flex: 1 1 auto; min-width: 0; }
 h1 { font-size: 16px; font-weight: 500; margin: 0 0 4px; }
 .subtitle { font-size: 12px; color: #5f6368; margin: 0 0 16px; }
+/* A single icon-link (NOT a menu). Self-styled in the shadow root, same as the
+   rest of the modal — page CSS doesn't reach here. */
+.gear {
+  flex: 0 0 auto; width: 28px; height: 28px; padding: 0; margin: -2px -4px 0 0;
+  border: 0; border-radius: 50%; background: none; cursor: pointer;
+  color: #5f6368; font-size: 16px; line-height: 28px; text-align: center;
+}
+.gear:hover, .gear:focus-visible { background: #f1f3f4; color: #202124; outline: none; }
+.gear:disabled { opacity: .6; cursor: default; }
 .section-label {
   font-size: 11px; font-weight: 500; letter-spacing: .4px;
   text-transform: uppercase; color: #5f6368; margin: 12px 0 6px;

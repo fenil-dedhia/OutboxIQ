@@ -102,3 +102,19 @@ export async function clearRecipientCache(): Promise<void> {
   const state = await getState();
   await setState({ ...state, recipientCache: [] });
 }
+
+/** PRD §5.8.2 per-row "delete entry": atomically remove the cache record for
+ * `email` (case-insensitive). The single-row sibling of clearRecipientCache —
+ * the Settings cache list (Session 12) needs it and there is no existing
+ * single-delete primitive. No-op if the recipient isn't cached.
+ *
+ * (Edit-timezone deliberately does NOT use this — it is a delete-then-re-add
+ * upsert via setCachedRecipient, preserving the original resolvedAt; see the
+ * Settings cache section. Only an actual row removal goes through here.) */
+export async function removeCachedRecipient(email: string): Promise<void> {
+  const state = await getState();
+  const recipientCache = state.recipientCache.filter(
+    (e) => !sameEmail(e.email, email),
+  );
+  await setState({ ...state, recipientCache });
+}

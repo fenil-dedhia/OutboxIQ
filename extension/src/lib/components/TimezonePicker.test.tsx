@@ -244,6 +244,25 @@ describe("TimezonePicker — Pinned section (PRD §5.1.3 Step 2)", () => {
     expect(screen.getByRole("option")).toHaveTextContent("Japan");
   });
 
+  it("renders the Pinned section in pinnedIanaIds array order (not dataset/offset order)", () => {
+    // India (+5:30) then Pacific (-8): the OPPOSITE of dataset west→east order,
+    // so this only passes if the picker honours the pinned ARRAY order (the
+    // §5.8.2 reorder is authoritative — Session 12).
+    render(
+      <TimezonePicker
+        value={null}
+        onChange={vi.fn()}
+        ariaLabel="picker"
+        pinnedIanaIds={["Asia/Kolkata", "America/Los_Angeles"]}
+      />,
+    );
+    openMenu();
+    const options = screen.getAllByRole("option");
+    // The pinned entries render first, in array order.
+    expect(options[0]).toHaveTextContent("India");
+    expect(options[1]).toHaveTextContent("Pacific Time");
+  });
+
   it("selecting a pinned option emits its canonical IANA id", () => {
     const onChange = vi.fn();
     render(

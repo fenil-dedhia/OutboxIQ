@@ -1,0 +1,319 @@
+/* PRD §5.8 Settings page. Shares onboarding's visual language (same accent,
+   borders, system font) — one product, two pages. Self-contained to this page;
+   the shared TimezonePicker / PinnedTimezonesEditor bring their own styles. */
+
+:root {
+  color-scheme: light;
+  --fl-fg: #1a1a1a;
+  --fl-muted: #5f6368;
+  --fl-accent: #1a73e8;
+  --fl-accent-dark: #1b66c9;
+  --fl-border: #dadce0;
+  --fl-danger: #c5221f;
+  --fl-bg: #f5f6f8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  color: var(--fl-fg);
+  background: var(--fl-bg);
+}
+
+.fl-set-shell {
+  max-width: 960px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: #fff;
+  border-left: 1px solid var(--fl-border);
+  border-right: 1px solid var(--fl-border);
+}
+
+.fl-set-header {
+  padding: 20px 32px;
+  border-bottom: 1px solid var(--fl-border);
+}
+
+.fl-set-header h1 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.fl-set-loading {
+  padding: 48px 32px;
+  color: var(--fl-muted);
+}
+
+.fl-set-body {
+  display: flex;
+  align-items: flex-start;
+}
+
+/* Sidebar nav */
+.fl-set-nav {
+  flex: 0 0 232px;
+  padding: 16px 12px;
+  border-right: 1px solid var(--fl-border);
+  min-height: calc(100vh - 61px);
+}
+
+.fl-set-nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fl-set-nav-item {
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  border: 0;
+  background: none;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--fl-fg);
+  cursor: pointer;
+}
+
+.fl-set-nav-item:hover,
+.fl-set-nav-item:focus-visible {
+  background: #f1f3f4;
+  outline: none;
+}
+
+.fl-set-nav-item.is-active {
+  background: #e8f0fe;
+  color: var(--fl-accent);
+  font-weight: 600;
+}
+
+/* Main content pane */
+.fl-set-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 28px 32px 48px;
+  max-width: 720px;
+}
+
+.fl-set-section h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+
+.fl-set-help {
+  font-size: 14px;
+  color: var(--fl-muted);
+  line-height: 1.5;
+  margin: 0 0 16px;
+}
+
+.fl-set-field-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.fl-set-tz-picker {
+  max-width: 380px;
+}
+
+.fl-set-empty {
+  font-size: 14px;
+  color: var(--fl-muted);
+  line-height: 1.5;
+  background: #f8f9fa;
+  border: 1px solid var(--fl-border);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+/* Buttons */
+.fl-set-btn {
+  font: inherit;
+  background: #fff;
+  border: 1px solid var(--fl-border);
+  color: var(--fl-fg);
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.fl-set-btn:hover,
+.fl-set-btn:focus-visible {
+  background: #f1f3f4;
+  outline: none;
+}
+
+.fl-set-btn-danger {
+  border-color: var(--fl-danger);
+  color: var(--fl-danger);
+}
+
+.fl-set-btn-danger:hover,
+.fl-set-btn-danger:focus-visible {
+  background: #fce8e6;
+}
+
+.fl-set-linkbtn {
+  font: inherit;
+  border: 0;
+  background: none;
+  padding: 2px 4px;
+  color: var(--fl-accent);
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.fl-set-linkbtn:hover,
+.fl-set-linkbtn:focus-visible {
+  background: #e8f0fe;
+  outline: none;
+}
+
+.fl-set-linkbtn-danger {
+  color: var(--fl-danger);
+}
+
+.fl-set-linkbtn-danger:hover,
+.fl-set-linkbtn-danger:focus-visible {
+  background: #fce8e6;
+}
+
+/* Recipient timezone cache */
+.fl-set-cache-toolbar {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.fl-set-cache-search {
+  font: inherit;
+  flex: 1 1 240px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--fl-border);
+  border-radius: 6px;
+  color: var(--fl-fg);
+}
+
+.fl-set-cache-search:focus {
+  border-color: var(--fl-accent);
+  box-shadow: 0 0 0 1px var(--fl-accent);
+  outline: none;
+}
+
+.fl-set-confirm {
+  flex: 1 1 100%;
+  background: #fef7f6;
+  border: 1px solid #f3c9c6;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 13px;
+  color: var(--fl-fg);
+  line-height: 1.5;
+}
+
+.fl-set-confirm-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.fl-set-cache-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--fl-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.fl-set-cache-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #eceef0;
+  flex-wrap: wrap;
+}
+
+.fl-set-cache-row:last-child {
+  border-bottom: 0;
+}
+
+.fl-set-cache-id {
+  flex: 1 1 180px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.fl-set-cache-name {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.fl-set-cache-email {
+  font-size: 12px;
+  color: var(--fl-muted);
+  overflow-wrap: anywhere;
+}
+
+.fl-set-cache-tz {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.fl-set-cache-tz-label {
+  font-size: 13px;
+  color: var(--fl-fg);
+}
+
+.fl-set-cache-edit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fl-set-cache-picker {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 300px;
+}
+
+.fl-set-cache-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  color: var(--fl-muted);
+  flex: 0 0 auto;
+}
+
+.fl-set-cache-source--leak {
+  color: var(--fl-danger);
+  font-weight: 600;
+}
+
+.fl-set-cache-actions {
+  display: flex;
+  gap: 4px;
+  flex: 0 0 auto;
+}

@@ -3,6 +3,14 @@ import { Welcome } from "./steps/Welcome";
 import { TimezoneStep } from "./steps/TimezoneStep";
 import { WorkingHoursStep } from "./steps/WorkingHoursStep";
 import { isWorkingHoursValid } from "../../lib/storage";
+import { MSG_OPEN_SETTINGS } from "../../lib/messages";
+
+// PRD §5.8.1 access point: the completion screen links to Settings. Content
+// scripts have no openOptionsPage, so settings-open is owned by the service
+// worker; this extension page asks it via the same message the modal gear uses.
+function openSettings(): void {
+  void chrome.runtime.sendMessage({ type: MSG_OPEN_SETTINGS });
+}
 
 // Focus the nearest open Gmail tab, then close this onboarding tab.
 // This is an extension page so it can use chrome.tabs directly; querying by
@@ -78,6 +86,13 @@ export function App() {
               onClick={() => void returnToGmail()}
             >
               Return to Gmail
+            </button>
+            <button
+              type="button"
+              className="oq-secondary"
+              onClick={openSettings}
+            >
+              Open Settings
             </button>
           </div>
         </section>

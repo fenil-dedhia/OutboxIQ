@@ -17,6 +17,7 @@ import { StrictMode } from "react";
 import { ScheduleModal } from "./ScheduleModal";
 import { ModalErrorBoundary } from "./ErrorBoundary";
 import { MODAL_CSS } from "./styles";
+import { MSG_OPEN_SETTINGS } from "../../lib/messages";
 import type { ComposeRecipient } from "../compose/compose-recipients";
 import type { LastScheduled, WorkingHours } from "../../lib/storage";
 
@@ -79,6 +80,11 @@ export function openScheduleModal(args: OpenScheduleModalArgs): void {
           recipients={args.recipients}
           pinnedTimezones={args.pinnedTimezones}
           onScheduled={args.onScheduled}
+          // §5.8.1: content scripts can't open extension tabs, so ask the
+          // service worker to open Settings (it owns openOptionsPage).
+          onOpenSettings={() =>
+            void chrome.runtime.sendMessage({ type: MSG_OPEN_SETTINGS })
+          }
           onClose={close}
         />
       </ModalErrorBoundary>

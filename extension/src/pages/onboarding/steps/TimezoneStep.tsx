@@ -1,10 +1,7 @@
 import type { TimezoneSource } from "../../../lib/storage";
 import { TimezonePicker } from "../../../lib/components/TimezonePicker";
-import {
-  MAX_PINNED_TIMEZONES,
-  pinnedChipLabel,
-  resolvePinnedEntries,
-} from "../../../lib/timezone/pinned";
+import { PinnedTimezonesEditor } from "../../../lib/components/PinnedTimezonesEditor";
+import { MAX_PINNED_TIMEZONES } from "../../../lib/timezone/pinned";
 
 interface Props {
   timezone: string;
@@ -32,7 +29,10 @@ function detectedLabel(source: TimezoneSource): string {
 // <TimezonePicker> (§5.3.5 item (k) — the §5.3.5 Optimize-for-X inline picker
 // MUST use the same component); the pinned set surfaces in every picker's
 // "Pinned" section. The user's-own timezone is visually primary (it's the
-// required setting); pinned is the optional, secondary block below it.
+// required setting); pinned is the optional, secondary block below it. The
+// chips + add-picker are the shared <PinnedTimezonesEditor> (Session 12) so
+// onboarding and the §5.8.2 Settings section render the same control;
+// onboarding leaves reorder off.
 export function TimezoneStep({
   timezone,
   timezoneSource,
@@ -40,17 +40,6 @@ export function TimezoneStep({
   onChange,
   onPinnedChange,
 }: Props) {
-  const chips = resolvePinnedEntries(pinned);
-  const atCap = pinned.length >= MAX_PINNED_TIMEZONES;
-
-  function addPinned(tz: string) {
-    if (atCap || pinned.includes(tz)) return;
-    onPinnedChange([...pinned, tz]);
-  }
-  function removePinned(iana: string) {
-    onPinnedChange(pinned.filter((p) => p !== iana));
-  }
-
   return (
     <section className="oq-step" aria-labelledby="oq-tz-title">
       <h1 id="oq-tz-title">Set up your timezones</h1>
@@ -89,52 +78,7 @@ export function TimezoneStep({
           later in Settings.
         </p>
 
-        {chips.length > 0 && (
-          <ul className="oq-pinned-chips">
-            {chips.map((e) => {
-              const label = pinnedChipLabel(e);
-              return (
-                <li key={e.ianaIdentifier} className="oq-chip">
-                  <span>{label}</span>
-                  <button
-                    type="button"
-                    className="oq-chip-remove"
-                    aria-label={`Remove ${label}`}
-                    onClick={() => removePinned(e.ianaIdentifier)}
-                  >
-                    &times;
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-
-        {atCap ? (
-          <p className="oq-pinned-max" role="status">
-            Maximum {MAX_PINNED_TIMEZONES} pinned timezones. Remove one to add
-            another, or{" "}
-            <button
-              type="button"
-              className="oq-linkbtn"
-              onClick={() => onPinnedChange([])}
-            >
-              remove all
-            </button>
-            .
-          </p>
-        ) : (
-          <label className="oq-field" htmlFor="oq-pin-add">
-            <span>Add a timezone</span>
-            <TimezonePicker
-              id="oq-pin-add"
-              className="oq-tz-picker"
-              value={null}
-              placeholder="Add a timezone&hellip;"
-              onChange={addPinned}
-            />
-          </label>
-        )}
+        <PinnedTimezonesEditor pinned={pinned} onChange={onPinnedChange} />
       </div>
     </section>
   );

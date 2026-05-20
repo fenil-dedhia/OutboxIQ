@@ -69,6 +69,12 @@ export const DEFAULT_PINNED_TIMEZONES: readonly string[] = [
 // as emitted by the CRXJS build. Used to open/locate the onboarding tab.
 export const ONBOARDING_PAGE_PATH = "src/pages/onboarding/index.html";
 
+// Path of the standalone Settings page (PRD §5.8), mirroring the manifest
+// `options_page`. Opened by all three §5.8.1 access points (toolbar icon when
+// onboarding is complete, the onboarding completion screen, and the Schedule
+// Send modal's gear icon). Keep in sync with manifest.config.ts `options_page`.
+export const SETTINGS_PAGE_PATH = "src/pages/settings/index.html";
+
 // PRD §5.2.1: the native "Schedule send" dropdown item is relabelled to this.
 // Verbatim from the PRD — do not paraphrase (it is the one branded surface in
 // compose; §8.1 "native feel over branded feel" keeps it to exactly this).

@@ -5,13 +5,16 @@
 // layer can import them without pulling in the curated dataset.
 
 import { resolveCuratedEntry } from "./search";
-import { offsetToMinutes, type CuratedTimezone } from "./curated-timezones";
+import { type CuratedTimezone } from "./curated-timezones";
 
 export { MAX_PINNED_TIMEZONES, DEFAULT_PINNED_TIMEZONES } from "../constants";
 
 /** Resolve stored pinned IANA ids to their curated entries — deduped by
- * curated group, offset-ordered, unknown/unresolvable ids dropped (§6.7). The
- * picker's "Pinned" section renders these. */
+ * curated group, unknown/unresolvable ids dropped (§6.7), **preserving the
+ * input array order**. The order in `state.pinnedTimezones` is authoritative
+ * and user-controlled (Session 12 §5.8.2 reorder controls); the picker's
+ * "Pinned" section and the Settings chips both render in this order. (Was
+ * offset-sorted through Session 11, before pins were user-orderable.) */
 export function resolvePinnedEntries(
   ianaIds: readonly string[],
 ): CuratedTimezone[] {
@@ -24,9 +27,29 @@ export function resolvePinnedEntries(
       out.push(entry);
     }
   }
-  return out.sort(
-    (a, b) => offsetToMinutes(a.offset) - offsetToMinutes(b.offset),
-  );
+  return out;
+}
+
+/** PRD §5.8.2 Settings reorder: move the pinned id at `index` one slot toward
+ * the start (`dir = -1`) or end (`dir = +1`), returning a NEW array. A move
+ * that would cross a boundary (or an out-of-range index) returns a copy
+ * unchanged — callers also disable the boundary buttons, so this is just
+ * defense in depth. Pure (no storage), so it unit-tests in isolation. */
+export function movePinned(
+  ids: readonly string[],
+  index: number,
+  dir: -1 | 1,
+): string[] {
+  const target = index + dir;
+  if (index < 0 || index >= ids.length || target < 0 || target >= ids.length) {
+    return [...ids];
+  }
+  const next = [...ids];
+  const moved = next[index];
+  if (moved === undefined) return [...ids]; // unreachable given the guard above
+  next.splice(index, 1);
+  next.splice(target, 0, moved);
+  return next;
 }
 
 /** A compact label for a pinned-zone chip: the descriptor + offset, dropping

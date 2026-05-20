@@ -24,6 +24,7 @@ import { ONBOARDING_PAGE_PATH } from "../lib/constants";
 import { isOnboardingComplete } from "../lib/storage";
 import {
   MSG_OPEN_ONBOARDING,
+  MSG_OPEN_SETTINGS,
   MSG_RESOLVE_RECIPIENT_TZ,
   type RuntimeMessage,
   type ResolveRecipientTzResponse,
@@ -125,6 +126,18 @@ async function injectIntoOpenGmailTabs(): Promise<void> {
   }
 }
 
+// PRD §5.8.1 access point. Opens — or focuses, if already open — the Settings
+// page. `openOptionsPage()` targets our manifest `options_page` (which IS the
+// Settings page), so it needs no "tabs" permission (Entry-39 minimal footprint)
+// and dedupes an already-open Settings tab for free.
+async function openSettings(): Promise<void> {
+  try {
+    await chrome.runtime.openOptionsPage();
+  } catch (err) {
+    console.warn("[Fashionably Late] could not open settings:", err);
+  }
+}
+
 chrome.runtime.onInstalled.addListener(() => {
   void openOnboarding(false);
   void injectIntoOpenGmailTabs();
@@ -144,6 +157,10 @@ chrome.runtime.onStartup.addListener(() => {
 // early as possible. Returns false: fire-and-forget, no response channel.
 chrome.runtime.onMessage.addListener((message: RuntimeMessage) => {
   if (message?.type === MSG_OPEN_ONBOARDING) void openOnboarding(false);
+  // PRD §5.8.1: the Schedule Send modal's gear icon and the onboarding
+  // completion screen ask the SW to open Settings (content scripts have no
+  // openOptionsPage; routing both through here keeps one definition).
+  if (message?.type === MSG_OPEN_SETTINGS) void openSettings();
   return false;
 });
 
@@ -167,9 +184,13 @@ chrome.runtime.onMessage.addListener(
   },
 );
 
-// Toolbar-icon click: always open onboarding (force) — a reliable manual entry
-// point during development and a sensible action while the popup/settings
-// surface (PRD §5.8.1) isn't built yet.
+// Toolbar-icon click (PRD §5.8.1): once onboarding is complete, the icon opens
+// Settings; before that, it (re)opens onboarding — the guaranteed user-gesture
+// entry point into setup. `force` so a finished-but-reopened onboarding still
+// works pre-completion.
 chrome.action.onClicked.addListener(() => {
-  void openOnboarding(true);
+  void (async () => {
+    if (await isOnboardingComplete()) await openSettings();
+    else await openOnboarding(true);
+  })();
 });

@@ -89,6 +89,8 @@ export interface ScheduleModalProps {
   pinnedTimezones: string[];
   /** Persist a freshly-scheduled time so it becomes "Last scheduled time". */
   onScheduled: (v: LastScheduled) => void;
+  /** PRD §5.8.1 access point: the modal-header gear opens the Settings page. */
+  onOpenSettings: () => void;
   onClose: () => void;
 }
 
@@ -118,6 +120,7 @@ export function ScheduleModal({
   recipients,
   pinnedTimezones,
   onScheduled,
+  onOpenSettings,
   onClose,
 }: ScheduleModalProps) {
   const [status, setStatus] = useState<Status>({ kind: "idle" });
@@ -416,8 +419,23 @@ export function ScheduleModal({
         aria-modal="true"
         aria-label="Schedule send with Fashionably Late"
       >
-        <h1>When do you want to send this email?</h1>
-        <p className="subtitle">{tzLabel.text}</p>
+        <div className="modal-header">
+          <div className="modal-header-text">
+            <h1>When do you want to send this email?</h1>
+            <p className="subtitle">{tzLabel.text}</p>
+          </div>
+          {/* §5.8.1 access point — a single icon-link, NOT a menu. */}
+          <button
+            type="button"
+            className="gear"
+            aria-label="Open Fashionably Late settings"
+            title="Settings"
+            disabled={busy}
+            onClick={onOpenSettings}
+          >
+            ⚙
+          </button>
+        </div>
 
         {lastScheduled && (
           <>
