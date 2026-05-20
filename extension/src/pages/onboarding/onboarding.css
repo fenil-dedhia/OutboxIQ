@@ -24,7 +24,11 @@ body {
 }
 
 .oq-shell {
-  max-width: 560px;
+  /* Widened 560→600 (Session-12 owner UX): with the wider "Your timezone"
+     picker (440px), 560px left the picker nearly edge-to-edge in its card,
+     which read as crowded. 600px gives the card comfortable horizontal room
+     while staying narrower (more focused) than the Settings page. */
+  max-width: 600px;
   margin: 48px auto;
   padding: 32px;
   background: #fff;
@@ -107,7 +111,9 @@ select {
   font-size: 13px;
   color: var(--oq-muted);
   font-style: italic;
-  margin: 0 0 6px;
+  /* Balanced rhythm: equal gap above the picker (here) and below it
+     (.oq-help--tight) so the control sits evenly between its labels. */
+  margin: 0 0 10px;
 }
 
 /* PRD §5.1.3 Step 2 (Session 11) — Pinned Timezones. */
@@ -130,11 +136,11 @@ select {
 .oq-field-label--primary {
   font-size: 16px;
   font-weight: 600;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
 .oq-help--tight {
-  margin: 8px 0 0;
+  margin: 10px 0 0;
 }
 
 .oq-pinned {
