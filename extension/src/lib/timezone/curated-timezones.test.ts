@@ -26,6 +26,7 @@ const INTENTIONAL_SHARED_TERMS = new Set([
   "aest", // Australia Eastern (Sydney) / Queensland (Brisbane)
   "ast", // Atlantic Time / Arabia Standard Time (Moscow bloc)
   "cst", // US Central / China Standard Time (shown in neither's label; D5)
+  "west africa", // Ghana/Senegal (+0) and Nigeria/Algeria (+1) — region spans both
 ]);
 
 describe("curated-timezones dataset", () => {
