@@ -263,6 +263,44 @@ describe("TimezonePicker — Pinned section (PRD §5.1.3 Step 2)", () => {
     expect(options[1]).toHaveTextContent("Pacific Time");
   });
 
+  it("scrolls the active option into view on keyboard nav but NOT on mouse hover", () => {
+    // Regression (Session 12): hovering a partially-clipped row used to scroll
+    // the list and hide the top pinned row. Hover must move the highlight
+    // WITHOUT scrolling; only keyboard nav (and the initial open) scrolls.
+    const scrollSpy = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      value: scrollSpy,
+      configurable: true,
+      writable: true,
+    });
+    try {
+      render(
+        <TimezonePicker
+          value={null}
+          onChange={vi.fn()}
+          ariaLabel="picker"
+          pinnedIanaIds={["America/Los_Angeles", "Asia/Kolkata"]}
+        />,
+      );
+      openMenu();
+      scrollSpy.mockClear(); // ignore the initial open-time scroll
+
+      // Hovering an option highlights it but must not scroll.
+      fireEvent.mouseEnter(screen.getAllByRole("option")[3]!);
+      expect(scrollSpy).not.toHaveBeenCalled();
+
+      // Arrow-key nav must scroll the newly-active option into view.
+      fireEvent.keyDown(
+        screen.getByRole("textbox", { name: "Search timezones" }),
+        { key: "ArrowDown" },
+      );
+      expect(scrollSpy).toHaveBeenCalled();
+    } finally {
+      delete (HTMLElement.prototype as { scrollIntoView?: unknown })
+        .scrollIntoView;
+    }
+  });
+
   it("selecting a pinned option emits its canonical IANA id", () => {
     const onChange = vi.fn();
     render(

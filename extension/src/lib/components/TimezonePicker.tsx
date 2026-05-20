@@ -91,6 +91,12 @@ export function TimezonePicker({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
+  // Auto-scroll the active option into view ONLY for keyboard nav + the initial
+  // open — NOT on mouse hover. Hover also moves the active option, but scrolling
+  // on hover fights the user: hovering a partially-clipped row scrolls the list
+  // and hides the top row (owner-reported Session 12). Set on open / arrow keys,
+  // cleared on hover.
+  const scrollActiveIntoView = useRef(true);
 
   const baseId = useId();
   const listId = `${baseId}-list`;
@@ -184,6 +190,7 @@ export function TimezonePicker({
     if (disabled) return;
     setPos(computePos());
     setOpen(true);
+    scrollActiveIntoView.current = true; // bring the selection into view on open
     // Start the highlight on the current selection if it's in view, else top.
     const idx = selectedEntry
       ? optionEntries.findIndex(
@@ -205,10 +212,14 @@ export function TimezonePicker({
     if (open) inputRef.current?.focus();
   }, [open]);
 
-  // Keep the highlighted option in view (guarded — jsdom has no layout and
-  // may not implement scrollIntoView).
+  // Keep the highlighted option in view for KEYBOARD nav / initial open only
+  // (the flag gates it — see scrollActiveIntoView). Mouse hover changes
+  // activeIndex too but must NOT scroll. Guarded — jsdom has no layout and may
+  // not implement scrollIntoView.
   useEffect(() => {
     if (!open) return;
+    if (!scrollActiveIntoView.current) return;
+    scrollActiveIntoView.current = false;
     const opts =
       listRef.current?.querySelectorAll<HTMLElement>('[role="option"]');
     try {
@@ -250,18 +261,22 @@ export function TimezonePicker({
     switch (e.key) {
       case "ArrowDown":
         e.preventDefault();
+        scrollActiveIntoView.current = true;
         setActiveIndex((i) => Math.min(i + 1, optionEntries.length - 1));
         break;
       case "ArrowUp":
         e.preventDefault();
+        scrollActiveIntoView.current = true;
         setActiveIndex((i) => Math.max(i - 1, 0));
         break;
       case "Home":
         e.preventDefault();
+        scrollActiveIntoView.current = true;
         setActiveIndex(0);
         break;
       case "End":
         e.preventDefault();
+        scrollActiveIntoView.current = true;
         setActiveIndex(optionEntries.length - 1);
         break;
       case "Enter":
@@ -304,7 +319,12 @@ export function TimezonePicker({
           e.preventDefault();
           commit(i);
         }}
-        onMouseEnter={() => setActiveIndex(i)}
+        // Hover moves the highlight but must NOT scroll the list (clearing the
+        // flag keeps the scroll effect a no-op for this change).
+        onMouseEnter={() => {
+          scrollActiveIntoView.current = false;
+          setActiveIndex(i);
+        }}
       >
         {entry.label}
       </li>
