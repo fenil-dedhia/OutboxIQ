@@ -148,25 +148,37 @@ button.secondary:hover, button.secondary:focus-visible {
   border: 1px solid #e8eaed; line-height: 1.5;
 }
 .optimize-tz {
-  display: flex; flex-direction: column; gap: 6px;
+  display: flex; flex-direction: column; gap: 6px; min-width: 0;
 }
 .optimize-tz-prompt {
   font-size: 12px; color: #5f6368; margin: 0;
+  /* A long unbroken recipient email must wrap within the modal rather
+     than overflow it (no char-count cutoff — adapts to any length).
+     anywhere also fixes the flex min-content sizing so the column
+     can't be forced wider than the card. */
+  overflow-wrap: anywhere;
 }
 .optimize-tz-select {
   font: inherit; padding: 6px 8px; border: 1px solid #dadce0;
   border-radius: 4px; color: #202124; background: #fff; width: 100%;
 }
+/* flex (not inline-flex) so it spans the panel width and the long-email
+   span can wrap; flex-start keeps the checkbox at the first text line
+   when the email wraps to multiple lines. */
 .optimize-remember {
-  display: inline-flex; align-items: center; gap: 8px;
+  display: flex; align-items: flex-start; gap: 8px;
   font-size: 12px; color: #5f6368; cursor: pointer; margin-top: 2px;
+  min-width: 0;
 }
+.optimize-remember > span { overflow-wrap: anywhere; min-width: 0; }
 .optimize-remember input[type="checkbox"] {
   width: 14px; height: 14px; accent-color: #1a73e8; cursor: pointer;
+  flex: 0 0 auto; margin-top: 1px;
 }
 .optimize-confirm {
   font-size: 13px; color: #202124; margin: 2px 0 0;
   padding: 8px 10px; background: #e8f0fe; border-radius: 4px;
   border-left: 3px solid #1a73e8; line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 `;
