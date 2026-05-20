@@ -425,14 +425,22 @@ const PICKER_CSS = `
 .fl-tzp-option {
   padding: 8px 12px; cursor: pointer; color: #202124; font-size: 13px;
   line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  /* So a keyboard-focused option scrolls clear of the sticky header above it. */
+  scroll-margin-top: 30px;
 }
 .fl-tzp-option.is-active { background: #e8f0fe; }
 .fl-tzp-option.is-selected { font-weight: 600; }
 .fl-tzp-option.is-selected::after { content: " ✓"; color: #1a73e8; }
 .fl-tzp-empty { padding: 12px; color: #5f6368; font-size: 13px; text-align: center; }
+/* Section headers ("Pinned" / "All timezones"): a full-width neutral-gray
+   band — deliberately a DIFFERENT hue from the blue option-hover (#e8f0fe) so
+   a header never reads as a focused row. Sticky to the top of the scrolling
+   list, so the current section's header stays visible and swaps PINNED ↔ ALL
+   TIMEZONES as you scroll across the boundary (only one stuck at a time). */
 .fl-tzp-section-label {
-  padding: 8px 12px 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
-  text-transform: uppercase; color: #5f6368;
+  position: sticky; top: 0; z-index: 1;
+  padding: 6px 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+  text-transform: uppercase; color: #3c4043;
+  background: #f1f3f4; border-bottom: 1px solid #e0e0e0;
 }
-.fl-tzp-section-label + .fl-tzp-section-label { display: none; }
 `;
