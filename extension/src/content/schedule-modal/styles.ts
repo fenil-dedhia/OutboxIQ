@@ -88,8 +88,14 @@ button.secondary:hover, button.secondary:focus-visible {
    to its content automatically, so long emails are fully readable
    when the menu is expanded (owner UX call after Session 10 hands-on). */
 .optimize { margin-top: 4px; }
+/* Stronger separation between the core scheduling workflow (Quick
+   Options + Pick Custom) and the optional Optimize feature: the
+   leading divider gets extra breathing room above/below vs the
+   12px inter-section dividers, so Optimize reads as its own block
+   rather than crammed under Pick Custom (owner UX call). */
+.optimize > .divider { margin: 22px 0 18px; }
 .optimize-row {
-  display: flex; align-items: center; gap: 8px; flex-wrap: nowrap;
+  display: flex; align-items: center; gap: 16px; flex-wrap: nowrap;
   margin: 0 0 8px;
 }
 .optimize-engage {
