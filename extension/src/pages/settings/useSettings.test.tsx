@@ -1,7 +1,7 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { useSettings } from "./useSettings";
-import { getState } from "../../lib/storage";
+import { createDefaultState, getState } from "../../lib/storage";
 import {
   listCachedRecipients,
   setManualRecipientTimezone,
@@ -61,6 +61,52 @@ describe("useSettings — settings autosave (§5.8.2)", () => {
       expect((await getState()).pinnedTimezones).toEqual(["America/New_York"]);
     });
     expect(await listCachedRecipients()).toHaveLength(1);
+  });
+
+  it("setWorkingHours persists working hours + Default boundaries", async () => {
+    const { result } = await readyHook();
+    const wh = {
+      ...createDefaultState().workingHours,
+      absoluteEarliest: "06:00",
+      monday: { enabled: false, start: "09:00", end: "17:00" },
+    };
+    act(() => result.current.setWorkingHours(wh));
+    await waitFor(async () => {
+      const s = await getState();
+      expect(s.workingHours.absoluteEarliest).toBe("06:00");
+      expect(s.workingHours.monday.enabled).toBe(false);
+    });
+  });
+
+  it("setWorkingHours to defaults round-trips (Reset path)", async () => {
+    const { result } = await readyHook();
+    // First change, then reset to defaults.
+    act(() =>
+      result.current.setWorkingHours({
+        ...createDefaultState().workingHours,
+        absoluteLatest: "23:00",
+      }),
+    );
+    await waitFor(async () => {
+      expect((await getState()).workingHours.absoluteLatest).toBe("23:00");
+    });
+    act(() =>
+      result.current.setWorkingHours(createDefaultState().workingHours),
+    );
+    await waitFor(async () => {
+      expect((await getState()).workingHours.absoluteLatest).toBe("19:00");
+    });
+  });
+
+  it("setFeatureToggle persists a flag without touching the others", async () => {
+    const { result } = await readyHook();
+    act(() => result.current.setFeatureToggle("recipientOptimization", false));
+    await waitFor(async () => {
+      const t = (await getState()).featureToggles;
+      expect(t.recipientOptimization).toBe(false);
+      // The other Free-v1 toggle is untouched.
+      expect(t.autoRescheduleOnOutsideHours).toBe(true);
+    });
   });
 });
 

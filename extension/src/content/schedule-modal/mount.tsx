@@ -34,6 +34,8 @@ export interface OpenScheduleModalArgs {
   /** User's pinned IANA zones (PRD §5.1.3 Step 2) — surfaced in the §5.3.5 (i)
    * cache-miss timezone picker's "Pinned" section. */
   pinnedTimezones: string[];
+  /** §5.8.2 toggle: when false, the §5.3.5 Optimize section is hidden. */
+  optimizeEnabled: boolean;
   onScheduled: (v: LastScheduled) => void;
   /** A render-time throw in the modal hands off to Gmail's native scheduler
    * so the user is never stranded (PRD §5.2.3). See ErrorBoundary.tsx. */
@@ -79,6 +81,7 @@ export function openScheduleModal(args: OpenScheduleModalArgs): void {
           lastScheduled={args.lastScheduled}
           recipients={args.recipients}
           pinnedTimezones={args.pinnedTimezones}
+          optimizeEnabled={args.optimizeEnabled}
           onScheduled={args.onScheduled}
           // §5.8.1: content scripts can't open extension tabs, so ask the
           // service worker to open Settings (it owns openOptionsPage).

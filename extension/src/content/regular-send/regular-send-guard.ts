@@ -212,6 +212,10 @@ function makeHandler(opts: RegularSendGuardOptions, s: GuardState) {
 
     const cfg = getCachedConfig();
     if (!cfg) return; // rules not loaded yet → fail-OPEN: native Send proceeds
+    // §5.8.2 toggle off → never intercept (fail-toward-send). This is strictly
+    // safer than the default path: it only ADDS an early return that lets the
+    // native Send through, so it can never wedge sending (§5.2.3).
+    if (!cfg.autoRescheduleOnOutsideHours) return;
 
     let snap: WallTime | null;
     let verdict;

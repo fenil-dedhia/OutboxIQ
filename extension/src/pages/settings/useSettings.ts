@@ -2,8 +2,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   getState,
   setState as persistState,
+  type FeatureToggles,
   type OutboxIQState,
   type RecipientCacheEntry,
+  type WorkingHours,
 } from "../../lib/storage";
 import {
   clearRecipientCache,
@@ -32,6 +34,13 @@ export interface UseSettings {
   setTimezone: (timezone: string) => void;
   /** Replace the pinned-timezone list (add / remove / reorder / remove-all). */
   setPinned: (pinned: string[]) => void;
+  /** Replace working hours + Default boundaries (PRD §5.8.2 Working Hours).
+   * Callers pass a VALID WorkingHours (the section gates on validity before
+   * autosaving — an invalid intermediate edit is never persisted). Resetting
+   * to defaults is just setWorkingHours(createDefaultState().workingHours). */
+  setWorkingHours: (workingHours: WorkingHours) => void;
+  /** Flip a Free-v1 feature toggle (PRD §5.8.2 Feature Toggles). */
+  setFeatureToggle: (key: keyof FeatureToggles, value: boolean) => void;
   /** Correct a cached recipient's timezone — delete-then-re-add upsert that
    * KEEPS the original email + resolvedAt (a correction, not a re-resolution).
    * Source is normalised to "manual" (Free v1's only source). */
@@ -130,6 +139,31 @@ export function useSettings(): UseSettings {
     [commit, persistSettings],
   );
 
+  const setWorkingHours = useCallback(
+    (workingHours: WorkingHours) => {
+      const cur = stateRef.current;
+      if (!cur) return;
+      const next: OutboxIQState = { ...cur, workingHours };
+      commit(next);
+      persistSettings(next);
+    },
+    [commit, persistSettings],
+  );
+
+  const setFeatureToggle = useCallback(
+    (key: keyof FeatureToggles, value: boolean) => {
+      const cur = stateRef.current;
+      if (!cur) return;
+      const next: OutboxIQState = {
+        ...cur,
+        featureToggles: { ...cur.featureToggles, [key]: value },
+      };
+      commit(next);
+      persistSettings(next);
+    },
+    [commit, persistSettings],
+  );
+
   const editCacheTimezone = useCallback(
     (entry: RecipientCacheEntry, timezone: string) => {
       runCacheWrite(() =>
@@ -164,6 +198,8 @@ export function useSettings(): UseSettings {
     state,
     setTimezone,
     setPinned,
+    setWorkingHours,
+    setFeatureToggle,
     editCacheTimezone,
     deleteCacheEntry,
     clearCache,

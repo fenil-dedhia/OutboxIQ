@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useSettings } from "./useSettings";
 import { ProfileSection } from "./sections/ProfileSection";
 import { PinnedSection } from "./sections/PinnedSection";
+import { WorkingHoursSection } from "./sections/WorkingHoursSection";
+import { FeatureTogglesSection } from "./sections/FeatureTogglesSection";
 import { CacheSection } from "./sections/CacheSection";
 
 // PRD §5.8 Settings panel. Sidebar nav + content pane: each §5.8.2 section is a
@@ -13,14 +15,17 @@ import { CacheSection } from "./sections/CacheSection";
 //
 // Free v1 carve-outs (Entry 39 / §5.8.2): no email field, no "Refresh from
 // Calendar", no "Unschedule on Reply" / "Schedule confirmation toast" toggles —
-// omitted, not stubbed. Phase 1 ships the three sections that unblock launch
-// (Profile/Timezone, Pinned Timezones, Recipient Timezone Cache).
+// omitted, not stubbed. Sections: Profile/Timezone, Pinned Timezones, Working
+// Hours, Feature Toggles, Recipient Timezone Cache. (Privacy & Data + About
+// are the remaining Phase-3 sections.)
 
-type SectionId = "profile" | "pinned" | "cache";
+type SectionId = "profile" | "pinned" | "hours" | "toggles" | "cache";
 
 const NAV: { id: SectionId; label: string }[] = [
   { id: "profile", label: "Profile & timezone" },
   { id: "pinned", label: "Pinned timezones" },
+  { id: "hours", label: "Working hours" },
+  { id: "toggles", label: "Feature toggles" },
   { id: "cache", label: "Recipient timezone cache" },
 ];
 
@@ -77,6 +82,18 @@ export function App() {
             <PinnedSection
               pinned={state.pinnedTimezones}
               onChange={settings.setPinned}
+            />
+          )}
+          {active === "hours" && (
+            <WorkingHoursSection
+              workingHours={state.workingHours}
+              onChange={settings.setWorkingHours}
+            />
+          )}
+          {active === "toggles" && (
+            <FeatureTogglesSection
+              toggles={state.featureToggles}
+              onToggle={settings.setFeatureToggle}
             />
           )}
           {active === "cache" && (

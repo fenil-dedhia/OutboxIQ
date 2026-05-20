@@ -57,6 +57,7 @@ describe("ScheduleModal §5.5 trigger split (Entry 40)", () => {
         lastScheduled={null}
         recipients={[sarah]}
         pinnedTimezones={[]}
+        optimizeEnabled={true}
         onScheduled={vi.fn()}
         onOpenSettings={vi.fn()}
         onClose={vi.fn()}
@@ -116,6 +117,7 @@ describe("ScheduleModal §5.5 trigger split (Entry 40)", () => {
         lastScheduled={null}
         recipients={[sarah]}
         pinnedTimezones={[]}
+        optimizeEnabled={true}
         onScheduled={vi.fn()}
         onOpenSettings={vi.fn()}
         onClose={vi.fn()}
@@ -137,5 +139,49 @@ describe("ScheduleModal §5.5 trigger split (Entry 40)", () => {
     ).toBeInTheDocument();
     // Preset must NOT have been scheduled — the warning is gating it.
     expect(schedulePreset).not.toHaveBeenCalled();
+  });
+});
+
+describe("ScheduleModal — §5.8.2 recipientOptimization toggle", () => {
+  it("renders the Optimize section when enabled", () => {
+    render(
+      <ScheduleModal
+        timezone="America/New_York"
+        workingHours={createDefaultState().workingHours}
+        lastScheduled={null}
+        recipients={[sarah]}
+        pinnedTimezones={[]}
+        optimizeEnabled={true}
+        onScheduled={vi.fn()}
+        onOpenSettings={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+    expect(
+      screen.getByRole("checkbox", { name: /optimize delivery for/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("hides the Optimize section when disabled (rest of the modal still works)", () => {
+    render(
+      <ScheduleModal
+        timezone="America/New_York"
+        workingHours={createDefaultState().workingHours}
+        lastScheduled={null}
+        recipients={[sarah]}
+        pinnedTimezones={[]}
+        optimizeEnabled={false}
+        onScheduled={vi.fn()}
+        onOpenSettings={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+    expect(
+      screen.queryByRole("checkbox", { name: /optimize delivery for/i }),
+    ).toBeNull();
+    // Quick Options are unaffected.
+    expect(
+      screen.getAllByRole("button", { name: /tomorrow|next monday/i }).length,
+    ).toBeGreaterThan(0);
   });
 });

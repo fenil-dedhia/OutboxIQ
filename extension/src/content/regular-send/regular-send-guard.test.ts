@@ -110,6 +110,7 @@ beforeEach(() => {
   getCachedConfig.mockReturnValue({
     timezone: "America/New_York",
     workingHours: {} as never,
+    autoRescheduleOnOutsideHours: true, // §5.8.2: default ON (feature enabled)
   });
   openRegularSendWarning.mockReturnValue({ close: vi.fn() });
   scheduleAt.mockResolvedValue(undefined);
@@ -138,6 +139,22 @@ describe("§5.5.1 — never block an in-hours / unclassifiable Send (§5.2.3)", 
     const { send } = buildCompose();
     teardown = installRegularSendGuard();
     expect(fire(send, "pointerdown").defaultPrevented).toBe(false);
+    expect(openRegularSendWarning).not.toHaveBeenCalled();
+  });
+
+  it("§5.8.2 toggle OFF → does NOT intercept even on a violation", () => {
+    // Feature disabled in Settings: the guard must let the native Send through
+    // (fail-toward-send), regardless of a real off-hours violation.
+    getCachedConfig.mockReturnValue({
+      timezone: "America/New_York",
+      workingHours: {} as never,
+      autoRescheduleOnOutsideHours: false,
+    });
+    checkWorkingHours.mockReturnValue(violation("absolute"));
+    const { send } = buildCompose();
+    teardown = installRegularSendGuard();
+    const evs = ["pointerdown", "mousedown", "pointerup", "mouseup", "click"];
+    for (const t of evs) expect(fire(send, t).defaultPrevented).toBe(false);
     expect(openRegularSendWarning).not.toHaveBeenCalled();
   });
 

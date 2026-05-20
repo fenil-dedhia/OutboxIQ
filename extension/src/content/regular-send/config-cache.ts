@@ -20,6 +20,9 @@ export interface SendGuardConfig {
   timezone: string;
   /** Working hours + absolute limits (PRD §7.2). The §5.5 calc input. */
   workingHours: WorkingHours;
+  /** §5.8.2 toggle. When false, the §5.5.1 guard does not intercept Send at
+   * all (fail-toward-send) — the off-hours auto-reschedule prompt is disabled. */
+  autoRescheduleOnOutsideHours: boolean;
 }
 
 let cached: SendGuardConfig | null = null;
@@ -52,6 +55,8 @@ export function startConfigWatch(initial?: SendGuardConfig): () => void {
           cached = {
             timezone: s.user.timezone,
             workingHours: s.workingHours,
+            autoRescheduleOnOutsideHours:
+              s.featureToggles.autoRescheduleOnOutsideHours,
           };
         }
       })

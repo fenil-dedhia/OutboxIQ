@@ -88,6 +88,10 @@ export interface ScheduleModalProps {
   /** User's pinned IANA zones (PRD §5.1.3 Step 2) — forwarded to the §5.3.5 (i)
    * cache-miss timezone picker so it shows the "Pinned" section. */
   pinnedTimezones: string[];
+  /** §5.8.2 "Recipient optimized scheduling" toggle. When false, the §5.3.5
+   * Optimize section is not rendered at all (the rest of the modal is
+   * unaffected). */
+  optimizeEnabled: boolean;
   /** Persist a freshly-scheduled time so it becomes "Last scheduled time". */
   onScheduled: (v: LastScheduled) => void;
   /** PRD §5.8.1 access point: the modal-header gear opens the Settings page. */
@@ -120,6 +124,7 @@ export function ScheduleModal({
   lastScheduled,
   recipients,
   pinnedTimezones,
+  optimizeEnabled,
   onScheduled,
   onOpenSettings,
   onClose,
@@ -497,15 +502,20 @@ export function ScheduleModal({
           />
         </div>
 
-        <OptimizeSection
-          recipients={recipients}
-          userTimezone={timezone}
-          pinnedTimezones={livePinnedTimezones}
-          onChange={setOptimize}
-          onEngage={() => setSelection(null)}
-          resetSignal={optimizeReset}
-          disabled={busy}
-        />
+        {/* §5.8.2 toggle: hide the §5.3.5 Optimize section entirely when the
+            feature is off. The rest of the modal (Quick Options / Pick Custom)
+            is unaffected. */}
+        {optimizeEnabled && (
+          <OptimizeSection
+            recipients={recipients}
+            userTimezone={timezone}
+            pinnedTimezones={livePinnedTimezones}
+            onChange={setOptimize}
+            onEngage={() => setSelection(null)}
+            resetSignal={optimizeReset}
+            disabled={busy}
+          />
+        )}
 
         {status.kind === "busy" && (
           <p className="status">Opening Gmail&apos;s scheduler…</p>

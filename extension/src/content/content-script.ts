@@ -103,6 +103,10 @@ function handleScheduleSend(): void {
         // §5.1.3 Step 2: surface the user's pinned zones in the cache-miss
         // timezone picker (§5.3.5 (i)).
         pinnedTimezones: state.pinnedTimezones,
+        // §5.8.2 Feature toggle: when off, the §5.3.5 Optimize section is
+        // hidden (read fresh per open, so toggling in Settings takes effect on
+        // the next Schedule Send — no Gmail refresh).
+        optimizeEnabled: state.featureToggles.recipientOptimization,
         onScheduled: persistLastScheduled,
         // Render-time throw inside the modal (async to this try/catch) —
         // ErrorBoundary tears the host down and routes here (§5.2.3).
@@ -133,6 +137,11 @@ function enableIntegrationsIfOnboarded(state: OutboxIQState): boolean {
   startConfigWatch({
     timezone: state.user.timezone,
     workingHours: state.workingHours,
+    // §5.8.2 Feature toggle: when off, the §5.5.1 regular-Send guard does not
+    // intercept (config-cache refreshes on storage change, so the toggle takes
+    // effect live).
+    autoRescheduleOnOutsideHours:
+      state.featureToggles.autoRescheduleOnOutsideHours,
   });
   installRegularSendGuard({ onScheduled: persistLastScheduled });
   integrationsInstalled = true;
