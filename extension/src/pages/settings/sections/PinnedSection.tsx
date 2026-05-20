@@ -19,8 +19,8 @@ export function PinnedSection({ pinned, onChange }: Props) {
       <h2 id="fl-set-pinned-h">Pinned timezones</h2>
       <p className="fl-set-help">
         Pin up to {MAX_PINNED_TIMEZONES} timezones for the people you email
-        most. They show first — in this order — in every timezone picker. Use
-        the arrows to reorder.
+        most. They show first — in this order — in every timezone picker. Drag a
+        row to reorder (or focus its handle and use the arrow keys).
       </p>
       <PinnedTimezonesEditor pinned={pinned} onChange={onChange} reorderable />
     </section>

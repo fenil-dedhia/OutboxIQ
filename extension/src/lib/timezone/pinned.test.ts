@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { movePinned, resolvePinnedEntries } from "./pinned";
+import { movePinned, reorderPinned, resolvePinnedEntries } from "./pinned";
 
 // PRD §5.1.3 Step 2 / §5.8.2 — pinned-timezone ordering helpers (Session 12).
 
@@ -31,6 +31,34 @@ describe("movePinned (pure reorder)", () => {
 
   it("is a no-op for an out-of-range index", () => {
     expect(movePinned(ids, 9, -1)).toEqual(ids);
+  });
+});
+
+describe("reorderPinned (pure drag move)", () => {
+  const ids = ["a", "b", "c", "d"];
+
+  it("moves an item forward to an arbitrary index", () => {
+    expect(reorderPinned(ids, 0, 2)).toEqual(["b", "c", "a", "d"]);
+  });
+
+  it("moves an item backward to an arbitrary index", () => {
+    expect(reorderPinned(ids, 3, 1)).toEqual(["a", "d", "b", "c"]);
+  });
+
+  it("is a no-op when from === to", () => {
+    expect(reorderPinned(ids, 2, 2)).toEqual(ids);
+  });
+
+  it("is a no-op for out-of-range indices", () => {
+    expect(reorderPinned(ids, -1, 2)).toEqual(ids);
+    expect(reorderPinned(ids, 1, 9)).toEqual(ids);
+  });
+
+  it("returns a NEW array (does not mutate the input)", () => {
+    const input = [...ids];
+    const out = reorderPinned(input, 0, 3);
+    expect(out).not.toBe(input);
+    expect(input).toEqual(ids);
   });
 });
 

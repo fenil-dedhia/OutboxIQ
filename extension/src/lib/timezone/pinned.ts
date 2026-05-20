@@ -33,22 +33,38 @@ export function resolvePinnedEntries(
 /** PRD §5.8.2 Settings reorder: move the pinned id at `index` one slot toward
  * the start (`dir = -1`) or end (`dir = +1`), returning a NEW array. A move
  * that would cross a boundary (or an out-of-range index) returns a copy
- * unchanged — callers also disable the boundary buttons, so this is just
- * defense in depth. Pure (no storage), so it unit-tests in isolation. */
+ * unchanged. The keyboard (arrow-key) reorder path uses this. Pure (no
+ * storage), so it unit-tests in isolation. */
 export function movePinned(
   ids: readonly string[],
   index: number,
   dir: -1 | 1,
 ): string[] {
-  const target = index + dir;
-  if (index < 0 || index >= ids.length || target < 0 || target >= ids.length) {
+  return reorderPinned(ids, index, index + dir);
+}
+
+/** Move the pinned id from `from` to `to` (arbitrary distance), returning a NEW
+ * array. The drag-and-drop reorder path uses this. A no-op move or an
+ * out-of-range index returns a copy unchanged. Pure — unit-tested. */
+export function reorderPinned(
+  ids: readonly string[],
+  from: number,
+  to: number,
+): string[] {
+  if (
+    from === to ||
+    from < 0 ||
+    from >= ids.length ||
+    to < 0 ||
+    to >= ids.length
+  ) {
     return [...ids];
   }
   const next = [...ids];
-  const moved = next[index];
+  const moved = next[from];
   if (moved === undefined) return [...ids]; // unreachable given the guard above
-  next.splice(index, 1);
-  next.splice(target, 0, moved);
+  next.splice(from, 1);
+  next.splice(to, 0, moved);
   return next;
 }
 

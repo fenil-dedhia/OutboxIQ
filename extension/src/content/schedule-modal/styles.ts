@@ -25,11 +25,12 @@ export const MODAL_CSS = `
 h1 { font-size: 16px; font-weight: 500; margin: 0 0 4px; }
 .subtitle { font-size: 12px; color: #5f6368; margin: 0 0 16px; }
 /* A single icon-link (NOT a menu). Self-styled in the shadow root, same as the
-   rest of the modal — page CSS doesn't reach here. */
+   rest of the modal — page CSS doesn't reach here. Sized for clear visibility
+   (owner UX call, Session-12 hands-on: the 16px glyph read as too small). */
 .gear {
-  flex: 0 0 auto; width: 28px; height: 28px; padding: 0; margin: -2px -4px 0 0;
+  flex: 0 0 auto; width: 36px; height: 36px; padding: 0; margin: -4px -6px 0 0;
   border: 0; border-radius: 50%; background: none; cursor: pointer;
-  color: #5f6368; font-size: 16px; line-height: 28px; text-align: center;
+  color: #5f6368; font-size: 22px; line-height: 36px; text-align: center;
 }
 .gear:hover, .gear:focus-visible { background: #f1f3f4; color: #202124; outline: none; }
 .gear:disabled { opacity: .6; cursor: default; }
