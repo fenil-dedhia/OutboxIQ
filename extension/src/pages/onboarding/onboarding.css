@@ -105,6 +105,87 @@ select {
   font-size: 13px;
   color: var(--oq-muted);
   font-style: italic;
+  margin: 0 0 6px;
+}
+
+/* PRD §5.1.3 Step 2 (Session 11) — Pinned Timezones. */
+.oq-field-label {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.oq-pinned {
+  margin: 24px 0 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--oq-border);
+}
+
+.oq-pinned-chips {
+  list-style: none;
+  margin: 12px 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.oq-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 10px;
+  background: #e8f0fe;
+  border: 1px solid #d2e3fc;
+  border-radius: 16px;
+  font-size: 13px;
+  color: #1a3a6b;
+}
+
+.oq-chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #1a73e8;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.oq-chip-remove:hover,
+.oq-chip-remove:focus-visible {
+  background: #d2e3fc;
+  outline: none;
+}
+
+.oq-pinned-max {
+  font-size: 13px;
+  color: var(--oq-muted);
+  margin: 12px 0 4px;
+}
+
+.oq-skip {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: #1a73e8;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.oq-skip:hover,
+.oq-skip:focus-visible {
+  color: #1b66c9;
+  outline: none;
 }
 
 .oq-help {

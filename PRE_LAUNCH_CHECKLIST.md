@@ -165,6 +165,31 @@ Items that must be completed **before Fashionably Late Free v1 can be made publi
 
 ---
 
+## Settings panel (PRD §5.8) — Free v1 feature build, still a stub
+
+The Settings panel is still a placeholder (`src/pages/settings/App.tsx`). It
+must be built before launch because it is the **only** surface for two pieces
+of user data that onboarding can set but not later edit:
+
+- **Recipient Timezone Cache (§5.8.2).** View / edit / delete cached manual
+  recipient timezones and a "Clear all" bulk action. The list/clear APIs
+  already exist (`recipient-cache.ts`: `listCachedRecipients`,
+  `clearRecipientCache`); the panel is the missing UI. Manual entries are
+  cached **indefinitely** (PRD §5.3.5 (j)), so without this surface the user
+  can never correct a wrong pin.
+- **Pinned Timezones (§5.1.3 Step 2 — Session 11).** View / reorder / add /
+  remove the user's pinned zones (`state.pinnedTimezones`). Onboarding is
+  currently the only place to set them; an onboarded user (or an upgraded
+  user, who starts with **no** pins by migration design) needs Settings to
+  manage them. Reuse the onboarding Step-2 chips + add-picker pattern; the
+  shared `TimezonePicker` already renders the "Pinned" section from this field,
+  and the `MAX_PINNED_TIMEZONES` cap is a UI concern to re-apply here.
+
+Both also need the §5.8.2 Profile/Working-Hours/Feature-Toggles/Privacy
+sections. Tracked as a single Free-v1 build (Session 12 candidate).
+
+---
+
 ## Compatibility & Verification
 
 ### Google Workspace compatibility — Schedule Send

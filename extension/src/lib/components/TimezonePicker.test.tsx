@@ -192,3 +192,74 @@ describe("TimezonePicker (PRD §5.3.5 (k) shared component)", () => {
     expect(screen.queryByRole("listbox")).toBeNull();
   });
 });
+
+describe("TimezonePicker — Pinned section (PRD §5.1.3 Step 2)", () => {
+  const pins = ["America/Los_Angeles", "Asia/Kolkata"];
+
+  it("renders Pinned + All timezones sections; an entry appears once", () => {
+    render(
+      <TimezonePicker
+        value={null}
+        onChange={vi.fn()}
+        ariaLabel="picker"
+        pinnedIanaIds={pins}
+      />,
+    );
+    openMenu();
+    expect(screen.getByText("Pinned")).toBeInTheDocument();
+    expect(screen.getByText("All timezones")).toBeInTheDocument();
+    // The pinned India entry is NOT duplicated into "All timezones".
+    expect(screen.getAllByRole("option", { name: /India/ })).toHaveLength(1);
+    expect(
+      screen.getAllByRole("option", { name: /Pacific Time/ }),
+    ).toHaveLength(1);
+  });
+
+  it("omits the Pinned section entirely when no pins are configured", () => {
+    render(
+      <TimezonePicker value={null} onChange={vi.fn()} ariaLabel="picker" />,
+    );
+    openMenu();
+    expect(screen.queryByText("Pinned")).toBeNull();
+    expect(screen.queryByText("All timezones")).toBeNull();
+  });
+
+  it("search filters across both sections (no Pinned header when nothing pinned matches)", () => {
+    render(
+      <TimezonePicker
+        value={null}
+        onChange={vi.fn()}
+        ariaLabel="picker"
+        pinnedIanaIds={pins}
+      />,
+    );
+    openMenu();
+    const input = screen.getByRole("textbox", { name: "Search timezones" });
+    // "tokyo" matches a NON-pinned entry only → no Pinned header.
+    fireEvent.change(input, { target: { value: "tokyo" } });
+    expect(screen.queryByText("Pinned")).toBeNull();
+    expect(screen.getAllByRole("option")).toHaveLength(1);
+    expect(screen.getByRole("option")).toHaveTextContent("Japan");
+  });
+
+  it("selecting a pinned option emits its canonical IANA id", () => {
+    const onChange = vi.fn();
+    render(
+      <TimezonePicker
+        value={null}
+        onChange={onChange}
+        ariaLabel="picker"
+        pinnedIanaIds={pins}
+      />,
+    );
+    openMenu();
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Search timezones" }),
+      {
+        target: { value: "pacific" },
+      },
+    );
+    fireEvent.mouseDown(screen.getByRole("option", { name: /Pacific Time/ }));
+    expect(onChange).toHaveBeenCalledWith("America/Los_Angeles");
+  });
+});

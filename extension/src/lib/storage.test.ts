@@ -10,7 +10,12 @@ import {
   setLastScheduled,
   WEEKDAYS,
 } from "./storage";
-import { PRIVACY_POLICY_VERSION, SCHEMA_VERSION } from "./constants";
+import {
+  PRIVACY_POLICY_VERSION,
+  SCHEMA_VERSION,
+  DEFAULT_PINNED_TIMEZONES,
+  MAX_PINNED_TIMEZONES,
+} from "./constants";
 
 describe("storage defaults (PRD §7.2)", () => {
   it("defaults to Mon–Fri 09:00–17:00 with 07:00/19:00 absolute bounds", () => {
@@ -91,12 +96,12 @@ describe("completeOnboarding (PRD §5.1.4)", () => {
   });
 });
 
-describe("lastScheduled (PRD §5.3.3 amendment, schema v2)", () => {
-  it("defaults to null and stamps schema v2", () => {
+describe("lastScheduled (PRD §5.3.3 amendment) + schema version", () => {
+  it("defaults to null and stamps the current schema version (v3)", () => {
     const s = createDefaultState();
     expect(s.lastScheduled).toBeNull();
     expect(s.schemaVersion).toBe(SCHEMA_VERSION);
-    expect(SCHEMA_VERSION).toBe(2);
+    expect(SCHEMA_VERSION).toBe(3);
   });
 
   it("setLastScheduled persists and is read back by getState", async () => {
@@ -133,5 +138,47 @@ describe("onboarding draft persistence (resume-mid-flow)", () => {
     const loaded = await getOnboardingDraft();
     expect(loaded.stepIndex).toBe(2);
     expect(loaded.timezone).toBe("Asia/Tokyo");
+  });
+});
+
+describe("pinnedTimezones (PRD §5.1.3 Step 2, schema v3)", () => {
+  it("state default is empty — existing users are not silently pinned", () => {
+    expect(createDefaultState().pinnedTimezones).toEqual([]);
+  });
+
+  it("onboarding draft pre-selects the default pins (the common picks)", () => {
+    expect(createDefaultDraft().pinnedTimezones).toEqual([
+      ...DEFAULT_PINNED_TIMEZONES,
+    ]);
+    expect(DEFAULT_PINNED_TIMEZONES.length).toBe(MAX_PINNED_TIMEZONES);
+  });
+
+  it("completeOnboarding commits the draft's pins into state", async () => {
+    await completeOnboarding(
+      {
+        ...createDefaultDraft(),
+        pinnedTimezones: ["Asia/Tokyo", "Europe/Berlin"],
+      },
+      PRIVACY_POLICY_VERSION,
+    );
+    expect((await getState()).pinnedTimezones).toEqual([
+      "Asia/Tokyo",
+      "Europe/Berlin",
+    ]);
+  });
+
+  it("the Skip path (empty draft pins) commits an empty array", async () => {
+    await completeOnboarding(
+      { ...createDefaultDraft(), pinnedTimezones: [] },
+      PRIVACY_POLICY_VERSION,
+    );
+    expect((await getState()).pinnedTimezones).toEqual([]);
+  });
+
+  it("an older v2 record (no pinnedTimezones key) migrates to empty array", async () => {
+    await chrome.storage.local.set({
+      outboxiqState: { schemaVersion: 2, user: { timezone: "UTC" } },
+    });
+    expect((await getState()).pinnedTimezones).toEqual([]);
   });
 });

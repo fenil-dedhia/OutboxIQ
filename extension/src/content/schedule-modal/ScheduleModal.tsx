@@ -84,6 +84,9 @@ export interface ScheduleModalProps {
    * when DOM read failed (§6.7 fail-open). Empty → Optimize section is
    * hidden so the user can still use Quick Options / Pick Custom. */
   recipients: ComposeRecipient[];
+  /** User's pinned IANA zones (PRD §5.1.3 Step 2) — forwarded to the §5.3.5 (i)
+   * cache-miss timezone picker so it shows the "Pinned" section. */
+  pinnedTimezones: string[];
   /** Persist a freshly-scheduled time so it becomes "Last scheduled time". */
   onScheduled: (v: LastScheduled) => void;
   onClose: () => void;
@@ -113,6 +116,7 @@ export function ScheduleModal({
   workingHours,
   lastScheduled,
   recipients,
+  pinnedTimezones,
   onScheduled,
   onClose,
 }: ScheduleModalProps) {
@@ -472,6 +476,7 @@ export function ScheduleModal({
         <OptimizeSection
           recipients={recipients}
           userTimezone={timezone}
+          pinnedTimezones={pinnedTimezones}
           onChange={setOptimize}
           onEngage={() => setSelection(null)}
           resetSignal={optimizeReset}

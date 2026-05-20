@@ -30,6 +30,9 @@ export interface OpenScheduleModalArgs {
    * (BCC excluded by `readComposeRecipients`). Empty → §5.3.5 section
    * hidden, modal still usable via Quick Options / Pick Custom. */
   recipients: ComposeRecipient[];
+  /** User's pinned IANA zones (PRD §5.1.3 Step 2) — surfaced in the §5.3.5 (i)
+   * cache-miss timezone picker's "Pinned" section. */
+  pinnedTimezones: string[];
   onScheduled: (v: LastScheduled) => void;
   /** A render-time throw in the modal hands off to Gmail's native scheduler
    * so the user is never stranded (PRD §5.2.3). See ErrorBoundary.tsx. */
@@ -74,6 +77,7 @@ export function openScheduleModal(args: OpenScheduleModalArgs): void {
           workingHours={args.workingHours}
           lastScheduled={args.lastScheduled}
           recipients={args.recipients}
+          pinnedTimezones={args.pinnedTimezones}
           onScheduled={args.onScheduled}
           onClose={close}
         />

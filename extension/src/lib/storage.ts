@@ -6,6 +6,7 @@ import {
   STORAGE_KEY_STATE,
   STORAGE_KEY_ONBOARDING_DRAFT,
   SCHEMA_VERSION,
+  DEFAULT_PINNED_TIMEZONES,
 } from "./constants";
 
 export type TimezoneSource = "calendar_api" | "browser" | "manual";
@@ -133,6 +134,9 @@ export interface OutboxIQState {
   consent: Consent | null;
   /** Null until the user schedules at least once via Fashionably Late (§5.3.3). */
   lastScheduled: LastScheduled | null;
+  /** Up to MAX_PINNED_TIMEZONES canonical IANA ids the picker surfaces in its
+   * "Pinned" section (PRD §5.1.3 Step 2, Session 11). Empty = none pinned. */
+  pinnedTimezones: string[];
 }
 
 function defaultDay(enabled: boolean): DayHours {
@@ -170,6 +174,10 @@ export function createDefaultState(): OutboxIQState {
     recipientCache: [],
     consent: null,
     lastScheduled: null,
+    // Empty by default: existing/upgraded users are NOT silently pinned
+    // (migration note, constants.ts). Onboarding pre-selects the defaults in
+    // the DRAFT only (createDefaultDraft).
+    pinnedTimezones: [],
   };
 }
 
@@ -209,6 +217,9 @@ export async function getState(): Promise<OutboxIQState> {
     // simply lacks the key and resolves to null. No explicit version branch
     // is needed yet (see CLAUDE.md migration convention).
     lastScheduled: stored.lastScheduled ?? defaults.lastScheduled,
+    // v2→v3 added `pinnedTimezones`; same additive-default migration — an
+    // older record lacks the key and resolves to [] (no silent pinning).
+    pinnedTimezones: stored.pinnedTimezones ?? defaults.pinnedTimezones,
   };
 }
 
@@ -238,6 +249,10 @@ export interface OnboardingDraft {
   timezoneSource: TimezoneSource;
   workingHours: WorkingHours;
   consentChecked: boolean;
+  /** PRD §5.1.3 Step 2 (Session 11): up to MAX_PINNED_TIMEZONES IANA ids.
+   * Pre-seeded with DEFAULT_PINNED_TIMEZONES here (the onboarding draft
+   * pre-checks the common picks); committed to state on finish. */
+  pinnedTimezones: string[];
 }
 
 export function createDefaultDraft(): OnboardingDraft {
@@ -248,6 +263,9 @@ export function createDefaultDraft(): OnboardingDraft {
     timezoneSource: d.user.timezoneSource,
     workingHours: d.workingHours,
     consentChecked: false,
+    // Pre-select the common picks (state default is [] — only the draft
+    // pre-checks them, so an upgraded user isn't silently pinned).
+    pinnedTimezones: [...DEFAULT_PINNED_TIMEZONES],
   };
 }
 
@@ -294,6 +312,7 @@ export async function completeOnboarding(
     },
     workingHours: draft.workingHours,
     consent: { privacyPolicyVersion, consentedAt: now },
+    pinnedTimezones: draft.pinnedTimezones,
   };
   await setState(next);
   await clearOnboardingDraft();

@@ -100,6 +100,9 @@ function handleScheduleSend(): void {
         workingHours: state.workingHours,
         lastScheduled: state.lastScheduled,
         recipients,
+        // §5.1.3 Step 2: surface the user's pinned zones in the cache-miss
+        // timezone picker (§5.3.5 (i)).
+        pinnedTimezones: state.pinnedTimezones,
         onScheduled: persistLastScheduled,
         // Render-time throw inside the modal (async to this try/catch) —
         // ErrorBoundary tears the host down and routes here (§5.2.3).

@@ -35,6 +35,7 @@ import {
   resolveCuratedEntry,
   searchCuratedTimezones,
 } from "../timezone/search";
+import { resolvePinnedEntries } from "../timezone/pinned";
 
 /** Fixed-overlay coordinates for the popup, measured from the trigger. The
  * popup is `position: fixed` so it overlays the page/modal like a native
@@ -65,6 +66,10 @@ export interface TimezonePickerProps {
   disabled?: boolean;
   /** className for the OUTER wrapper — consumer-owned width/layout only. */
   className?: string;
+  /** Canonical IANA ids to surface in a "Pinned" section above "All
+   * timezones" (PRD §5.1.3 Step 2, Session 11). Empty/undefined → flat list,
+   * no sections. Resolved + deduped + offset-ordered for display. */
+  pinnedIanaIds?: string[];
 }
 
 export function TimezonePicker({
@@ -75,6 +80,7 @@ export function TimezonePicker({
   ariaLabel,
   disabled,
   className,
+  pinnedIanaIds,
 }: TimezonePickerProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -99,6 +105,32 @@ export function TimezonePicker({
     [value],
   );
   const results = useMemo(() => searchCuratedTimezones(query), [query]);
+
+  // Pinned section (§5.1.3 Step 2). When the consumer passes pinned ids, the
+  // filtered results split into a "Pinned" group and an "All timezones" group;
+  // an entry appears in exactly one (no duplication). `optionEntries` is the
+  // flat, keyboard-navigable sequence (pinned first, then the rest), and every
+  // option's id/highlight indexes into it.
+  const pinnedIdSet = useMemo(() => {
+    if (!pinnedIanaIds || pinnedIanaIds.length === 0) return null;
+    const entries = resolvePinnedEntries(pinnedIanaIds);
+    return entries.length
+      ? new Set(entries.map((e) => e.ianaIdentifier))
+      : null;
+  }, [pinnedIanaIds]);
+
+  const { pinnedMatches, allMatches, optionEntries } = useMemo(() => {
+    if (!pinnedIdSet) {
+      return { pinnedMatches: [], allMatches: results, optionEntries: results };
+    }
+    const pinned = results.filter((e) => pinnedIdSet.has(e.ianaIdentifier));
+    const rest = results.filter((e) => !pinnedIdSet.has(e.ianaIdentifier));
+    return {
+      pinnedMatches: pinned,
+      allMatches: rest,
+      optionEntries: [...pinned, ...rest],
+    };
+  }, [results, pinnedIdSet]);
 
   // Trigger text: the resolved group label; else the raw stored id (unknown
   // zone — surfaced, not hidden); else the placeholder.
@@ -139,7 +171,7 @@ export function TimezonePicker({
     setOpen(true);
     // Start the highlight on the current selection if it's in view, else top.
     const idx = selectedEntry
-      ? results.findIndex(
+      ? optionEntries.findIndex(
           (e) => e.ianaIdentifier === selectedEntry.ianaIdentifier,
         )
       : -1;
@@ -147,7 +179,7 @@ export function TimezonePicker({
   }
 
   function commit(index: number) {
-    const entry = results[index];
+    const entry = optionEntries[index];
     if (!entry) return;
     onChange(entry.ianaIdentifier);
     close(true);
@@ -203,7 +235,7 @@ export function TimezonePicker({
     switch (e.key) {
       case "ArrowDown":
         e.preventDefault();
-        setActiveIndex((i) => Math.min(i + 1, results.length - 1));
+        setActiveIndex((i) => Math.min(i + 1, optionEntries.length - 1));
         break;
       case "ArrowUp":
         e.preventDefault();
@@ -215,7 +247,7 @@ export function TimezonePicker({
         break;
       case "End":
         e.preventDefault();
-        setActiveIndex(results.length - 1);
+        setActiveIndex(optionEntries.length - 1);
         break;
       case "Enter":
         e.preventDefault();
@@ -240,7 +272,29 @@ export function TimezonePicker({
   }
 
   const activeOptionId =
-    open && results.length > 0 ? optId(activeIndex) : undefined;
+    open && optionEntries.length > 0 ? optId(activeIndex) : undefined;
+
+  const renderOption = (entry: (typeof optionEntries)[number], i: number) => {
+    const isSel =
+      !!selectedEntry && entry.ianaIdentifier === selectedEntry.ianaIdentifier;
+    return (
+      <li
+        key={entry.ianaIdentifier}
+        id={optId(i)}
+        role="option"
+        aria-selected={isSel}
+        className={`fl-tzp-option${i === activeIndex ? " is-active" : ""}${isSel ? " is-selected" : ""}`}
+        // mousedown (not click) so selection beats any blur/close race.
+        onMouseDown={(e) => {
+          e.preventDefault();
+          commit(i);
+        }}
+        onMouseEnter={() => setActiveIndex(i)}
+      >
+        {entry.label}
+      </li>
+    );
+  };
 
   return (
     <div
@@ -307,33 +361,27 @@ export function TimezonePicker({
             onKeyDown={onInputKeyDown}
           />
           <ul ref={listRef} id={listId} role="listbox" className="fl-tzp-list">
-            {results.length === 0 && (
+            {optionEntries.length === 0 && (
               <li className="fl-tzp-empty" role="presentation">
                 No timezones found
               </li>
             )}
-            {results.map((entry, i) => {
-              const isSel =
-                !!selectedEntry &&
-                entry.ianaIdentifier === selectedEntry.ianaIdentifier;
-              return (
-                <li
-                  key={entry.ianaIdentifier}
-                  id={optId(i)}
-                  role="option"
-                  aria-selected={isSel}
-                  className={`fl-tzp-option${i === activeIndex ? " is-active" : ""}${isSel ? " is-selected" : ""}`}
-                  // mousedown (not click) so selection beats any blur/close race.
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    commit(i);
-                  }}
-                  onMouseEnter={() => setActiveIndex(i)}
-                >
-                  {entry.label}
+            {pinnedIdSet && pinnedMatches.length > 0 && (
+              <li className="fl-tzp-section-label" role="presentation">
+                Pinned
+              </li>
+            )}
+            {pinnedMatches.map((entry, j) => renderOption(entry, j))}
+            {pinnedIdSet &&
+              pinnedMatches.length > 0 &&
+              allMatches.length > 0 && (
+                <li className="fl-tzp-section-label" role="presentation">
+                  All timezones
                 </li>
-              );
-            })}
+              )}
+            {allMatches.map((entry, k) =>
+              renderOption(entry, pinnedMatches.length + k),
+            )}
           </ul>
         </div>
       )}

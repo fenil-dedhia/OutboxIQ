@@ -74,6 +74,9 @@ export interface OptimizeSectionProps {
   recipients: ComposeRecipient[];
   /** User's IANA timezone — drives the "your time" half of the (h) line. */
   userTimezone: string;
+  /** User's pinned IANA zones (PRD §5.1.3 Step 2) — surfaced in the inline
+   * timezone picker's "Pinned" section. */
+  pinnedTimezones?: string[];
   /** Bubbles a complete (commit-ready) Optimize choice, or null when the
    * section is unengaged / incomplete. The parent uses non-null presence
    * to enable Schedule and to bypass the §5.5 warning on commit. */
@@ -113,6 +116,7 @@ function recipientDisplay(r: ComposeRecipient): string {
 export function OptimizeSection({
   recipients,
   userTimezone,
+  pinnedTimezones,
   onChange,
   onEngage,
   resetSignal,
@@ -313,6 +317,7 @@ export function OptimizeSection({
                 id={tzPickerId}
                 value={tzState.manualTz}
                 placeholder="Choose their timezone"
+                pinnedIanaIds={pinnedTimezones}
                 disabled={disabled}
                 onChange={(tz) =>
                   setTzState({

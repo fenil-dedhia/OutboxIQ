@@ -43,7 +43,27 @@ export const STORAGE_KEY_AUTH = "outboxiqAuth";
 // v1→v2 (2026-05-16): added `lastScheduled` (PRD §5.3.3 amendment). Purely
 // additive + nullable, so getState()'s default-merge is the migration; no
 // explicit version branch needed yet.
-export const SCHEMA_VERSION = 2;
+// v2→v3 (2026-05-20): added `pinnedTimezones` (PRD §5.1.3 Step 2, Session 11).
+// Purely additive (defaults to []), so the default-merge is again the
+// migration — an existing record simply lacks the key and resolves to empty
+// (no silent default-pinning; the user pins explicitly in onboarding/Settings).
+export const SCHEMA_VERSION = 3;
+
+// PRD §5.1.3 Step 2 (Session 11 — Pinned Timezones). The picker surfaces up to
+// MAX_PINNED_TIMEZONES of the user's most-used zones in a "Pinned" section.
+export const MAX_PINNED_TIMEZONES = 5;
+
+// The five defaults pre-selected in onboarding ("the most common picks":
+// PST / EST / GMT / CET / IST). Stored as canonical IANA ids — Entry-30 stable
+// values, each a curated-dataset primary. NOT applied silently to existing
+// users (migration leaves pins empty); only onboarding pre-checks these.
+export const DEFAULT_PINNED_TIMEZONES: readonly string[] = [
+  "America/Los_Angeles", // PST — Pacific Time
+  "America/New_York", // EST — Eastern Time
+  "Europe/London", // GMT — United Kingdom
+  "Europe/Berlin", // CET — Central European Time
+  "Asia/Kolkata", // IST — India
+];
 
 // Path (relative to the extension root) of the standalone onboarding page,
 // as emitted by the CRXJS build. Used to open/locate the onboarding tab.

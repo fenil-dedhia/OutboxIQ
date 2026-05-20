@@ -124,9 +124,11 @@ export function App() {
         <TimezoneStep
           timezone={draft.timezone}
           timezoneSource={draft.timezoneSource}
+          pinned={draft.pinnedTimezones}
           onChange={(timezone, timezoneSource) =>
             update({ timezone, timezoneSource })
           }
+          onPinnedChange={(pinnedTimezones) => update({ pinnedTimezones })}
         />
       )}
       {step === 2 && (
