@@ -80,12 +80,20 @@ button.secondary:hover, button.secondary:focus-visible {
 
 /* §5.3.5 Optimize-for-X section (locked items a–n, Session 10).
    Visually integrated with Quick Options + Pick Custom; not a styled
-   island (§8.1 native feel). */
+   island (§8.1 native feel). The engage label + recipient dropdown
+   sit on ONE row that never wraps — even when the selected recipient
+   is a long email, the dropdown grows to its content. The card's
+   own overflow:auto provides horizontal scrolling when content
+   exceeds the modal width (owner-directed behaviour after Session 10
+   hands-on: stay on one line, expand past the modal if needed). */
 .optimize { margin-top: 4px; }
+.optimize-row {
+  display: flex; align-items: center; gap: 8px; flex-wrap: nowrap;
+  margin: 0 0 8px;
+}
 .optimize-engage {
   display: inline-flex; align-items: center; gap: 8px;
-  font-size: 13px; color: #202124; cursor: pointer;
-  margin: 0 0 8px;
+  color: #202124; cursor: pointer; flex: 0 0 auto; white-space: nowrap;
 }
 .optimize-engage input[type="checkbox"] {
   width: 16px; height: 16px; accent-color: #1a73e8; cursor: pointer;
@@ -93,7 +101,7 @@ button.secondary:hover, button.secondary:focus-visible {
 .optimize-recipient {
   font: inherit; padding: 6px 8px; border: 1px solid #dadce0;
   border-radius: 4px; color: #202124; background: #fff;
-  margin: 0 0 0 4px; max-width: 100%;
+  flex: 0 0 auto; width: auto;
 }
 .optimize-recipient:disabled { background: #f8f9fa; color: #5f6368; }
 .optimize-body {

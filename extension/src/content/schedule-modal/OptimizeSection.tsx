@@ -224,44 +224,46 @@ export function OptimizeSection({
     <div className="optimize">
       <hr className="divider" />
 
-      <label
-        className="optimize-engage"
-        htmlFor={checkboxId}
-        title="Optimize delivery for a specific recipient's working hours"
-      >
-        <input
-          id={checkboxId}
-          type="checkbox"
-          checked={engaged}
-          disabled={disabled}
-          onChange={(e) => {
-            const next = e.target.checked;
-            setEngaged(next);
-            if (next) onEngage?.();
-          }}
-        />
-        <span>Optimize delivery for</span>
-      </label>
+      <div className="optimize-row">
+        <label
+          className="optimize-engage"
+          htmlFor={checkboxId}
+          title="Optimize delivery for a specific recipient's working hours"
+        >
+          <input
+            id={checkboxId}
+            type="checkbox"
+            checked={engaged}
+            disabled={disabled}
+            onChange={(e) => {
+              const next = e.target.checked;
+              setEngaged(next);
+              if (next) onEngage?.();
+            }}
+          />
+          <span>Optimize delivery for</span>
+        </label>
 
-      <select
-        id={recipientId}
-        aria-label="Optimize recipient"
-        className="optimize-recipient"
-        value={selectedKey ?? ""}
-        disabled={disabled}
-        onChange={(e) => setSelectedKey(e.target.value || null)}
-      >
-        {(recipients.length > 1 || !selectedKey) && (
-          <option value="" disabled>
-            Choose recipient…
-          </option>
-        )}
-        {recipients.map((r) => (
-          <option key={recipientKey(r)} value={recipientKey(r)}>
-            {recipientLabel(r)}
-          </option>
-        ))}
-      </select>
+        <select
+          id={recipientId}
+          aria-label="Optimize recipient"
+          className="optimize-recipient"
+          value={selectedKey ?? ""}
+          disabled={disabled}
+          onChange={(e) => setSelectedKey(e.target.value || null)}
+        >
+          {(recipients.length > 1 || !selectedKey) && (
+            <option value="" disabled>
+              Choose recipient…
+            </option>
+          )}
+          {recipients.map((r) => (
+            <option key={recipientKey(r)} value={recipientKey(r)}>
+              {recipientLabel(r)}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {engaged && (
         <div className="optimize-body">
