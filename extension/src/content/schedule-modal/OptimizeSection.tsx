@@ -11,7 +11,10 @@
 // Locked behaviour (PRD §5.3.5 / Entry 40 — do not re-litigate here):
 //   (a) Checkbox starts UNCHECKED on modal open (opt-in per send).
 //   (b) Recipient dropdown sourced from compose To+CC (BCC excluded).
-//   (c) Per-entry "(To)" / "(CC)" label.
+//   (c) Per-entry display = name (or email); the "(To)"/"(CC)" field
+//       suffix was DROPPED (owner UX call 2026-05-20, PRD §5.3.5 (c)
+//       amendment) — not information worth surfacing. `field` still
+//       carried in data for BCC exclusion.
 //   (d) Single recipient → pre-selected; multi → "Choose recipient…"
 //       placeholder; Schedule disabled until one is selected.
 //   (e) Display name from compose DOM (Gmail's resolved chip); never
@@ -19,7 +22,10 @@
 //   (f) Two timings only: Morning peak (9 AM their time) [default] /
 //       Midday engagement (1 PM their time). "End of day" dropped — out
 //       of scope, not deferred.
-//   (g) Tooltip: research framing; no Fashionably Late tracking.
+//   (g) Tooltip: open-rate framing only (the "based on general research,
+//       not Fashionably Late tracking" disclaimer was dropped as awkward
+//       justification, owner UX call 2026-05-20 — §11 no-tracking remains
+//       binding on BEHAVIOUR; it was never a copy requirement).
 //   (h) Cache hit → confirmation line.
 //   (i) Cache miss → inline tz picker with "Choose their timezone"
 //       placeholder (NOT user's tz), Remember default-checked,
@@ -91,16 +97,12 @@ function recipientKey(r: ComposeRecipient): string {
   return r.email.toLowerCase();
 }
 
-function recipientLabel(r: ComposeRecipient): string {
-  // Spec (c): "Sarah Chen (To)" / "Mike Johnson (CC)". Spec (e): when no
-  // display name was rendered into the chip, the email is the label.
-  const name = r.displayName ?? r.email;
-  return `${name} (${r.field})`;
-}
-
 function recipientDisplay(r: ComposeRecipient): string {
-  // For the inline picker prompt + the confirmation line, we want just
-  // the name-or-email (no "(To)"/"(CC)" appendage; that's dropdown-only).
+  // Name where Gmail rendered one into the chip; else the email (spec (e),
+  // never-emailed recipients). The "(To)"/"(CC)" field suffix was dropped
+  // (owner UX call 2026-05-20 — see PRD §5.3.5 (c) amendment): the To-vs-CC
+  // distinction is not information worth surfacing in the dropdown. `field`
+  // is still carried in the data for BCC exclusion + future use.
   return r.displayName ?? r.email;
 }
 
@@ -259,7 +261,7 @@ export function OptimizeSection({
           )}
           {recipients.map((r) => (
             <option key={recipientKey(r)} value={recipientKey(r)}>
-              {recipientLabel(r)}
+              {recipientDisplay(r)}
             </option>
           ))}
         </select>
@@ -294,8 +296,7 @@ export function OptimizeSection({
           {tooltipOpen && (
             <p className="optimize-tooltip" role="note">
               Morning typically sees the highest open rate. Midday catches
-              recipients between meetings. Based on general research, not
-              Fashionably Late tracking.
+              recipients between meetings.
             </p>
           )}
 

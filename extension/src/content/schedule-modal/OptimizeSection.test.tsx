@@ -84,7 +84,7 @@ describe("OptimizeSection (PRD §5.3.5 a–n)", () => {
     ).toBeInTheDocument();
   });
 
-  it("(c) per-entry labels carry the (To)/(CC) suffix", () => {
+  it("(c) per-entry label is the name only — NO (To)/(CC) suffix (owner UX call)", () => {
     render(
       <OptimizeSection
         recipients={[sarah, mike]}
@@ -92,15 +92,19 @@ describe("OptimizeSection (PRD §5.3.5 a–n)", () => {
         onChange={vi.fn()}
       />,
     );
+    // Exact-match the option text so a stray "(To)" suffix would fail.
     expect(
-      screen.getByRole("option", { name: /sarah chen \(to\)/i }),
+      screen.getByRole("option", { name: "Sarah Chen" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("option", { name: /mike johnson \(cc\)/i }),
+      screen.getByRole("option", { name: "Mike Johnson" }),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("option", { name: /\((to|cc)\)/i }),
+    ).not.toBeInTheDocument();
   });
 
-  it("(e) never-emailed recipient: email is shown as the display label", () => {
+  it("(e) never-emailed recipient: email is shown as the display label (no suffix)", () => {
     render(
       <OptimizeSection
         recipients={[stranger]}
@@ -109,7 +113,7 @@ describe("OptimizeSection (PRD §5.3.5 a–n)", () => {
       />,
     );
     expect(
-      screen.getByRole("option", { name: /first-contact@example.com \(to\)/i }),
+      screen.getByRole("option", { name: "first-contact@example.com" }),
     ).toBeInTheDocument();
   });
 
@@ -235,7 +239,7 @@ describe("OptimizeSection (PRD §5.3.5 a–n)", () => {
     expect(opts.some((t) => t.includes("end of day"))).toBe(false);
   });
 
-  it("(g) info button toggles the research-framed tooltip", () => {
+  it("(g) info button toggles the open-rate tooltip (no tracking-disclaimer copy)", () => {
     render(
       <OptimizeSection
         recipients={[sarah]}
@@ -253,9 +257,13 @@ describe("OptimizeSection (PRD §5.3.5 a–n)", () => {
     expect(
       screen.getByText(/morning typically sees the highest open rate/i),
     ).toBeInTheDocument();
+    // The awkward "based on general research, not Fashionably Late tracking"
+    // justification was dropped (owner UX call); §11 stays binding on
+    // behaviour, never was a copy requirement.
+    expect(screen.queryByText(/general research/i)).not.toBeInTheDocument();
     expect(
-      screen.getByText(/general research, not fashionably late tracking/i),
-    ).toBeInTheDocument();
+      screen.queryByText(/fashionably late tracking/i),
+    ).not.toBeInTheDocument();
   });
 
   it("(m) multi-recipient + no selection: section is inert, onChange stays null", () => {

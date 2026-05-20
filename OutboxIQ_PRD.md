@@ -261,7 +261,9 @@ A standard date and time picker for custom scheduling. Selected time is always i
 
 **(b) Recipient dropdown — population from compose DOM.** Auto-populated from the Gmail compose **To: and CC:** fields. **BCC is excluded** (preserves the BCC privacy contract; §11). No People API, no autocomplete enrichment beyond what Gmail already rendered in the compose chips.
 
-**(c) Per-entry labelling.** Each entry is labelled with its field of origin: e.g. **"Sarah Chen (To)"**, **"Mike Johnson (CC)"**. The To-vs-CC distinction is made explicit in the optimization UI so the user always knows who they're targeting.
+**(c) Per-entry labelling.** Each entry shows the recipient's display name (or email when never-emailed, per (e)).
+
+> **Amendment (2026-05-20, owner UX call — Session 10 hands-on).** The original spec labelled each entry with its field of origin — **"Sarah Chen (To)"**, **"Mike Johnson (CC)"**. In the built UI this read as unnecessary visual noise: the To-vs-CC distinction is not information worth surfacing in the dropdown. The **"(To)"/"(CC)" suffix is dropped** — each entry is just the name (or email). The `field` value is still read from the compose DOM and carried internally (it is load-bearing for the BCC-exclusion contract in (b)); it simply isn't rendered.
 
 **(d) Default selection.**
 - **Single recipient across To+CC:** that recipient is pre-selected; the Optimize **checkbox still starts unchecked** (engagement is explicit).
@@ -273,7 +275,9 @@ A standard date and time picker for custom scheduling. Selected time is always i
 - **"Morning peak (9:00 AM their time)"** — default.
 - **"Midday engagement (1:00 PM their time)"**.
 
-**(g) Timing tooltip.** A small info icon opens the tooltip: *"Morning typically sees the highest open rate. Midday catches recipients between meetings."* Framed as **based on general research, not Fashionably Late-specific tracking** — §11 items 2 / 3 / 13 / 20 (no email tracking, no analytics, no telemetry) remain binding; Fashionably Late does not measure recipient behaviour.
+**(g) Timing tooltip.** A small info icon opens the tooltip: *"Morning typically sees the highest open rate. Midday catches recipients between meetings."*
+
+> **Amendment (2026-05-20, owner UX call — Session 10 hands-on).** The original spec appended **"Based on general research, not Fashionably Late tracking."** to the tooltip. In the built UI this read as awkward, defensive over-justification, so it is **dropped**. This is a copy decision only — §11 items 2 / 3 / 13 / 20 (no email tracking, no analytics, no telemetry) remain **fully binding on behaviour**: Fashionably Late does not measure recipient behaviour. The constraint was never a requirement to *say so* in this tooltip.
 
 **(h) Timezone resolution — Case A (recipient already in cache).** Below the timing dropdown a confirmation line appears dynamically:
 

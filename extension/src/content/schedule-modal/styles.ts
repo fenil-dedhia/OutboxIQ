@@ -81,11 +81,12 @@ button.secondary:hover, button.secondary:focus-visible {
 /* §5.3.5 Optimize-for-X section (locked items a–n, Session 10).
    Visually integrated with Quick Options + Pick Custom; not a styled
    island (§8.1 native feel). The engage label + recipient dropdown
-   sit on ONE row that never wraps — even when the selected recipient
-   is a long email, the dropdown grows to its content. The card's
-   own overflow:auto provides horizontal scrolling when content
-   exceeds the modal width (owner-directed behaviour after Session 10
-   hands-on: stay on one line, expand past the modal if needed). */
+   sit on ONE row that never wraps. The CLOSED dropdown button fills
+   the remaining row width and truncates a long selected value with
+   the browser's native ellipsis — it never pushes past the modal
+   (no horizontal scroll). The OPEN dropdown menu is native and sizes
+   to its content automatically, so long emails are fully readable
+   when the menu is expanded (owner UX call after Session 10 hands-on). */
 .optimize { margin-top: 4px; }
 .optimize-row {
   display: flex; align-items: center; gap: 8px; flex-wrap: nowrap;
@@ -101,7 +102,10 @@ button.secondary:hover, button.secondary:focus-visible {
 .optimize-recipient {
   font: inherit; padding: 6px 8px; border: 1px solid #dadce0;
   border-radius: 4px; color: #202124; background: #fff;
-  flex: 0 0 auto; width: auto;
+  /* Fill the row's remaining width; min-width:0 lets it shrink below
+     content size so the closed button stays inside the modal and the
+     selected text truncates with the native <select> ellipsis. */
+  flex: 1 1 auto; min-width: 0;
 }
 .optimize-recipient:disabled { background: #f8f9fa; color: #5f6368; }
 .optimize-body {
@@ -111,10 +115,14 @@ button.secondary:hover, button.secondary:focus-visible {
 }
 .optimize-timing-row {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  font-size: 13px; color: #202124;
+  color: #202124;
 }
-.optimize-timing-label { color: #5f6368; font-size: 12px; }
+.optimize-timing-label {
+  color: #5f6368; font-size: 12px; flex: 0 0 auto; width: 100%;
+}
 .optimize-timing {
+  /* font:inherit picks up the 14px modal body (matches Quick Options /
+     Pick Custom) — the row no longer forces a smaller size. */
   font: inherit; padding: 6px 8px; border: 1px solid #dadce0;
   border-radius: 4px; color: #202124; background: #fff; flex: 1 1 auto;
   min-width: 200px;
