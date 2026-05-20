@@ -106,8 +106,13 @@ button.secondary:hover, button.secondary:focus-visible {
   width: 16px; height: 16px; accent-color: #1a73e8; cursor: pointer;
 }
 .optimize-recipient {
-  font: inherit; padding: 6px 8px; border: 1px solid #dadce0;
+  font: inherit; border: 1px solid #dadce0;
   border-radius: 4px; color: #202124; background: #fff;
+  /* Extra right padding reserves space for the native dropdown arrow so
+     a truncated long email stops BEFORE the chevron instead of running
+     under it. The open menu still shows the full value (native). */
+  padding: 6px 28px 6px 8px;
+  text-overflow: ellipsis;
   /* Fill the row's remaining width; min-width:0 lets it shrink below
      content size so the closed button stays inside the modal and the
      selected text truncates with the native <select> ellipsis. */
@@ -129,9 +134,9 @@ button.secondary:hover, button.secondary:focus-visible {
 .optimize-timing {
   /* font:inherit picks up the 14px modal body (matches Quick Options /
      Pick Custom) — the row no longer forces a smaller size. */
-  font: inherit; padding: 6px 8px; border: 1px solid #dadce0;
+  font: inherit; padding: 6px 28px 6px 8px; border: 1px solid #dadce0;
   border-radius: 4px; color: #202124; background: #fff; flex: 1 1 auto;
-  min-width: 200px;
+  min-width: 0; text-overflow: ellipsis;
 }
 .optimize-tooltip-btn {
   font: inherit; width: 20px; height: 20px; line-height: 18px;
@@ -159,8 +164,9 @@ button.secondary:hover, button.secondary:focus-visible {
   overflow-wrap: anywhere;
 }
 .optimize-tz-select {
-  font: inherit; padding: 6px 8px; border: 1px solid #dadce0;
+  font: inherit; padding: 6px 28px 6px 8px; border: 1px solid #dadce0;
   border-radius: 4px; color: #202124; background: #fff; width: 100%;
+  text-overflow: ellipsis;
 }
 /* flex (not inline-flex) so it spans the panel width and the long-email
    span can wrap; flex-start keeps the checkbox at the first text line
