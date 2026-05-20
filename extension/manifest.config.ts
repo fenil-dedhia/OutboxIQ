@@ -43,10 +43,17 @@ export default defineManifest({
       run_at: "document_idle",
     },
   ],
-  // `storage` only. NO `identity` (Free v1 has no OAuth — Entry 39), NO
-  // `tabs`. Premium v1 re-adds `identity` for its OAuth (preserved in
-  // src/premium-v1/); not requested here.
-  permissions: ["storage"],
+  // `storage` + `scripting`. NO `identity` (Free v1 has no OAuth —
+  // Entry 39), NO `tabs` (we use host_permissions for tab access).
+  // `scripting` is needed so the service worker can inject the
+  // content-script into Gmail tabs that were ALREADY open at install
+  // time — Chrome's static `content_scripts` manifest declaration only
+  // injects on subsequent page loads, not retroactively into existing
+  // tabs (MV3 model). Without this, a user who has Gmail open and then
+  // installs the extension would have to manually refresh Gmail before
+  // the extension does anything. Premium v1 re-adds `identity` for its
+  // OAuth (preserved in src/premium-v1/); not requested here.
+  permissions: ["storage", "scripting"],
   // mail.google.com ONLY: the content-script origin; also lets the
   // onboarding page focus the user's Gmail tab on finish (PRD §5.1.4).
   // `people.googleapis.com` was REMOVED — Free v1 makes no Google API

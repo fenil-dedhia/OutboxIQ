@@ -7,6 +7,18 @@
 //      installed but not onboarded, and Gmail is open" (incl. the dev reload
 //      button, which does NOT fire onInstalled).
 //   3. Clicking the toolbar icon — a guaranteed user-gesture fallback.
+//
+// CONTENT-SCRIPT HOT-INJECTION ON INSTALL (post-Session-10 hands-on fix):
+// Chrome MV3's static `content_scripts` manifest declaration does NOT
+// retroactively inject into tabs that were ALREADY OPEN when the extension
+// installs — it only fires on subsequent page loads. Without intervention,
+// a user installing Fashionably Late with Gmail already open would see no
+// behaviour until they manually refresh that tab. We use `chrome.scripting`
+// (requires the `scripting` permission, added in manifest.config.ts) to
+// inject the content script into every open Gmail tab on `onInstalled`,
+// so the user's existing tabs hot-upgrade. The content script then sits
+// quietly until the storage listener it just installed observes the
+// onboarding-completed write (see content-script.ts).
 
 import { ONBOARDING_PAGE_PATH } from "../lib/constants";
 import { isOnboardingComplete } from "../lib/storage";
@@ -55,12 +67,77 @@ async function openOnboarding(force: boolean): Promise<void> {
   }
 }
 
+/**
+ * Inject the content script into every currently-open Gmail tab. Chrome
+ * MV3's static `content_scripts` declaration only fires on future page
+ * loads, so without this an already-open Gmail tab stays inert until the
+ * user manually refreshes it. The content script's own bootstrap is
+ * idempotent (storage-listener + latch) so a tab that ALSO loads the
+ * static content script later won't double-install.
+ *
+ * Reads the file path from the live manifest so it never drifts from the
+ * CRXJS-built hashed filename. Per-tab try/catch — some tabs may reject
+ * injection (e.g. URLs not actually matching despite the query), and a
+ * single rejection must not abort the rest.
+ *
+ * Fail-open: any setup failure (manifest read, permission missing, no
+ * matching tabs) is logged and ignored — never break Gmail (§5.2.3).
+ */
+async function injectIntoOpenGmailTabs(): Promise<void> {
+  try {
+    const manifest = chrome.runtime.getManifest();
+    const files = manifest.content_scripts?.[0]?.js ?? [];
+    if (files.length === 0) {
+      if (import.meta.env.DEV) {
+        console.warn(
+          "[Fashionably Late] hot-inject: no content_scripts.js in manifest",
+        );
+      }
+      return;
+    }
+    const tabs = await chrome.tabs.query({ url: "https://mail.google.com/*" });
+    if (import.meta.env.DEV) {
+      console.info(
+        `[Fashionably Late] hot-injecting into ${tabs.length} open Gmail tab(s)`,
+      );
+    }
+    for (const tab of tabs) {
+      if (tab.id == null) continue;
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files,
+        });
+      } catch (err) {
+        // Per-tab: a single reject (e.g., a temporarily-uninjectable
+        // page state) must not stop the others. Logged DEV-only so prod
+        // doesn't accumulate console noise on edge tabs.
+        if (import.meta.env.DEV) {
+          console.info(
+            `[Fashionably Late] hot-inject skip (tab ${tab.id}):`,
+            err,
+          );
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("[Fashionably Late] hot-inject setup failed:", err);
+  }
+}
+
 chrome.runtime.onInstalled.addListener(() => {
   void openOnboarding(false);
+  void injectIntoOpenGmailTabs();
 });
 
 chrome.runtime.onStartup.addListener(() => {
   void openOnboarding(false);
+  // Re-inject on browser startup as well: in principle Chrome should
+  // restore content scripts into restored Gmail tabs automatically, but
+  // it's a tiny safety net for cases where it doesn't (e.g. tab
+  // discarding / lazy restore) and the static content-script
+  // declaration hasn't fired yet.
+  void injectIntoOpenGmailTabs();
 });
 
 // Synchronous, top-level listener so a cold-started worker has it attached as
