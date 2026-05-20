@@ -192,9 +192,7 @@ describe("OptimizeSection (PRD §5.3.5 a–n)", () => {
         target: { value: "london" },
       },
     );
-    fireEvent.mouseDown(
-      screen.getByRole("option", { name: /united kingdom/i }),
-    );
+    fireEvent.mouseDown(screen.getByRole("option", { name: /london/i }));
     await waitFor(() => {
       const last = onChange.mock.calls.at(-1)?.[0] as OptimizeChoice | null;
       expect(last).not.toBeNull();
@@ -229,9 +227,7 @@ describe("OptimizeSection (PRD §5.3.5 a–n)", () => {
         target: { value: "london" },
       },
     );
-    fireEvent.mouseDown(
-      screen.getByRole("option", { name: /united kingdom/i }),
-    );
+    fireEvent.mouseDown(screen.getByRole("option", { name: /london/i }));
     await waitFor(() => {
       const last = onChange.mock.calls.at(-1)?.[0] as OptimizeChoice | null;
       expect(last?.rememberTz).toBe(false);

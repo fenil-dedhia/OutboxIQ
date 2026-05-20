@@ -18,13 +18,29 @@ describe("searchCuratedTimezones", () => {
     }
   });
 
-  it("is case-insensitive and substring-based", () => {
-    expect(searchCuratedTimezones("KOL")[0]?.ianaIdentifier).toBe(
+  it("is case-insensitive and substring-based for mixed/lowercase queries", () => {
+    expect(searchCuratedTimezones("Kol")[0]?.ianaIdentifier).toBe(
       "Asia/Kolkata",
     );
     expect(searchCuratedTimezones("toky")[0]?.ianaIdentifier).toBe(
       "Asia/Tokyo",
     );
+  });
+
+  it("ALL-CAPS query matches abbreviations case-sensitively, not city substrings", () => {
+    // "IST" → India + Israel (their "(IST)"), NOT Istanbul (the +3 Moscow row).
+    const ist = searchCuratedTimezones("IST").map((e) => e.ianaIdentifier);
+    expect(ist).toContain("Asia/Kolkata");
+    expect(ist).toContain("Asia/Jerusalem");
+    expect(ist).not.toContain("Europe/Moscow");
+    // "PST" → Pacific Time only.
+    expect(searchCuratedTimezones("PST").map((e) => e.ianaIdentifier)).toEqual([
+      "America/Los_Angeles",
+    ]);
+    // A non-abbreviation all-caps string ("KOL") is treated as an abbreviation
+    // search, so it does NOT match the city "Kolkata" (lowercase intent → use
+    // lowercase). This is the deliberate trade-off in the owner's rule.
+    expect(searchCuratedTimezones("KOL")).toEqual([]);
   });
 
   it("matches a familiar city absent from the IANA id (Mumbai/Delhi → Kolkata)", () => {
@@ -36,9 +52,9 @@ describe("searchCuratedTimezones", () => {
     ).toEqual(["Asia/Kolkata"]);
   });
 
-  it("matches a country name", () => {
+  it("matches a country name (Singapore now its own +8 row after the split)", () => {
     expect(searchCuratedTimezones("singapore")[0]?.ianaIdentifier).toBe(
-      "Asia/Shanghai",
+      "Asia/Singapore",
     );
     expect(searchCuratedTimezones("japan")[0]?.ianaIdentifier).toBe(
       "Asia/Tokyo",

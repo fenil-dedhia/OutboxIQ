@@ -29,9 +29,11 @@ const INTENTIONAL_SHARED_TERMS = new Set([
 ]);
 
 describe("curated-timezones dataset", () => {
-  it("is a sensible curated size (40–50 entries), not the raw IANA list", () => {
+  it("is a sensible curated size (40–65 entries), not the raw IANA list", () => {
+    // Upper bound widened from 50 after the Session-11 "split the worst"
+    // relabel split the crowded Asian +3/+5/+8 and the +4 Gulf/Caucasus rows.
     expect(CURATED_TIMEZONES.length).toBeGreaterThanOrEqual(40);
-    expect(CURATED_TIMEZONES.length).toBeLessThanOrEqual(50);
+    expect(CURATED_TIMEZONES.length).toBeLessThanOrEqual(65);
   });
 
   it("every ianaIdentifier is a valid, Intl-recognised zone", () => {

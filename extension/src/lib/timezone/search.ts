@@ -65,9 +65,25 @@ function matchesOffset(entry: CuratedTimezone, qLower: string): boolean {
   return offsetTokens(entry.offset).some((tok) => tok.startsWith(cleaned));
 }
 
-/** Does `entry` match the (already-lowercased) query? Case-insensitive,
- * substring across label + abbreviations + searchTerms, plus offset tokens. */
-export function matchesEntry(entry: CuratedTimezone, qLower: string): boolean {
+/** Does `entry` match `query`? Substring across label + abbreviations +
+ * searchTerms, plus offset tokens.
+ *
+ * Case rule (owner request): when the WHOLE query is upper-case (e.g. "IST",
+ * "PST"), the user is searching a timezone ABBREVIATION — match
+ * case-SENSITIVELY against the label + abbreviations so "IST" finds India /
+ * Israel's "(IST)" and NOT "Istanbul". Any lower-case letter ("Ist", "ist",
+ * "india") keeps the normal case-insensitive city/country substring search. */
+export function matchesEntry(entry: CuratedTimezone, query: string): boolean {
+  const q = query.trim();
+  if (!q) return true;
+
+  if (/[A-Z]/.test(q) && q === q.toUpperCase()) {
+    if (entry.label.includes(q)) return true;
+    if (entry.abbreviations?.some((a) => a.includes(q))) return true;
+    return matchesOffset(entry, q.toLowerCase());
+  }
+
+  const qLower = q.toLowerCase();
   if (entry.label.toLowerCase().includes(qLower)) return true;
   if (entry.abbreviations?.some((a) => a.toLowerCase().includes(qLower)))
     return true;
@@ -78,7 +94,7 @@ export function matchesEntry(entry: CuratedTimezone, qLower: string): boolean {
 /** Curated entries matching `query`, in offset order. Empty/whitespace query
  * returns the whole list. */
 export function searchCuratedTimezones(query: string): CuratedTimezone[] {
-  const q = query.trim().toLowerCase();
+  const q = query.trim();
   if (!q) return SORTED_CURATED_TIMEZONES;
   return SORTED_CURATED_TIMEZONES.filter((e) => matchesEntry(e, q));
 }
