@@ -1082,8 +1082,6 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
       "auckland",
       "wellington",
       "christchurch",
-      "fiji",
-      "suva",
       "nzst",
       "nzdt",
       "mcmurdo",
@@ -1091,7 +1089,32 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
     ],
     abbreviations: ["NZST", "NZDT"],
     observesDST: true,
-  }, // McMurdo / South Pole follow NZ time — correct fold. FLAG: Fiji (folded) is now no-DST +12.
+  }, // McMurdo / South Pole follow NZ time — correct fold.
+  {
+    offset: "+12:00",
+    label: "(UTC+12:00) Fiji, Marshall Islands, Kiribati",
+    ianaIdentifier: "Pacific/Fiji",
+    searchTerms: [
+      "fiji",
+      "suva",
+      "marshall islands",
+      "majuro",
+      "kwajalein",
+      "kiribati",
+      "tarawa",
+      "gilbert islands",
+      "tuvalu",
+      "funafuti",
+      "nauru",
+      "wallis",
+      "wake island",
+      "kamchatka",
+      "petropavlovsk",
+      "anadyr",
+    ],
+    abbreviations: null,
+    observesDST: false,
+  }, // D3(d): the +12 NO-DST bloc (closes the coverage gap; gives Fiji a correct home rather than folding to NZ/DST). Russia Far East (Kamchatka/Anadyr) folds into search.
   {
     offset: "+12:45",
     label: "(UTC+12:45) Chatham Islands — Waitangi (DST)",
@@ -1120,7 +1143,6 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
     label: "(UTC+14:00) Kiribati — Kiritimati",
     ianaIdentifier: "Pacific/Kiritimati",
     searchTerms: [
-      "kiribati",
       "line islands",
       "kiritimati",
       "christmas island kiribati",
@@ -1128,7 +1150,7 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
     ],
     abbreviations: null,
     observesDST: false,
-  }, // The world's easternmost offset.
+  }, // The world's easternmost offset. ("kiribati" → the +12 Gilbert Islands row where most Kiribati live; "christmas island kiribati" still finds this Line Islands row.)
 ];
 
 /** Parse a "+05:30" / "-08:00" offset to signed minutes. Used for sorting and

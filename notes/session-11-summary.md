@@ -150,6 +150,22 @@ one-country rows (new IANA ids Europe/Dublin, Europe/Lisbon, Asia/Colombo,
 Asia/Ho_Chi_Minh). ~68 rows; 240 tests green (the ICU validator re-verified the
 new split zones). The CLAUDE.md "Locked decisions" bullet carries the grammar.
 
+## g4. Coverage gap check (2026-05-20, owner-requested)
+
+Owner asked which IANA zones the runtime knows aren't mapped to a curated row
+(would show the "pick to update" fallback). A discovery pass over
+`Intl.supportedValuesOf("timeZone")` (418 zones) found **18 unresolved** — none
+breakages, all graceful fallbacks. Only one cluster had meaningful population:
+**`+12:00` no-DST** (Russia Far East Kamchatka/Anadyr; Marshall Islands,
+Kiribati-Gilbert, Tuvalu, Nauru; plus Fiji, which had been mis-resolving to
+NZ/DST). Owner chose to **add one row** — `(UTC+12:00) Fiji, Marshall Islands,
+Kiribati` (`Pacific/Fiji`, Kamchatka folded to search) — closing that gap and
+giving Fiji a correct no-DST home; the other 9 combos (Pitcairn ~50, Eucla
+~200, Lord Howe, Norfolk, Noronha, Miquelon, Gambier, Marquesas, Adak — all
+sub-10k / remote) stay graceful. Added a **permanent coverage regression test**
+(`coverage.test.ts`) that fails the build if a future tzdb update or dataset
+edit opens a NEW gap (9 edge zones explicitly allowlisted). ~69 rows; 242 tests.
+
 ## h. Session 12 opening sequence (handoff)
 
 1. Build the §5.8 Settings panel (pinned-timezone management + manual-cache
