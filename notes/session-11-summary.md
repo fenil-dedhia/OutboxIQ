@@ -9,7 +9,18 @@
 > Timezones (onboarding capture + sectioned dropdown). Each phase gated on the
 > previous. Phase 1 gated on owner approval of the dataset.
 
-## a. What landed (all on `main`, commit-and-hold — not pushed)
+> **FINAL STATE (close-out, 2026-05-20).** Everything is on **`origin/main`**
+> (HEAD `7c7a0cf`, pushed). The session ran well past the three planned phases
+> into several owner hands-on iterations — read **§g2–§g4** alongside §a–§f
+> (those were written at the phase-3 build point, so their tallies/"not pushed"
+> notes are superseded here). Authoritative final numbers: **242 tests** green;
+> **~69** curated timezone rows; typecheck/lint/format/build + tier-split all
+> clean. Net deliverables: curated dataset → searchable picker (Option-B label
+> grammar) → Pinned Timezones → primary-tz + inline "remove all" +
+> commit-on-Continue/Back-reverts onboarding nav → sticky banded section
+> headers → a coverage regression test closing the +12 no-DST gap.
+
+## a. What landed (built locally; later pushed — see FINAL STATE above)
 
 - `f78aa02` — **Phase 1: curated dataset.** `src/lib/timezone/curated-timezones.ts`
   (+ tests). ~50 → (after the Phase-2 relabel) ~64 timezone GROUPS, each with a
