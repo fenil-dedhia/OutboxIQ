@@ -266,7 +266,7 @@ describe("OptimizeSection (PRD §5.3.5 a–n)", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("(m) multi-recipient + no selection: section is inert, onChange stays null", () => {
+  it("(m) multi-recipient + no selection: timing panel gated until a recipient is picked", async () => {
     const onChange = vi.fn();
     render(
       <OptimizeSection
@@ -278,10 +278,25 @@ describe("OptimizeSection (PRD §5.3.5 a–n)", () => {
     fireEvent.click(
       screen.getByRole("checkbox", { name: /optimize delivery for/i }),
     );
-    // No tz prompt yet (no recipient selected).
+    // Engaged but no recipient selected → the WHOLE "Optimize timing for"
+    // panel is hidden (pick the person first — owner UX call). Neither the
+    // timing dropdown nor the tz prompt should be present.
+    expect(
+      screen.queryByRole("combobox", { name: /optimize timing for/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/optimize timing for/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/what timezone is/i)).not.toBeInTheDocument();
     // Latest bubbled choice is null (Schedule disabled in the parent).
     expect(onChange.mock.calls.at(-1)?.[0]).toBeNull();
+
+    // Pick a recipient → the panel appears.
+    fireEvent.change(
+      screen.getByRole("combobox", { name: /optimize recipient/i }),
+      { target: { value: "sarah@example.com" } },
+    );
+    await waitFor(() =>
+      expect(screen.getByText(/optimize timing for/i)).toBeInTheDocument(),
+    );
   });
 
   it("(k) shared TimezonePicker: uses the same component as onboarding (no duplicate dropdown)", async () => {

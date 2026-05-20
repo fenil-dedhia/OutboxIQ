@@ -35,6 +35,10 @@
 //       (used by both onboarding §5.1.3 Step 2 + here — binding lock).
 //   (l) No "I don't know" hint / heuristic fallback.
 //   (m) Multi-recipient unselected → inert section, Schedule disabled.
+//       The "Optimize timing for" panel is gated on a SELECTED recipient
+//       (engaged && selected): pick the person first, then configure
+//       timing (owner UX call 2026-05-20). Single-recipient composes
+//       auto-select, so the panel appears immediately on engage.
 //   (n) §5.5 Default-boundaries warning suppressed for Optimize-computed
 //       times (handled by the parent's commit path; this component does
 //       not invoke the warning).
@@ -267,7 +271,7 @@ export function OptimizeSection({
         </select>
       </div>
 
-      {engaged && (
+      {engaged && selected && (
         <div className="optimize-body">
           <label className="optimize-timing-row" htmlFor={timingId}>
             <span className="optimize-timing-label">Optimize timing for</span>
