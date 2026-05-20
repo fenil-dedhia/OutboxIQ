@@ -23,11 +23,33 @@
 // and can't leak into Gmail or be broken by it. Consumers control only outer
 // width via `className`.
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   resolveCuratedEntry,
   searchCuratedTimezones,
 } from "../timezone/search";
+
+/** Fixed-overlay coordinates for the popup, measured from the trigger. The
+ * popup is `position: fixed` so it overlays the page/modal like a native
+ * <select> menu — it does NOT grow the modal's scroll height (no second
+ * scrollbar) and is NOT clipped by the modal's `overflow:auto` card (the
+ * shadow host sits on document.body with no transformed ancestor, so a fixed
+ * descendant resolves against the viewport). */
+interface PopupPos {
+  left: number;
+  top?: number;
+  bottom?: number;
+  minWidth: number;
+  maxWidth: number;
+  maxHeight: number;
+}
 
 export interface TimezonePickerProps {
   /** IANA zone, or null when the consumer requires "no default" (§5.3.5 (i)/(l)). */
@@ -57,6 +79,7 @@ export function TimezonePicker({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
+  const [pos, setPos] = useState<PopupPos | null>(null);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -89,8 +112,30 @@ export function TimezonePicker({
     if (restoreFocus) triggerRef.current?.focus();
   }
 
+  // Measure where to put the fixed-overlay popup, anchored to the trigger.
+  // Flips above the trigger when there's more room there. Uses only refs +
+  // window, so it's stable across renders.
+  const computePos = useCallback((): PopupPos | null => {
+    const t = triggerRef.current?.getBoundingClientRect();
+    if (!t) return null;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const spaceBelow = vh - t.bottom - 8;
+    const spaceAbove = t.top - 8;
+    const below = spaceBelow >= 240 || spaceBelow >= spaceAbove;
+    return {
+      left: t.left,
+      top: below ? t.bottom + 4 : undefined,
+      bottom: below ? undefined : vh - t.top + 4,
+      minWidth: t.width,
+      maxWidth: Math.max(220, vw - t.left - 12),
+      maxHeight: Math.max(160, Math.min(360, below ? spaceBelow : spaceAbove)),
+    };
+  }, []);
+
   function openMenu() {
     if (disabled) return;
+    setPos(computePos());
     setOpen(true);
     // Start the highlight on the current selection if it's in view, else top.
     const idx = selectedEntry
@@ -139,6 +184,20 @@ export function TimezonePicker({
     document.addEventListener("mousedown", onDocPointer, true);
     return () => document.removeEventListener("mousedown", onDocPointer, true);
   }, [open]);
+
+  // The popup is fixed-positioned, so it must follow the trigger when the page
+  // or the modal's scroll container moves. Capture-phase scroll catches the
+  // modal card's own scroll too.
+  useEffect(() => {
+    if (!open) return;
+    const reposition = () => setPos(computePos());
+    window.addEventListener("resize", reposition);
+    window.addEventListener("scroll", reposition, true);
+    return () => {
+      window.removeEventListener("resize", reposition);
+      window.removeEventListener("scroll", reposition, true);
+    };
+  }, [open, computePos]);
 
   function onInputKeyDown(e: React.KeyboardEvent) {
     switch (e.key) {
@@ -219,8 +278,18 @@ export function TimezonePicker({
         </span>
       )}
 
-      {open && (
-        <div className="fl-tzp-popup">
+      {open && pos && (
+        <div
+          className="fl-tzp-popup"
+          style={{
+            left: pos.left,
+            top: pos.top,
+            bottom: pos.bottom,
+            minWidth: pos.minWidth,
+            maxWidth: pos.maxWidth,
+            maxHeight: pos.maxHeight,
+          }}
+        >
           <input
             ref={inputRef}
             type="text"
@@ -289,21 +358,25 @@ const PICKER_CSS = `
 .fl-tzp-trigger-text { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fl-tzp-chevron { flex: 0 0 auto; color: #5f6368; font-size: 11px; }
 .fl-tzp-hint { display: block; margin-top: 4px; font-size: 12px; color: #b06000; }
+/* Fixed overlay (top/left/min-/max-width/max-height set inline from the
+   trigger rect). width:max-content lets it grow horizontally to fit the
+   widest single-line row instead of wrapping; it overflows the modal to the
+   side/below like a native <select> menu rather than scrolling the modal. */
 .fl-tzp-popup {
-  position: absolute; z-index: 2147483000; top: calc(100% + 4px); left: 0; right: 0;
+  position: fixed; z-index: 2147483000;
   background: #fff; border: 1px solid #dadce0; border-radius: 6px;
   box-shadow: 0 2px 10px rgba(60,64,67,0.28); overflow: hidden;
-  display: flex; flex-direction: column; max-height: 320px;
+  display: flex; flex-direction: column; width: max-content;
 }
 .fl-tzp-search {
   font: inherit; margin: 8px; padding: 7px 9px; border: 1px solid #dadce0;
-  border-radius: 6px; color: #202124; outline: none;
+  border-radius: 6px; color: #202124; outline: none; min-width: 0;
 }
 .fl-tzp-search:focus { border-color: #1a73e8; box-shadow: 0 0 0 1px #1a73e8; }
-.fl-tzp-list { list-style: none; margin: 0; padding: 0 0 4px; overflow-y: auto; }
+.fl-tzp-list { list-style: none; margin: 0; padding: 0 0 4px; overflow-y: auto; overflow-x: hidden; }
 .fl-tzp-option {
   padding: 8px 12px; cursor: pointer; color: #202124; font-size: 13px;
-  line-height: 1.4; overflow-wrap: anywhere;
+  line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .fl-tzp-option.is-active { background: #e8f0fe; }
 .fl-tzp-option.is-selected { font-weight: 600; }
