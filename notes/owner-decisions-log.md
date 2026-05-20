@@ -1727,6 +1727,87 @@ that preceded the §5.3.5/§5.4 build. They qualify; Entries 26 and 27.
   `research/compose-recipients-probe.{js,md}`;
   `notes/session-10-summary.md`.
 
+## Entry 44 — Curated timezone dataset over raw IANA, then hands-on reshaped the picker
+
+- **Session:** 11 (the headline work; Phase 1 owner-gated, Phases 2–3 hands-on).
+- **Moment:** The picker had been rendering all ~600 raw IANA identifiers
+  (`Asia/Calcutta`, alphabetical-by-continent). Owner testing surfaced three
+  concrete failures: legacy city names confuse (Calcutta vs. Kolkata); one
+  city per zone hides the zone from someone searching a *different* city in it
+  (a Mumbai user finds no "Mumbai"); and Africa-first ordering buries the
+  populous regions. Later, *during* the build, owner hands-on caught what the
+  spec and unit tests could not: the popup grew the modal into a second
+  scrollbar and wrapped each row; and the UTC+8 row was an unreadable jumble
+  that mixed a country (China) with its own cities (Shanghai) *and* unrelated
+  countries, naming Singapore twice.
+- **My input (owner):** Directed the whole reframe — **abandon raw-IANA
+  display for a curated list of offset-labelled GROUPS** with multi-city search
+  matching, canonical IANA stored underneath. Gated Phase 1 on reviewing the
+  dataset before any picker code (approved: keep all entries incl. thin/edge;
+  Greenland = Nuuk-only). Then drove four hands-on UX corrections as separate
+  calls: (1) the popup must float like a native menu (no modal scrollbar, no
+  clipping); (2) rows single-line, menu grows sideways; (3) "**split the worst,
+  keep the rest**" — multi-sovereign offsets become one row per country, the
+  rest stay one short row; (4) drop the noisy "(no DST)" notes and make
+  ALL-CAPS search case-sensitive so "IST" finds India/Israel, not Istanbul.
+- **What Claude Code would have done without it:** Claude executed each step
+  faithfully and added the engineering rigour — the machine-verified dataset
+  (every offset + DST flag recomputed from ICU and asserted), the
+  correctness-driven (offset + DST) entry keying, the self-styled Shadow-DOM-safe
+  combobox, the fixed-overlay positioning, the case-sensitive-abbreviation
+  search. But the *problems being solved* were all owner-surfaced: the curated
+  reframe was the owner's direction, and the three rendered-UX defects (double
+  scrollbar, wrapping, jumbled grouping) were invisible to the spec and to
+  jsdom — they only appear when a human opens the dropdown in a real modal.
+  Left to its own devices Claude would have shipped the literal spec (a flat
+  curated list, jammed multi-country rows, an in-flow popup) and the UX would
+  have been caught only after release.
+- **Outcome:** `src/lib/timezone/{curated-timezones,search,zone-info,pinned}.ts`;
+  the rebuilt `TimezonePicker.tsx`; commits `f78aa02` `2d03753` `b0e101f`
+  `c434d8c` `a9d6ddb`. ~64 verified entries; 239 tests green.
+- **Lesson (for coaching):** Two reinforced. (1) *The deepest fix is often
+  reframing what's displayed, not optimising how* — the raw IANA list wasn't a
+  rendering bug, it was the wrong data model for a human to scan; the owner saw
+  that the answer was a curated abstraction, not a better-sorted enumeration.
+  (2) *Extends Entry 43:* spec-faithful + green tests still isn't shippable UX.
+  A dataset can be machine-perfect (offsets verified) and still read as a
+  jumble; a popup can pass every unit test and still spawn a second scrollbar.
+  The felt experience of a list — scan-ability, grouping intuition, overflow
+  behaviour — is made in hands-on iteration, and the owner doing that iteration
+  was the load-bearing contribution.
+
+## Entry 45 — Pinned Timezones: a new feature, specified with migration discipline
+
+- **Session:** 11 (Phase 3).
+- **Moment:** The curated picker still meant scrolling to reach the handful of
+  zones a given user actually emails into. The owner specified a complementary
+  feature: let users pin up to 5 zones, surfaced first in every picker.
+- **My input (owner):** Defined the feature concretely — **cap of 5**, five
+  pre-selected defaults (PST/EST/GMT/CET/IST), captured during a reworked
+  onboarding Step 2 ("Set up your timezones"), with a Skip path and a
+  "Pinned"/"All timezones" sectioned dropdown. Imposed the migration discipline
+  explicitly: **no silent default-pinning of existing/upgraded users** — the
+  defaults pre-check only in the onboarding *draft*; the committed state
+  defaults to empty, and pinning is always an explicit user act.
+- **What Claude Code would have done without it:** This was an owner feature
+  request, not something Claude would have proposed (it sits outside the PRD as
+  written). Claude's contribution was the implementation shape: the additive
+  SCHEMA_VERSION 2→3 default-merge migration (no framework, consistent with the
+  `lastScheduled` precedent), the flat `pinnedTimezones: string[]` on §7.2
+  (matching the existing camelCase schema rather than the prompt's nested
+  shape), threading the pins through to the §5.3.5 inline picker, and choosing
+  to leave editing to the future Settings panel rather than half-build it now.
+- **Outcome:** `pinnedTimezones` on state + draft; `constants.ts`
+  `MAX_PINNED_TIMEZONES`/`DEFAULT_PINNED_TIMEZONES`; `pinned.ts`; reworked
+  onboarding Step 2; picker `pinnedIanaIds` sections; Settings stub note +
+  PRE_LAUNCH "Settings panel" item. Commit `4a79ec2`; +15 tests.
+- **Lesson (for coaching):** A new feature carries an implicit data-lifecycle
+  decision that's easy to get subtly wrong — here, "what happens to users who
+  already exist?" The owner naming "no silent pinning" up front turned a
+  potential surprise (everyone suddenly has 5 pins after an update) into a
+  deliberate, tested migration. The cheapest place to get migration semantics
+  right is in the feature spec, not in a post-launch bug report.
+
 ---
 
 *New entries are appended at every session close-out, alongside the session

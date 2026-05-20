@@ -161,6 +161,25 @@ The onboarding flow opens automatically on install, and again on browser startup
 > "§5.1.3 Calendar-amendment tracking marker" (resolved by correction, not
 > by wiring).
 
+> **Session-11 amendment (2026-05-20, owner-directed) — Step 2 becomes "Set
+> up your timezones" (user tz + Pinned Timezones).** Step 2 now covers BOTH
+> the user's own timezone (above) AND **Pinned Timezones**: the user picks up
+> to **5** timezones to surface first in every timezone picker (a "Pinned"
+> section above "All timezones"). Onboarding **pre-selects 5 defaults**
+> (PST/EST/GMT/CET/IST → `America/Los_Angeles`, `America/New_York`,
+> `Europe/London`, `Europe/Berlin`, `Asia/Kolkata`), shown as removable chips
+> with an add-picker and a **Skip** link (Skip → empty). The 5-pin cap is
+> enforced in the UI ("Maximum 5 pinned timezones"). Stored as
+> `pinnedTimezones: string[]` (canonical IANA ids) on the §7.2 state
+> (SCHEMA_VERSION 2→3, additive default-merge migration → `[]`). **Migration
+> discipline:** existing/upgraded users are **NOT** silently pinned — the
+> defaults pre-check only in the onboarding *draft*; committed state defaults
+> to empty; pinning is always an explicit act. The picker dropdown is now a
+> **searchable combobox over a curated timezone dataset** (see §5.3.5 (k)
+> Session-11 amendment), not a raw IANA list. Editing pins post-onboarding is
+> the §5.8.2 Settings surface (not yet built — `PRE_LAUNCH_CHECKLIST.md`).
+> `notes/owner-decisions-log.md` Entries 44–45; `notes/session-11-summary.md`.
+
 **Step 3: Working hours.**
 - The plugin presents an interface for configuring working days and per-day start/end times.
 - Default values: Monday through Friday, 9:00 AM to 5:00 PM.
@@ -296,6 +315,24 @@ User reviews → clicks **Schedule** → the native Gmail Schedule Send mechanis
 **(j) Cache TTL for manual selections — indefinite.** Manual timezone selections are explicit user-entered data and **do not expire**. (Contrast with the original §5.4.2 90-day TTL, which was framed for *auto-detected* data. With auto-detection removed in Session 9, there is no auto-detected data in Free v1, and the TTL framing changes: **manual entries persist until the user clears them via the Settings panel** — §5.8.2 "Recipient Timezone Cache" bulk action.)
 
 **(k) Shared timezone picker component (binding architectural constraint).** The IANA timezone dropdown used in this Optimize-for-X inline picker (item i) **MUST be the same component implementation** used by onboarding (§5.1.3, Step 2). Both pickers share UI, behaviour, search interface, and content. Any improvement to one applies to the other automatically. This is a **binding architectural constraint, not guidance** — to prevent silent drift between the two pickers over the lifetime of the product. Session-10 implementation note: factor the timezone picker into a shared component on first use rather than duplicating.
+
+> **Session-11 amendment (2026-05-20, owner-directed).** The shared picker is
+> now a **searchable combobox over a curated timezone dataset**
+> (`src/lib/timezone/curated-timezones.ts`), NOT the raw ~600-entry IANA list.
+> It shows friendly offset-labelled groups ("(UTC+5:30) India, Sri Lanka —
+> Mumbai, Delhi, Bengaluru, Colombo (IST)"), matches a typed
+> city/country/abbreviation/legacy-IANA-name/offset, and **emits a canonical
+> IANA id** on selection (stored data unchanged; legacy/browser ids resolve to
+> their group for display only, never silently migrated). All-caps queries
+> match abbreviations case-sensitively ("IST" → India/Israel, not "Istanbul").
+> It also renders the user's **Pinned Timezones** (§5.1.3 Step 2) in a "Pinned"
+> section above "All timezones" via a `pinnedIanaIds` prop — in this §5.3.5 (i)
+> inline picker the pins are threaded from the user's stored `pinnedTimezones`.
+> The component is self-styled (co-located scoped `<style>`) so it renders
+> identically on the onboarding page and inside this modal's Shadow DOM, and
+> its popup is a fixed overlay (no modal scrollbar, no clipping). The spec-(k)
+> single-component lock is unchanged and still holds (one chunk, both
+> consumers). `notes/owner-decisions-log.md` Entry 44.
 
 **(l) No "I don't know" hint or fallback heuristic.** If the user doesn't know the recipient's timezone, the correct product behaviour is to **not use Optimize-for-X for this send** — uncheck the Optimize checkbox and use Quick Options instead. The product does **not** engineer a workaround (an "I don't know" default, a "use my timezone" hint, or any heuristic guess) that would pollute the cache with low-quality timezone data and silently degrade future optimizations for that recipient.
 
@@ -715,6 +752,12 @@ Accessible via:
 - Display the user's email address (read-only).
 - Display the user's current timezone with an option to override.
 - A "Refresh from Google Calendar" button to re-fetch the timezone setting.
+- **Pinned Timezones (Session-11 amendment, 2026-05-20).** View / add / remove
+  the user's pinned zones (`state.pinnedTimezones`, up to `MAX_PINNED_TIMEZONES`
+  = 5; PRD §5.1.3 Step 2). Onboarding is currently the ONLY place to set them,
+  so this surface is needed for any later edit (and for upgraded users, who
+  start with none by migration design). Reuse the onboarding Step-2 chips +
+  add-picker pattern. **Not yet built** — tracked in `PRE_LAUNCH_CHECKLIST.md`.
 
 **Working Hours**
 - Per-day toggle and time pickers.
