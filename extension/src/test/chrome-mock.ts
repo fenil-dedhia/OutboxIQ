@@ -3,13 +3,29 @@
 
 let store: Record<string, unknown> = {};
 
+type StorageChangeListener = (
+  changes: Record<string, chrome.storage.StorageChange>,
+  area: string,
+) => void;
+let storageListeners: StorageChangeListener[] = [];
+
 export function resetChromeStore(): void {
   store = {};
+  storageListeners = [];
 }
 
 /** Directly seed storage for tests (e.g. a resumable onboarding draft). */
 export function seedStorage(values: Record<string, unknown>): void {
   Object.assign(store, values);
+}
+
+/** Fire a chrome.storage.onChanged event to registered listeners. Lets a test
+ * exercise live cross-context paths (e.g. the §5.8.2 → open-modal pin sync). */
+export function emitStorageChange(
+  changes: Record<string, chrome.storage.StorageChange>,
+  area = "local",
+): void {
+  for (const cb of [...storageListeners]) cb(changes, area);
 }
 
 export function installChromeMock(): void {
@@ -26,12 +42,18 @@ export function installChromeMock(): void {
       },
       // chrome.storage.onChanged surface — content-script.ts subscribes to
       // it for the post-Session-10 live-onboarding-upgrade path; config-
-      // cache.ts also uses it to keep the §5.5.1 snapshot fresh.
-      // Minimal addListener/removeListener pair; tests that need to fire
-      // a change can grab the listener list off the mock if they want.
+      // cache.ts keeps the §5.5.1 snapshot fresh; the §5.3 modal keeps its
+      // pinned list live (§5.8.2 → open-modal sync). Listeners are registered
+      // so a test can drive them via emitStorageChange(); nothing fires
+      // automatically on set(), so existing tests are unaffected.
       onChanged: {
-        addListener: () => undefined,
-        removeListener: () => undefined,
+        addListener: (cb: StorageChangeListener) => {
+          storageListeners.push(cb);
+        },
+        removeListener: (cb: StorageChangeListener) => {
+          const i = storageListeners.indexOf(cb);
+          if (i >= 0) storageListeners.splice(i, 1);
+        },
       },
     },
     runtime: {

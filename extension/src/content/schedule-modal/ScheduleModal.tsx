@@ -56,6 +56,7 @@ import {
 } from "./schedule-actions";
 import { WorkingHoursWarning } from "./WorkingHoursWarning";
 import { OptimizeSection, type OptimizeChoice } from "./OptimizeSection";
+import { useLivePinnedTimezones } from "./use-live-pinned-timezones";
 import { computeOptimizeSendTime } from "../../lib/schedule/optimize-time";
 import { setManualRecipientTimezone } from "../../lib/recipient-cache";
 import type { ComposeRecipient } from "../compose/compose-recipients";
@@ -141,6 +142,11 @@ export function ScheduleModal({
   // state-updater side effect (StrictMode-safe).
   const warningRef = useRef<PendingWarning | null>(null);
   warningRef.current = warning;
+
+  // §5.8.2 live link: pins reorder/add/remove from the Settings page reflect in
+  // this open modal's §5.3.5 (i) picker without reopening (owner UX call,
+  // Session 12). Scoped to pins only — timezone/presets/boundaries stay frozen.
+  const livePinnedTimezones = useLivePinnedTimezones(pinnedTimezones);
 
   const now = useMemo(() => new Date(), []);
   const presets = useMemo(() => computePresets(now, timezone), [now, timezone]);
@@ -494,7 +500,7 @@ export function ScheduleModal({
         <OptimizeSection
           recipients={recipients}
           userTimezone={timezone}
-          pinnedTimezones={pinnedTimezones}
+          pinnedTimezones={livePinnedTimezones}
           onChange={setOptimize}
           onEngage={() => setSelection(null)}
           resetSignal={optimizeReset}
