@@ -168,8 +168,17 @@ The onboarding flow opens automatically on install, and again on browser startup
 > section above "All timezones"). Onboarding **pre-selects 5 defaults**
 > (PST/EST/GMT/CET/IST → `America/Los_Angeles`, `America/New_York`,
 > `Europe/London`, `Europe/Berlin`, `Asia/Kolkata`), shown as removable chips
-> with an add-picker and a **Skip** link (Skip → empty). The 5-pin cap is
-> enforced in the UI ("Maximum 5 pinned timezones"). Stored as
+> with an add-picker. The 5-pin cap is enforced in the UI; at the cap the
+> message reads "Maximum 5 pinned timezones. Remove one to add another, or
+> **remove all**" ("remove all" clears to empty — it replaced the earlier
+> standalone "Skip" link; owner UX 2026-05-20). The user's-own timezone is the
+> **visually primary** block (tinted card + emphasised label); pinned is the
+> optional secondary block. **Back-reverts edits:** a step's settings commit
+> only on **Continue** — **Back** restores the step's on-entry state, so
+> accidentally clearing the pre-selected pins then going Back does not lose
+> them (`useOnboarding` `stepEntrySnapshot`, all steps; memory-only — a hard
+> refresh resumes from the persisted draft per §5.1.4 as an implicit commit).
+> Stored as
 > `pinnedTimezones: string[]` (canonical IANA ids) on the §7.2 state
 > (SCHEMA_VERSION 2→3, additive default-merge migration → `[]`). **Migration
 > discipline:** existing/upgraded users are **NOT** silently pinned — the

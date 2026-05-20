@@ -1807,6 +1807,23 @@ that preceded the §5.3.5/§5.4 build. They qualify; Entries 26 and 27.
   potential surprise (everyone suddenly has 5 pins after an update) into a
   deliberate, tested migration. The cheapest place to get migration semantics
   right is in the feature spec, not in a post-launch bug report.
+- **Hands-on addendum (2026-05-20, same session).** Owner hands-on of the
+  rendered Step 2 produced three further calls, the third trajectory-worthy:
+  (1) fold the standalone "Skip" link into the at-cap message as an inline
+  "remove all"; (2) make the user's-own timezone visually primary (it's the
+  required setting, but the colourful optional pinned chips were drawing the
+  eye first); (3) **commit-on-Continue** — a step's settings now change only
+  when the user clicks Continue; **Back restores the step's on-entry state**.
+  This last one is a genuine onboarding-model change: the prior build wrote
+  every edit straight to the persisted draft, so clicking "remove all" then
+  "Back" *kept* the cleared pins — which felt like data loss for someone just
+  exploring the steps. Claude had built the straightforward continuous-write
+  model (correct for §5.1.4 resume, wrong for the felt safety of Back); the
+  owner named the principle ("until Continue, a step's settings shouldn't
+  change") and Claude implemented it as a per-step on-entry snapshot that Back
+  restores, kept memory-only so §5.1.4 resume still works. Same Entry-43/44
+  lesson once more: the data model can be technically sound and still feel
+  unsafe in the hand — and only hands-on navigation surfaces it.
 
 ---
 

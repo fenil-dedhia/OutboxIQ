@@ -124,6 +124,20 @@ clean throughout. Tier-split audit clean (no `premium-v1` imports). Shared
 Two entries appended: **44** (curated dataset over raw IANA + the hands-on
 picker-UX refinements) and **45** (Pinned Timezones as a new feature).
 
+## g2. Post-hands-on Step-2 refinements (2026-05-20, owner)
+
+After the close-out commit, owner hands-on of the rendered onboarding Step 2
+drove three more changes (commit `680cc66`; owner-decisions Entry 45 addendum):
+(1) the standalone "Skip" link folded into the at-cap message as an inline
+"**remove all**"; the long footer dropped, its gist moved under the timezone
+field. (2) The user's-own timezone made **visually primary** (tinted card +
+bold label) so the eye lands there before the optional pinned chips. (3)
+**Commit-on-Continue**: a step's edits commit only on Continue; **Back restores
+the step's on-entry snapshot** (`useOnboarding`), so accidentally clearing the
+pre-selected pins then going Back no longer loses them — applies to all steps,
+memory-only so §5.1.4 resume is unaffected. 240 tests green. PRD §5.1.3
+amendment updated.
+
 ## h. Session 12 opening sequence (handoff)
 
 1. Build the §5.8 Settings panel (pinned-timezone management + manual-cache
