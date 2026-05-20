@@ -138,6 +138,18 @@ pre-selected pins then going Back no longer loses them — applies to all steps,
 memory-only so §5.1.4 resume is unaffected. 240 tests green. PRD §5.1.3
 amendment updated.
 
+## g3. Curated-label "Option B" grammar (2026-05-20, owner)
+
+Owner re-opened the row-grouping choice and picked a 4th custom option (commit
+`36b3dea`; owner-decisions Entry 44 addendum). The labels now follow a fixed
+grammar: zone-name + cities (grouped country-by-country, no country names) |
+single country + its cities | bare country list — never a country name mixed
+with another country's cities; never interleaved cities. India/Sri Lanka,
+UK/Ireland/Portugal, Thailand/Vietnam/Indonesia and Japan/Korea split into
+one-country rows (new IANA ids Europe/Dublin, Europe/Lisbon, Asia/Colombo,
+Asia/Ho_Chi_Minh). ~68 rows; 240 tests green (the ICU validator re-verified the
+new split zones). The CLAUDE.md "Locked decisions" bullet carries the grammar.
+
 ## h. Session 12 opening sequence (handoff)
 
 1. Build the §5.8 Settings panel (pinned-timezone management + manual-cache

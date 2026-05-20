@@ -1775,6 +1775,23 @@ that preceded the §5.3.5/§5.4 build. They qualify; Entries 26 and 27.
   The felt experience of a list — scan-ability, grouping intuition, overflow
   behaviour — is made in hands-on iteration, and the owner doing that iteration
   was the load-bearing contribution.
+- **Addendum (2026-05-20, same session) — "split the worst" → the Option-B
+  label grammar.** A further hands-on pass found the labels still read as a
+  jumble in two specific ways the owner articulated as rules: (1) a row must
+  not interleave one country's cities with another's ("New York, Miami,
+  Toronto", not "…, Toronto, Miami"); (2) a row must not name a country
+  *and* list another country's cities — "India, Sri Lanka — …, Colombo" makes
+  it unclear Colombo is Sri Lankan. The owner asked to re-open the original
+  3-way granularity choice, weighed it, and picked a **4th custom option**:
+  every label is now either a recognised *zone name + cities* (cities grouped
+  by country, no country names), a *single country + its cities*, or a *bare
+  country list* — never mixed. India/Sri Lanka, UK/Ireland/Portugal,
+  Thailand/Vietnam/Indonesia, Japan/Korea split into one-country rows. Claude's
+  earlier "split the worst" (Entry-44 main) was a *granularity* fix; this was a
+  *grammar* fix the owner derived from two clean rules — and it generalised
+  better than any of the three options Claude had offered. Lesson: when the
+  options you present all feel slightly off to the user, the right move is
+  often a rule they can state, not an option they can pick — capture the rule.
 
 ## Entry 45 — Pinned Timezones: a new feature, specified with migration discipline
 
