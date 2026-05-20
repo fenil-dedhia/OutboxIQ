@@ -1612,18 +1612,120 @@ that preceded the §5.3.5/§5.4 build. They qualify; Entries 26 and 27.
   win* wasn't the new name — it was confirming the Entry-30
   framework worked in practice exactly as designed.
 
-Session 10 — no entries this session.
+## Entry 42 — The install-time activation gap: owner overruled Claude's "acceptable MVP" deferral
 
-(The session was pure implementation against the Entry-40 locked §5.3.5
-spec + the Phase-1 Default-boundaries spec-code alignment also tracked
-in the Entry-40 close-out. No owner trajectory input during execution;
-the architectural choices made by Claude — locale-independent compose
-`input[name="to"|"cc"]` anchors with fail-open semantics, the
-`commitOptimize`-bypasses-`gate` seam for the §5.5 Case-1 exception,
-making `recipient-cache.isCacheEntryFresh` source-aware for spec (j) —
-were spec-faithful implementation details, not new directional calls.
-The session-10 prompt itself explicitly flagged "no entries this
-session" as the acceptable outcome under this shape.)
+- **Session:** 10 (hands-on verification phase, *after* the §5.3.5 build
+  landed). Note: a "Session 10 — no entries" line was written at the
+  early close-out, when the session looked like pure spec-faithful
+  implementation. The hands-on phase then produced two real entries
+  (this + Entry 43); the premature "no entries" line was removed. The
+  lesson there is itself worth noting — *don't close the log before the
+  session is actually over.*
+- **Moment:** The owner loaded the built extension with Gmail already
+  open and the Optimize/relabel features never activated. After
+  diagnosing it together (Chrome MV3 does not retro-inject content
+  scripts into already-open tabs; the static `content_scripts`
+  declaration only fires on the *next* page load), the owner said:
+  *"We should find a better onboarding experience. Most users will not
+  refresh their Gmail. Is there a way to force trigger our version
+  somehow that will work cleanly and consistently every time after
+  install?"*
+- **My input (owner):** Rejected "refresh required" as a real-user
+  experience and demanded install-time activation that works without
+  any manual refresh, in both scenarios (Gmail open before install /
+  opened after).
+- **What Claude Code had already done (the honest, non-flattering
+  counterfactual):** This is not a "Claude would have missed it" case —
+  it is worse. Claude had **already seen this behaviour in an earlier
+  session and deliberately deferred it**, writing it into
+  `content-script.ts` and CLAUDE.md as an *"acceptable MVP limitation —
+  a tab already open picks this up on its next Gmail load; a live
+  re-check is deliberately not built."* That judgement was made from a
+  developer's chair (devs refresh constantly) and was wrong for real
+  users, who install an extension and expect it to just work. Left
+  alone, Fashionably Late would have shipped with a silent first-run
+  failure: install → nothing happens → no feedback → uninstall. The
+  owner, reasoning as a *user* rather than a *developer*, caught a
+  launch-quality activation bug that Claude had explicitly rationalised
+  as fine.
+- **Outcome:** Two-part fix. (1) `content-script.ts` subscribes to
+  `chrome.storage.onChanged` so a tab open during onboarding upgrades
+  the instant "Finish Setup" writes (latched, idempotent). (2) The
+  service worker hot-injects the content script into all open Gmail
+  tabs on `onInstalled` via `chrome.scripting` (new `scripting`
+  permission). Owner verified live: *"works fine now."* CLAUDE.md
+  "acceptable MVP" gotcha resolved + manifest-permissions note updated.
+- **Lesson (for coaching):** A deferral logged as "acceptable MVP" is
+  still a *decision*, and it inherits the blind spot of whoever made
+  it. Claude's deferrals are most dangerous exactly when they sound
+  reasonable from an implementer's view but fail a user's view —
+  install-time activation is the canonical example. When the owner's
+  product instinct contradicts a logged "acceptable" deferral, the
+  deferral deserves re-examination, not defence. (Pairs with Entry 27,
+  where a deferral was *reframed*; here a deferral was *overturned*.)
+- **Artifact:** commits `a3a5035` (storage-listener), `d7e5dd6`
+  (hot-inject + `scripting` permission); CLAUDE.md repo-status +
+  manifest-permissions update; `notes/session-10-summary.md`.
+
+## Entry 43 — Hands-on rendering corrected the docs-only-locked §5.3.5 UX
+
+- **Session:** 10 (hands-on UI-iteration phase). The §5.3.5 UX was
+  locked **docs-only** in Entry 40 (Session 9), items (a)–(n), with the
+  explicit framing "ready for Session 10 build."
+- **Moment:** Once the spec was rendered in the real modal and exercised
+  against live Gmail, the owner drove a rapid screenshot-by-screenshot
+  iteration that surfaced several issues the prose lock could not have
+  anticipated: (i) the To/CC suffix on each recipient ("Sarah Chen
+  (To)") read as noise → **dropped** (PRD §5.3.5 (c) amended); (ii) the
+  tooltip's "based on general research, not Fashionably Late tracking"
+  disclaimer read as awkward over-justification → **trimmed** (§5.3.5
+  (g) amended; §11 stays binding on *behaviour*, was never a copy
+  requirement); (iii) the "Optimize timing for" panel appearing on
+  checkbox-engage before a recipient was chosen → **gated on selection**
+  to enforce a who→when order (§5.3.5 (m) amended); plus a series of
+  pure-CSS problems no spec would ever specify (one-line layout,
+  body-vs-label font size, dropdown sizing, the open-menu overlapping
+  "for", long-email overflow + chevron-overlap truncation, section
+  divider spacing).
+- **My input (owner):** Supplied the design judgement and the specific
+  corrections, screenshot by screenshot, including the *preferred*
+  resolution for tradeoffs (e.g. wrap long emails to the next line
+  rather than ellipsis-truncate the label; truncate the `<select>`
+  button but show the full value in the open menu).
+- **What Claude Code would have done without it:** Built faithfully to
+  the literal Entry-40 spec and stopped — shipping the (To)/(CC)
+  suffix, the awkward disclaimer, the un-gated panel, and the overflow
+  bugs. All *functional*, all visibly rough. Claude's contribution in
+  this phase was execution + a couple of honest tradeoff framings (the
+  Gmail-username-length question; wrap-vs-truncate), not the design
+  direction.
+- **Outcome:** Six UI-polish commits (`ae72470`…`d91a886`); PRD §5.3.5
+  (c)/(g)/(m) amendments; the feature now matches Gmail's native modal
+  aesthetic and handles the long-email edge cleanly. Plus a separate
+  pre-requisite fix: the originally-shipped compose-recipient DOM
+  anchors (`input[name="to"|"cc"]` + doc-wide `[email]`) were a Claude
+  implementation guess that the original close-out had honestly flagged
+  as un-verified-live (3/5 confidence); they were simply *wrong* against
+  real Gmail (0 / 477-inbox-wide matches). A live probe
+  (`research/compose-recipients-probe.{js,md}`) found the real anchor
+  (`div[role="option"][data-hovercard-id]`) and the module was
+  re-anchored (`a052e6e`).
+- **Lesson (for coaching):** Docs-only UX locking (Entry 40's method)
+  reliably nails *structure and logic* — it caught the §5.5 trigger
+  collision and locked the data model, which held up perfectly. But it
+  **cannot** anticipate rendered presentation: spacing, type scale,
+  overflow, control affordances, and the felt sense of interaction
+  order. "Ready for build" is not "ready to ship"; the gap between them
+  is hands-on iteration, and that iteration is where the actual UX is
+  made, not merely polished. Corollary, from the compose-recipient
+  miss: a DOM selector written without a live probe is a *hypothesis*,
+  and shipping it as fact (even with honest confidence-flagging) still
+  means the feature is broken until someone runs it — the probe should
+  precede the build, not follow the bug.
+- **Artifact:** commits `a052e6e`, `ae72470`, `ee84d16`, `71444e4`,
+  `5b2fd96`, `52b514c`, `d91a886`; PRD §5.3.5 (c)/(g)/(m) amendments;
+  `research/compose-recipients-probe.{js,md}`;
+  `notes/session-10-summary.md`.
 
 ---
 

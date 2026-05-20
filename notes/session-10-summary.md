@@ -1,17 +1,62 @@
 # Session 10 — Summary
 
-**Date:** 2026-05-19
+**Date:** 2026-05-19 → 2026-05-20 (build + hands-on verification phase)
 
-> **Session-10 scope (from the prompt).** Two phases sequenced
-> deliberately: **Phase 1** — Default-boundaries spec-code alignment
-> in `WorkingHoursStep.tsx` (the one drift Entry 40 close-out flagged
-> for Session 10); **Phase 2** — build the §5.3.5 Optimize-for-X UI
-> against the locked PRD §5.3.5 items (a)–(n) + the Entry-40 §5.5
-> Case-1 exception. Both phases landed green. This is **pure
-> implementation against locked spec** — no owner trajectory input
-> during the session, so `notes/owner-decisions-log.md` carries the
-> single line `Session 10 — no entries this session.` (the prompt
-> explicitly noted this as the acceptable outcome).
+> **⚠️ AUTHORITATIVE ADDENDUM — read first (2026-05-20).** §a–§i below
+> were written at an *early* close-out, right after the §5.3.5 build
+> landed and before any hands-on verification. They are accurate as a
+> record of the build phase but are **superseded where they conflict**
+> by this addendum. The session did not end at the build — it continued
+> into a substantial **hands-on verification + UX-iteration phase** that
+> (1) found the shipped feature didn't actually work against live Gmail,
+> (2) found it didn't activate on install, and (3) refined the rendered
+> UX across six commits. The early "Session 10 — no entries this
+> session" line in the owner-decisions-log was **removed** — the
+> hands-on phase produced two genuine entries (**42** + **43**).
+>
+> **What the hands-on phase produced:**
+> - **§5.3.5 was broken on real Gmail (fixed).** The shipped
+>   compose-recipient DOM anchors (`input[name="to"|"cc"]` + doc-wide
+>   `[email]`) returned 0 / 477-inbox-wide — the Optimize section never
+>   appeared. A live probe (`research/compose-recipients-probe.{js,md}`)
+>   found the real anchor `div[role="option"][data-hovercard-id]`
+>   (email = `data-hovercard-id`, name = `data-name`, To/CC via a
+>   walked-up aria-label). Re-anchored + tests rewritten to the
+>   probe-verified shape (`a052e6e`). This was the un-verified-live
+>   shortcut §c flagged at 3/5 — it materialised exactly as flagged.
+> - **Install-time activation gap (fixed) — owner-decisions Entry 42.**
+>   Chrome MV3 doesn't retro-inject content scripts into already-open
+>   tabs, so installing with Gmail open did nothing. Fixed two ways:
+>   `chrome.storage.onChanged` live-upgrade in the content script
+>   (`a3a5035`) + service-worker hot-inject via `chrome.scripting`
+>   (new `scripting` permission, `d7e5dd6`). Owner verified: works.
+> - **UX iteration (6 commits) — owner-decisions Entry 43.** Owner-driven
+>   screenshot iteration: dropped (To)/(CC) suffix (PRD §5.3.5 (c)),
+>   trimmed the tooltip disclaimer (§5.3.5 (g)), gated the timing panel
+>   on a selected recipient — who→when order (§5.3.5 (m)), plus pure-CSS
+>   fixes (one-line layout, body-size timing font, dropdown sizing,
+>   open-menu clearing "for", long-email wrap, chevron-overlap
+>   truncation, divider spacing). Commits `ae72470`…`d91a886`.
+> - **Test count: 184** (was 143 at session open; +4 from the probe-fix
+>   regression tests on top of the +37 build tests). All green;
+>   typecheck/lint/format/build clean throughout.
+> - **Pushed:** everything is on `origin/main` (final push reached
+>   `d91a886`).
+> - **The one un-verified-live path remaining (deferred by owner to a
+>   later session):** the full *cache-miss → manual timezone pick →
+>   confirmation line → real native scheduled send* chain, and the
+>   cache-hit-on-second-use round-trip. Recipient detection, layout,
+>   gating, and install activation ARE live-verified; the
+>   pick-tz-and-actually-schedule chain is unit-tested but not yet
+>   driven end-to-end on live Gmail.
+
+> **Session-10 scope (from the prompt — build phase).** Two phases
+> sequenced deliberately: **Phase 1** — Default-boundaries spec-code
+> alignment in `WorkingHoursStep.tsx`; **Phase 2** — build the §5.3.5
+> Optimize-for-X UI against the locked PRD §5.3.5 items (a)–(n) + the
+> Entry-40 §5.5 Case-1 exception. Both landed green. (The "no entries
+> this session" framing below was written here, before the hands-on
+> phase overturned it — see the addendum above.)
 
 ## a. What this session accomplished
 
