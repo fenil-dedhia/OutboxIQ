@@ -10,10 +10,7 @@
 //   3. Alphabetical-by-continent ordering buries the regions most users live
 //      in behind Africa.
 // This dataset replaces raw-IANA display with a curated list of timezone
-// GROUPS, each labelled by UTC offset + a short region/country + representative
-// cities + (unambiguous) abbreviations, and each carrying a rich searchTerms
-// array so a familiar city/country/abbreviation/old-IANA-name resolves to the
-// right group. The STORED value is always a canonical IANA identifier
+// GROUPS. The STORED value is always a canonical IANA identifier
 // (`ianaIdentifier`); the friendly `label` is display only.
 //
 // ─── Data source & verification (2026-05-20) ─────────────────────────────
@@ -32,53 +29,53 @@
 //   • Samoa, Fiji — DST suspended/abolished (now fixed offset).
 //
 // ─── Design decisions encoded here ───────────────────────────────────────
-// D1. `offset` is the zone's STANDARD-time UTC offset. It is a DISPLAY +
-//     SORT key ONLY and is NEVER used for time math. All real scheduling
-//     offsets are resolved DST-correctly from `ianaIdentifier` via Intl in
-//     schedule/optimize-time.ts. So labelling Los Angeles "(UTC-8:00)"
-//     year-round (it is -7 in summer) is the intentional, OS-picker-standard
-//     convention; the (PST/PDT) abbreviation pair signals DST applies.
-// D2. Entries are keyed by (standard offset + DST behaviour), NOT by offset
-//     alone. Two regions that share a standard offset but differ in DST get
-//     SEPARATE entries — required for correctness, because mapping a no-DST
-//     recipient onto a DST IANA id (or vice-versa) is wrong by an hour for
-//     half the year (US Central vs. Mexico City; Mountain vs. Arizona;
-//     US Eastern vs. Bogotá; Sydney vs. Brisbane).
-// D3. ONE descriptor before the em-dash (a recognised zone name like "Pacific
-//     Time" / "Central European Time", OR a single country, OR a tight
-//     regional pair), then representative CITIES after it. NEVER a country
-//     listed alongside its own cities, never a name repeated. Offsets shared
-//     by several UNRELATED sovereign nations are SPLIT into one row per
-//     country/place (each storing its own IANA id) rather than jammed onto a
-//     single line — owner UX call (Session 11): "totally different countries"
-//     on one row read as a jumble (the old "China, Singapore, Hong Kong,
-//     Taiwan, … — Beijing, Shanghai, Singapore" row that named Singapore
-//     twice). Single-country / coherent-regional offsets stay one short row.
-// D4. `ianaIdentifier` = the most-canonical zone for the place. The stored
-//     value is always a current canonical IANA id.
+// D1. `offset` is the zone's STANDARD-time UTC offset. DISPLAY + SORT key
+//     ONLY — never used for time math (resolved DST-correctly from
+//     `ianaIdentifier` via Intl in schedule/optimize-time.ts). Labelling Los
+//     Angeles "(UTC-8:00)" year-round is the OS-picker-standard convention;
+//     the (PST/PDT) pair signals DST applies.
+// D2. Entries are keyed by (standard offset + DST behaviour), NOT offset
+//     alone — mapping a no-DST recipient onto a DST IANA id (or vice-versa)
+//     is wrong by an hour for half the year (US Central vs. Mexico City;
+//     Mountain vs. Arizona; US Eastern vs. Bogotá; Sydney vs. Brisbane).
+// D3. LABEL GRAMMAR (owner UX, Session 11 — the cleanliness rules). After the
+//     "(UTC±H:MM) " prefix, a label is exactly ONE of:
+//       (a) a recognised ZONE NAME + representative cities, cities grouped
+//           country-by-country, NO country names — e.g.
+//           "Eastern Time — New York, Miami, Toronto (EST/EDT)";
+//       (b) a SINGLE country + its own cities — e.g.
+//           "India — Mumbai, Delhi, Bengaluru (IST)";
+//       (c) a single place (city-state / territory) — e.g. "Singapore";
+//       (d) a bare LIST OF COUNTRIES, no cities — e.g.
+//           "Colombia, Peru, Ecuador" / "Saudi Arabia, Iraq, Kuwait, Qatar".
+//     NEVER mix a country name with another country's cities (so India and
+//     Sri Lanka are SEPARATE rows, not "India, Sri Lanka — …, Colombo"), and
+//     never interleave countries' cities ("New York, Miami, Toronto", not
+//     "New York, Toronto, Miami"). Multi-sovereign offsets with no dominant
+//     country use form (d); where one country dominates (UAE→Dubai) it gets
+//     form (b) and the rest fold into searchTerms. Every name dropped from a
+//     label stays in searchTerms, so findability is unchanged.
+// D4. `ianaIdentifier` = the most-canonical zone for the place. Always a
+//     current canonical IANA id.
 // D5. Ambiguous abbreviations are omitted from labels, kept in searchTerms.
-//     "CST" (US Central vs. China) → shown only for US Central. "BST"
-//     (British Summer vs. Bangladesh Standard) → shown only for the UK. "IST"
-//     (India / Israel) is well-known per region and intentionally appears in
-//     both entries' searchTerms (see INTENTIONAL_SHARED_TERMS in the test).
-//     The all-caps search rule (search.ts) matches abbreviations
-//     case-sensitively, so typing "IST" finds India/Israel, not "Istanbul".
+//     "CST" (US Central vs. China) → US Central only. "BST" (British Summer
+//     vs. Bangladesh) → UK only. "IST" (India / Israel) intentionally in both
+//     those entries' searchTerms (Ireland's "Irish Standard Time" is NOT
+//     tagged, to keep the IST set to the two well-known ones). The all-caps
+//     search rule (search.ts) matches abbreviations case-sensitively, so
+//     typing "IST" finds India/Israel, not "Istanbul".
 // D6. Deprecated / alternative IANA ids and obscure same-region zones are NOT
-//     separate dropdown rows — they live in the relevant entry's searchTerms.
-//     Typing "Calcutta", "Saigon", "Godthab" or "McMurdo" resolves to the
-//     correct group.
+//     separate dropdown rows — they live in searchTerms. Typing "Calcutta",
+//     "Saigon", "Godthab" or "McMurdo" resolves to the correct group.
 // D7. Offset-string queries ("+5:30", "gmt+5:30", "0530") are matched at query
 //     time against the `offset` field by the picker, NOT duplicated into all
 //     searchTerms arrays.
-// D8. No "(no DST)" notes in labels (owner UX call, Session 11 — they were
-//     noise on the majority of rows). DST is signalled positively: by the
-//     standard/daylight abbreviation pair (PST/PDT) where one exists, or by a
-//     bare "(DST)" tag on the few DST zones with no well-known abbreviation
-//     (Chile, Greenland, Azores, Chatham). The absence of any DST marker means
-//     the zone is fixed-offset.
+// D8. No "(no DST)" notes in labels. DST is signalled positively: the
+//     standard/daylight abbreviation pair (PST/PDT) where one exists, or a
+//     bare "(DST)" on the few DST zones with no well-known abbreviation
+//     (Chile, Greenland, Azores, Ireland, Chatham). No marker = fixed offset.
 //
-// Entries with thin/edge populations or imperfect folds are tagged FLAG in a
-// trailing comment; see the decisions summary for the owner-review list.
+// Entries with thin/edge populations or imperfect folds are tagged FLAG.
 
 /** A curated, display-friendly timezone group backed by a canonical IANA id. */
 export interface CuratedTimezone {
@@ -86,8 +83,7 @@ export interface CuratedTimezone {
    * "-08:00", "+00:00". DISPLAY + SORT ONLY — never used for time math (D1). */
   offset: string;
 
-  /** The dropdown label, rendered verbatim. Format:
-   * "(UTC±H:MM) Descriptor — City, City (ABBR/ABBR)". */
+  /** The dropdown label, rendered verbatim (see the D3 grammar). */
   label: string;
 
   /** Canonical IANA id stored when this entry is picked (D4). */
@@ -123,15 +119,16 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
     ],
     abbreviations: null,
     observesDST: false,
-  }, // FLAG: no inhabited region — OS-picker parity only; owner kept (Session 11).
+  }, // FLAG: no inhabited region — OS-picker parity only.
   {
     offset: "-11:00",
-    label: "(UTC-11:00) American Samoa, Niue — Pago Pago",
+    label: "(UTC-11:00) American Samoa, Niue",
     ianaIdentifier: "Pacific/Pago_Pago",
     searchTerms: [
       "american samoa",
       "pago pago",
       "niue",
+      "alofi",
       "midway",
       "sst",
       "samoa standard",
@@ -167,7 +164,7 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
   {
     offset: "-08:00",
     label:
-      "(UTC-8:00) Pacific Time — Los Angeles, Seattle, Vancouver (PST/PDT)",
+      "(UTC-8:00) Pacific Time — Los Angeles, Seattle, San Diego, Vancouver (PST/PDT)",
     ianaIdentifier: "America/Los_Angeles",
     searchTerms: [
       "pacific time",
@@ -175,9 +172,9 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
       "san francisco",
       "seattle",
       "portland",
-      "vancouver",
       "san diego",
       "las vegas",
+      "vancouver",
       "tijuana",
       "baja california",
       "pst",
@@ -188,7 +185,8 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
   },
   {
     offset: "-07:00",
-    label: "(UTC-7:00) Mountain Time — Denver, Calgary (MST/MDT)",
+    label:
+      "(UTC-7:00) Mountain Time — Denver, Salt Lake City, Calgary (MST/MDT)",
     ianaIdentifier: "America/Denver",
     searchTerms: [
       "mountain time",
@@ -213,7 +211,8 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
   }, // D2: Arizona does not observe DST — distinct from Mountain Time (Denver).
   {
     offset: "-06:00",
-    label: "(UTC-6:00) Central Time — Chicago, Dallas, Winnipeg (CST/CDT)",
+    label:
+      "(UTC-6:00) Central Time — Chicago, Dallas, Houston, Winnipeg (CST/CDT)",
     ianaIdentifier: "America/Chicago",
     searchTerms: [
       "central time",
@@ -243,11 +242,10 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
     ],
     abbreviations: null,
     observesDST: false,
-  }, // D2/D3: Mexico dropped DST in 2022 — split from US Central and from Central America.
+  }, // D2: Mexico dropped DST in 2022 — distinct from US Central.
   {
     offset: "-06:00",
-    label:
-      "(UTC-6:00) Central America — Guatemala City, San José, San Salvador",
+    label: "(UTC-6:00) Guatemala, Costa Rica, El Salvador",
     ianaIdentifier: "America/Guatemala",
     searchTerms: [
       "central america",
@@ -264,33 +262,33 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
     ],
     abbreviations: null,
     observesDST: false,
-  },
+  }, // D3(d): country list — no dominant single country at -6 (no DST).
   {
     offset: "-05:00",
-    label: "(UTC-5:00) Eastern Time — New York, Toronto, Miami (EST/EDT)",
+    label: "(UTC-5:00) Eastern Time — New York, Miami, Toronto (EST/EDT)",
     ianaIdentifier: "America/New_York",
     searchTerms: [
       "eastern time",
       "new york",
       "nyc",
-      "toronto",
-      "ottawa",
+      "miami",
+      "boston",
       "washington",
       "washington dc",
-      "boston",
-      "miami",
       "atlanta",
       "philadelphia",
       "detroit",
+      "toronto",
+      "ottawa",
       "est",
       "edt",
     ],
     abbreviations: ["EST", "EDT"],
     observesDST: true,
-  },
+  }, // D3: US cities grouped first (New York, Miami), then Canada (Toronto).
   {
     offset: "-05:00",
-    label: "(UTC-5:00) Colombia, Peru, Ecuador — Bogotá, Lima, Quito",
+    label: "(UTC-5:00) Colombia, Peru, Ecuador",
     ianaIdentifier: "America/Bogota",
     searchTerms: [
       "colombia",
@@ -306,10 +304,10 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
     ],
     abbreviations: null,
     observesDST: false,
-  }, // D2: no-DST -5 bloc, distinct from US Eastern. (Cuba/Havana observes DST → not here.)
+  }, // D3(d): no-DST -5 bloc, distinct from US Eastern. (Cuba observes DST → not here.)
   {
     offset: "-04:00",
-    label: "(UTC-4:00) Atlantic Time — Halifax, Bermuda (AST/ADT)",
+    label: "(UTC-4:00) Atlantic Time — Halifax (AST/ADT)",
     ianaIdentifier: "America/Halifax",
     searchTerms: [
       "atlantic time",
@@ -317,6 +315,7 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
       "nova scotia",
       "new brunswick",
       "bermuda",
+      "hamilton",
       "ast",
       "adt",
     ],
@@ -325,18 +324,17 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
   },
   {
     offset: "-04:00",
-    label: "(UTC-4:00) Venezuela, Bolivia — Caracas, La Paz",
+    label: "(UTC-4:00) Venezuela, Bolivia, Dominican Republic",
     ianaIdentifier: "America/Caracas",
     searchTerms: [
       "venezuela",
       "caracas",
       "bolivia",
       "la paz",
-      "caribbean",
-      "puerto rico",
-      "san juan",
       "dominican republic",
       "santo domingo",
+      "puerto rico",
+      "san juan",
       "guyana",
       "georgetown",
       "manaus",
@@ -344,7 +342,7 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
     ],
     abbreviations: null,
     observesDST: false,
-  }, // D2: no-DST -4 bloc, distinct from Atlantic (Halifax) and Chile (Santiago).
+  }, // D3(d): no-DST -4 bloc, distinct from Atlantic (Halifax) and Chile.
   {
     offset: "-04:00",
     label: "(UTC-4:00) Chile — Santiago (DST)",
@@ -371,7 +369,7 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
   }, // FLAG: small population but the famous North-American half-hour zone.
   {
     offset: "-03:00",
-    label: "(UTC-3:00) Brazil — São Paulo, Rio de Janeiro (BRT)",
+    label: "(UTC-3:00) Brazil — São Paulo, Rio de Janeiro, Brasília (BRT)",
     ianaIdentifier: "America/Sao_Paulo",
     searchTerms: [
       "brazil",
@@ -387,7 +385,7 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
   }, // Brazil abolished DST in 2019.
   {
     offset: "-03:00",
-    label: "(UTC-3:00) Argentina, Uruguay — Buenos Aires, Montevideo",
+    label: "(UTC-3:00) Argentina, Uruguay, Paraguay",
     ianaIdentifier: "America/Argentina/Buenos_Aires",
     searchTerms: [
       "argentina",
@@ -403,7 +401,7 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
     ],
     abbreviations: null,
     observesDST: false,
-  }, // D3: separate sovereign bloc from Brazil. Paraguay permanent UTC-3 since 2024. "America/Buenos_Aires" is the deprecated alias.
+  }, // D3(d): separate sovereign bloc from Brazil. Paraguay permanent -3 since 2024. "America/Buenos_Aires" is the deprecated alias.
   {
     offset: "-02:00",
     label: "(UTC-2:00) Greenland — Nuuk (DST)",
@@ -420,7 +418,7 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
   }, // FLAG: Greenland spans 4 zones (Nuuk -2 ≈ 90% of population). "America/Godthab" is the deprecated alias.
   {
     offset: "-01:00",
-    label: "(UTC-1:00) Azores, Cape Verde — Ponta Delgada, Praia (DST)",
+    label: "(UTC-1:00) Azores, Cape Verde (DST)",
     ianaIdentifier: "Atlantic/Azores",
     searchTerms: [
       "azores",
@@ -431,11 +429,10 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
     ],
     abbreviations: null,
     observesDST: true,
-  }, // FLAG: thin. Azores observes DST; Cape Verde (folded for search) does NOT.
+  }, // FLAG: thin. Azores (the primary) observes DST; Cape Verde (folded for search) does NOT.
   {
     offset: "+00:00",
-    label:
-      "(UTC+0:00) United Kingdom, Ireland, Portugal — London, Dublin, Lisbon (GMT/BST)",
+    label: "(UTC+0:00) United Kingdom — London (GMT/BST)",
     ianaIdentifier: "Europe/London",
     searchTerms: [
       "united kingdom",
@@ -443,21 +440,42 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
       "great britain",
       "britain",
       "england",
+      "scotland",
+      "wales",
       "london",
       "edinburgh",
-      "ireland",
-      "dublin",
-      "portugal",
-      "lisbon",
-      "lisboa",
+      "manchester",
       "gmt",
       "bst",
-      "wet",
       "utc",
     ],
     abbreviations: ["GMT", "BST"],
     observesDST: true,
   },
+  {
+    offset: "+00:00",
+    label: "(UTC+0:00) Ireland — Dublin (DST)",
+    ianaIdentifier: "Europe/Dublin",
+    searchTerms: ["ireland", "dublin", "cork"],
+    abbreviations: null,
+    observesDST: true,
+  }, // D3(b) split from the UK. Abbr omitted: "IST" (Irish Standard Time) collides with India/Israel — bare "(DST)" signals it instead (D5/D8).
+  {
+    offset: "+00:00",
+    label: "(UTC+0:00) Portugal — Lisbon (WET/WEST)",
+    ianaIdentifier: "Europe/Lisbon",
+    searchTerms: [
+      "portugal",
+      "lisbon",
+      "lisboa",
+      "porto",
+      "wet",
+      "west",
+      "western european",
+    ],
+    abbreviations: ["WET", "WEST"],
+    observesDST: true,
+  }, // D3(b) split out.
   {
     offset: "+00:00",
     label: "(UTC+0:00) Iceland — Reykjavík (GMT)",
@@ -468,7 +486,7 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
   }, // D2: no-DST UTC+0, distinct from the UK (which observes BST).
   {
     offset: "+00:00",
-    label: "(UTC+0:00) Ghana, Senegal — Accra, Dakar (GMT)",
+    label: "(UTC+0:00) Ghana, Senegal, Côte d'Ivoire",
     ianaIdentifier: "Africa/Accra",
     searchTerms: [
       "west africa",
@@ -488,9 +506,9 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
       "freetown",
       "gmt",
     ],
-    abbreviations: ["GMT"],
+    abbreviations: null,
     observesDST: false,
-  },
+  }, // D3(d): no-DST UTC+0 West Africa.
   {
     offset: "+01:00",
     label:
@@ -530,10 +548,10 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
     ],
     abbreviations: ["CET", "CEST"],
     observesDST: true,
-  },
+  }, // D3(a): zone name + one major city per country (no country names on the label).
   {
     offset: "+01:00",
-    label: "(UTC+1:00) Nigeria, Algeria — Lagos, Algiers (WAT)",
+    label: "(UTC+1:00) Nigeria, Algeria, DR Congo",
     ianaIdentifier: "Africa/Lagos",
     searchTerms: [
       "west africa",
@@ -556,9 +574,9 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
       "casablanca",
       "wat",
     ],
-    abbreviations: ["WAT"],
+    abbreviations: null,
     observesDST: false,
-  }, // D2: no-DST UTC+1, distinct from CET. Morocco (Casablanca) special-cases a Ramadan dip; folded for search.
+  }, // D2/D3(d): no-DST UTC+1, distinct from CET. Morocco special-cases a Ramadan dip; folded for search.
   {
     offset: "+02:00",
     label:
@@ -609,7 +627,7 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
   }, // D5: "IST" (Israel Standard Time) intentionally collides with India's IST.
   {
     offset: "+02:00",
-    label: "(UTC+2:00) South Africa — Johannesburg, Cape Town (SAST)",
+    label: "(UTC+2:00) South Africa — Johannesburg, Cape Town, Pretoria (SAST)",
     ianaIdentifier: "Africa/Johannesburg",
     searchTerms: [
       "south africa",
@@ -628,7 +646,7 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
   }, // D2: no-DST UTC+2, distinct from EET/Egypt/Israel.
   {
     offset: "+03:00",
-    label: "(UTC+3:00) Russia — Moscow, St Petersburg (MSK)",
+    label: "(UTC+3:00) Russia — Moscow, Saint Petersburg (MSK)",
     ianaIdentifier: "Europe/Moscow",
     searchTerms: [
       "moscow",
@@ -650,7 +668,7 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
   }, // Permanent UTC+3 since 2016. (D5: case-sensitive all-caps search keeps "IST" off "Istanbul".)
   {
     offset: "+03:00",
-    label: "(UTC+3:00) Saudi Arabia, Iraq — Riyadh, Baghdad",
+    label: "(UTC+3:00) Saudi Arabia, Iraq, Kuwait, Qatar",
     ianaIdentifier: "Asia/Riyadh",
     searchTerms: [
       "saudi arabia",
@@ -671,10 +689,10 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
     ],
     abbreviations: null,
     observesDST: false,
-  }, // Arabian Peninsula bloc, permanent UTC+3 no DST (Jordan/Syria 2022).
+  }, // D3(d): Arabian Peninsula bloc, permanent UTC+3 no DST (Jordan/Syria 2022).
   {
     offset: "+03:00",
-    label: "(UTC+3:00) East Africa — Nairobi, Addis Ababa, Dar es Salaam (EAT)",
+    label: "(UTC+3:00) Kenya, Ethiopia, Tanzania (EAT)",
     ianaIdentifier: "Africa/Nairobi",
     searchTerms: [
       "east africa",
@@ -703,7 +721,7 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
   }, // Iran abolished DST in 2022 — the only +3:30 zone in use.
   {
     offset: "+04:00",
-    label: "(UTC+4:00) Gulf — Dubai, Abu Dhabi, Muscat (GST)",
+    label: "(UTC+4:00) United Arab Emirates — Dubai, Abu Dhabi (GST)",
     ianaIdentifier: "Asia/Dubai",
     searchTerms: [
       "gulf",
@@ -720,10 +738,10 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
     ],
     abbreviations: ["GST"],
     observesDST: false,
-  },
+  }, // D3(b): UAE leads (Dubai); Oman/Mauritius fold into search.
   {
     offset: "+04:00",
-    label: "(UTC+4:00) Azerbaijan, Georgia, Armenia — Baku, Tbilisi, Yerevan",
+    label: "(UTC+4:00) Azerbaijan, Georgia, Armenia",
     ianaIdentifier: "Asia/Baku",
     searchTerms: [
       "azerbaijan",
@@ -735,7 +753,7 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
     ],
     abbreviations: null,
     observesDST: false,
-  }, // "georgia" here = the country.
+  }, // D3(d): Caucasus. "georgia" here = the country.
   {
     offset: "+04:30",
     label: "(UTC+4:30) Afghanistan — Kabul",
@@ -777,8 +795,7 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
   },
   {
     offset: "+05:30",
-    label:
-      "(UTC+5:30) India, Sri Lanka — Mumbai, Delhi, Bengaluru, Colombo (IST)",
+    label: "(UTC+5:30) India — Mumbai, Delhi, Bengaluru, Kolkata (IST)",
     ianaIdentifier: "Asia/Kolkata",
     searchTerms: [
       "india",
@@ -794,13 +811,19 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
       "madras",
       "hyderabad",
       "pune",
-      "sri lanka",
-      "colombo",
       "ist",
     ],
     abbreviations: ["IST"],
     observesDST: false,
   }, // "Calcutta" (deprecated Asia/Calcutta) → resolves here; stored value is the canonical Asia/Kolkata.
+  {
+    offset: "+05:30",
+    label: "(UTC+5:30) Sri Lanka — Colombo",
+    ianaIdentifier: "Asia/Colombo",
+    searchTerms: ["sri lanka", "colombo", "ceylon"],
+    abbreviations: null,
+    observesDST: false,
+  }, // D3(b): split from India (owner UX — "India, Sri Lanka — …, Colombo" was ambiguous).
   {
     offset: "+05:45",
     label: "(UTC+5:45) Nepal — Kathmandu",
@@ -843,33 +866,42 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
   }, // "Asia/Rangoon" is the deprecated alias.
   {
     offset: "+07:00",
-    label: "(UTC+7:00) Thailand, Vietnam — Bangkok, Hanoi, Ho Chi Minh (ICT)",
+    label: "(UTC+7:00) Thailand — Bangkok",
     ianaIdentifier: "Asia/Bangkok",
     searchTerms: [
       "thailand",
       "bangkok",
-      "vietnam",
-      "hanoi",
-      "ho chi minh",
-      "ho chi minh city",
-      "saigon",
       "cambodia",
       "phnom penh",
       "laos",
       "vientiane",
       "ict",
     ],
-    abbreviations: ["ICT"],
+    abbreviations: null,
+    observesDST: false,
+  }, // D3(b) split from Vietnam. Cambodia/Laos (also ICT) fold into search.
+  {
+    offset: "+07:00",
+    label: "(UTC+7:00) Vietnam — Hanoi, Ho Chi Minh City",
+    ianaIdentifier: "Asia/Ho_Chi_Minh",
+    searchTerms: [
+      "vietnam",
+      "hanoi",
+      "ho chi minh",
+      "ho chi minh city",
+      "saigon",
+    ],
+    abbreviations: null,
     observesDST: false,
   }, // "Asia/Saigon" is the deprecated alias for Ho Chi Minh City.
   {
     offset: "+07:00",
-    label: "(UTC+7:00) Indonesia (West) — Jakarta",
+    label: "(UTC+7:00) Indonesia — Jakarta",
     ianaIdentifier: "Asia/Jakarta",
     searchTerms: ["indonesia", "jakarta", "surabaya", "bandung", "wib"],
     abbreviations: null,
     observesDST: false,
-  },
+  }, // Western Indonesia (WIB).
   {
     offset: "+08:00",
     label: "(UTC+8:00) China — Beijing, Shanghai, Shenzhen",
@@ -885,7 +917,7 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
     ],
     abbreviations: null,
     observesDST: false,
-  }, // D3/D5: split out per owner. "CST" (China) ambiguous with US Central → searchTerms only.
+  }, // D5: "CST" (China) ambiguous with US Central → searchTerms only.
   {
     offset: "+08:00",
     label: "(UTC+8:00) Hong Kong",
@@ -962,10 +994,10 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
     searchTerms: ["south korea", "korea", "seoul", "busan", "incheon", "kst"],
     abbreviations: ["KST"],
     observesDST: false,
-  }, // D3: split from Japan (corrects the original "Tokyo, Seoul" conflation).
+  }, // D3(b): split from Japan (corrects the original "Tokyo, Seoul" conflation).
   {
     offset: "+09:30",
-    label: "(UTC+9:30) Australia Central — Adelaide (ACST/ACDT)",
+    label: "(UTC+9:30) Australia (Central) — Adelaide (ACST/ACDT)",
     ianaIdentifier: "Australia/Adelaide",
     searchTerms: [
       "australia central",
@@ -983,7 +1015,7 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
   {
     offset: "+10:00",
     label:
-      "(UTC+10:00) Australia Eastern — Sydney, Melbourne, Canberra (AEST/AEDT)",
+      "(UTC+10:00) Australia (Eastern) — Sydney, Melbourne, Canberra (AEST/AEDT)",
     ianaIdentifier: "Australia/Sydney",
     searchTerms: [
       "australia eastern",
@@ -1010,7 +1042,7 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
   }, // D2: Queensland does not observe DST — distinct from NSW/Victoria (Sydney).
   {
     offset: "+10:00",
-    label: "(UTC+10:00) Papua New Guinea, Guam — Port Moresby, Hagåtña",
+    label: "(UTC+10:00) Papua New Guinea, Guam",
     ianaIdentifier: "Pacific/Port_Moresby",
     searchTerms: [
       "papua new guinea",
@@ -1027,7 +1059,7 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
   },
   {
     offset: "+11:00",
-    label: "(UTC+11:00) Solomon Islands, New Caledonia — Honiara, Nouméa",
+    label: "(UTC+11:00) Solomon Islands, New Caledonia",
     ianaIdentifier: "Pacific/Guadalcanal",
     searchTerms: [
       "solomon islands",
@@ -1062,7 +1094,7 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
   }, // McMurdo / South Pole follow NZ time — correct fold. FLAG: Fiji (folded) is now no-DST +12.
   {
     offset: "+12:45",
-    label: "(UTC+12:45) Chatham Islands (NZ) — Waitangi (DST)",
+    label: "(UTC+12:45) Chatham Islands — Waitangi (DST)",
     ianaIdentifier: "Pacific/Chatham",
     searchTerms: ["chatham islands", "chatham", "waitangi"],
     abbreviations: null,
@@ -1070,7 +1102,7 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
   }, // FLAG: tiny population; the only quarter-hour zone east of +12.
   {
     offset: "+13:00",
-    label: "(UTC+13:00) Samoa, Tonga — Apia, Nukuʻalofa",
+    label: "(UTC+13:00) Samoa, Tonga",
     ianaIdentifier: "Pacific/Apia",
     searchTerms: [
       "samoa",
@@ -1085,7 +1117,7 @@ export const CURATED_TIMEZONES: CuratedTimezone[] = [
   }, // Samoa abolished DST; now fixed UTC+13.
   {
     offset: "+14:00",
-    label: "(UTC+14:00) Kiribati (Line Islands) — Kiritimati",
+    label: "(UTC+14:00) Kiribati — Kiritimati",
     ianaIdentifier: "Pacific/Kiritimati",
     searchTerms: [
       "kiribati",

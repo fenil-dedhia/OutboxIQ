@@ -30,11 +30,12 @@ const INTENTIONAL_SHARED_TERMS = new Set([
 ]);
 
 describe("curated-timezones dataset", () => {
-  it("is a sensible curated size (40–65 entries), not the raw IANA list", () => {
-    // Upper bound widened from 50 after the Session-11 "split the worst"
-    // relabel split the crowded Asian +3/+5/+8 and the +4 Gulf/Caucasus rows.
+  it("is a sensible curated size (not the raw IANA list)", () => {
+    // ~68 after the Session-11 "Option B" relabel (one country per row where
+    // no zone-name exists, e.g. India / Sri Lanka split). Bounded so it can't
+    // silently balloon back toward the raw ~600-entry list.
     expect(CURATED_TIMEZONES.length).toBeGreaterThanOrEqual(40);
-    expect(CURATED_TIMEZONES.length).toBeLessThanOrEqual(65);
+    expect(CURATED_TIMEZONES.length).toBeLessThanOrEqual(80);
   });
 
   it("every ianaIdentifier is a valid, Intl-recognised zone", () => {
@@ -188,7 +189,7 @@ describe("curated-timezones searchTerms", () => {
     const find = (term: string) =>
       CURATED_TIMEZONES.find((t) => t.searchTerms.includes(term));
     expect(find("calcutta")?.ianaIdentifier).toBe("Asia/Kolkata");
-    expect(find("saigon")?.ianaIdentifier).toBe("Asia/Bangkok"); // +7 group
+    expect(find("saigon")?.ianaIdentifier).toBe("Asia/Ho_Chi_Minh"); // Vietnam row
     expect(find("rangoon")?.ianaIdentifier).toBe("Asia/Yangon");
     expect(find("godthab")?.ianaIdentifier).toBe("America/Nuuk");
     expect(find("buenos_aires")?.ianaIdentifier).toBe(

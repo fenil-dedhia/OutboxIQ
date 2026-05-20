@@ -104,7 +104,7 @@ describe("TimezonePicker (PRD §5.3.5 (k) shared component)", () => {
     expect(opts[0]).toHaveTextContent("India");
   });
 
-  it("search matches an offset string (+5:30 → India)", () => {
+  it("search matches an offset string (+5:30 → India and Sri Lanka)", () => {
     render(
       <TimezonePicker value={null} onChange={vi.fn()} ariaLabel="picker" />,
     );
@@ -115,9 +115,11 @@ describe("TimezonePicker (PRD §5.3.5 (k) shared component)", () => {
         target: { value: "+5:30" },
       },
     );
-    const opts = screen.getAllByRole("option");
-    expect(opts).toHaveLength(1);
-    expect(opts[0]).toHaveTextContent("India");
+    // Both +5:30 rows match (India and Sri Lanka are now separate rows).
+    expect(screen.getByRole("option", { name: /India/ })).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: /Sri Lanka/ }),
+    ).toBeInTheDocument();
   });
 
   it("zero matches shows the empty state", () => {
