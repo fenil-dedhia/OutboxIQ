@@ -170,12 +170,12 @@ describe("OptimizeSection (PRD §5.3.5 a–n)", () => {
       ).toBeInTheDocument(),
     );
     // Default selection is the placeholder (NOT user's own tz — spec (i)).
-    // The picker is anchored by its <label>; its accessible name is the
-    // prompt, not the placeholder text.
-    const tzSelect = screen.getByRole("combobox", {
+    // The picker (Session 11) is a searchable combobox: its trigger is
+    // anchored by the <label>, and shows the placeholder until a pick.
+    const tzTrigger = screen.getByRole("combobox", {
       name: /what timezone is sarah chen in/i,
-    }) as HTMLSelectElement;
-    expect(tzSelect.value).toBe("");
+    });
+    expect(tzTrigger).toHaveTextContent(/choose their timezone/i);
     // (i): "Remember…" checkbox is default-checked.
     const remember = screen.getByRole("checkbox", {
       name: /remember for future emails to sarah chen/i,
@@ -184,8 +184,17 @@ describe("OptimizeSection (PRD §5.3.5 a–n)", () => {
     // Until the user picks, no complete choice is bubbled up.
     const lastBefore = onChange.mock.calls.at(-1)?.[0];
     expect(lastBefore).toBeNull();
-    // Pick a tz.
-    fireEvent.change(tzSelect, { target: { value: "Europe/London" } });
+    // Pick a tz: open the combobox, search, choose the UK group → Europe/London.
+    fireEvent.click(tzTrigger);
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Search timezones" }),
+      {
+        target: { value: "london" },
+      },
+    );
+    fireEvent.mouseDown(
+      screen.getByRole("option", { name: /united kingdom/i }),
+    );
     await waitFor(() => {
       const last = onChange.mock.calls.at(-1)?.[0] as OptimizeChoice | null;
       expect(last).not.toBeNull();
@@ -207,13 +216,22 @@ describe("OptimizeSection (PRD §5.3.5 a–n)", () => {
     fireEvent.click(
       screen.getByRole("checkbox", { name: /optimize delivery for/i }),
     );
-    const tzSelect = await screen.findByRole("combobox", {
+    const tzTrigger = await screen.findByRole("combobox", {
       name: /what timezone is sarah chen in/i,
     });
     fireEvent.click(
       screen.getByRole("checkbox", { name: /remember for future emails/i }),
     );
-    fireEvent.change(tzSelect, { target: { value: "Europe/London" } });
+    fireEvent.click(tzTrigger);
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Search timezones" }),
+      {
+        target: { value: "london" },
+      },
+    );
+    fireEvent.mouseDown(
+      screen.getByRole("option", { name: /united kingdom/i }),
+    );
     await waitFor(() => {
       const last = onChange.mock.calls.at(-1)?.[0] as OptimizeChoice | null;
       expect(last?.rememberTz).toBe(false);
@@ -310,11 +328,16 @@ describe("OptimizeSection (PRD §5.3.5 a–n)", () => {
     fireEvent.click(
       screen.getByRole("checkbox", { name: /optimize delivery for/i }),
     );
-    // The shared picker exposes its placeholder via the disabled first option;
-    // the option's text "Choose their timezone" is the contract bound by (i).
-    const placeholder = await screen.findByRole("option", {
-      name: /choose their timezone/i,
+    // The shared picker is a searchable combobox: the trigger shows the
+    // placeholder bound by (i), and opening reveals the curated search box —
+    // both unique to the shared TimezonePicker (proving no duplicate dropdown).
+    const trigger = await screen.findByRole("combobox", {
+      name: /what timezone is sarah chen in/i,
     });
-    expect(placeholder).toBeInTheDocument();
+    expect(trigger).toHaveTextContent(/choose their timezone/i);
+    fireEvent.click(trigger);
+    expect(
+      screen.getByRole("textbox", { name: "Search timezones" }),
+    ).toBeInTheDocument();
   });
 });

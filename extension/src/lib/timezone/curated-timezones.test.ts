@@ -4,47 +4,13 @@ import {
   offsetToMinutes,
   type CuratedTimezone,
 } from "./curated-timezones";
+import { standardOffsetMinutes, zoneObservesDST } from "./zone-info";
 
-// ─── Helpers: derive the truth from Intl/ICU, then check the dataset ──────
-//
-// The curated dataset asserts a STANDARD-time offset and a DST flag for each
-// IANA id. We don't trust the hand-authored values — we recompute them from
-// the platform's tz data and compare. This is what catches a fat-fingered
-// offset or a wrong observesDST.
-
-/** Offset (in signed minutes) of `timeZone` at `date`, read from Intl's
- * longOffset name ("GMT+05:30", "GMT-08:00", "GMT"/"UTC" == +0). */
-function offsetMinutesAt(timeZone: string, date: Date): number {
-  const name =
-    new Intl.DateTimeFormat("en-US", { timeZone, timeZoneName: "longOffset" })
-      .formatToParts(date)
-      .find((p) => p.type === "timeZoneName")?.value ?? "";
-  if (name === "GMT" || name === "UTC") return 0;
-  const m = /^GMT([+-])(\d{1,2})(?::(\d{2}))?$/.exec(name);
-  if (!m) throw new Error(`Unparseable offset "${name}" for ${timeZone}`);
-  const sign = m[1] === "-" ? -1 : 1;
-  return sign * (Number(m[2]) * 60 + (m[3] ? Number(m[3]) : 0));
-}
-
-// Four samples across a year catch DST in either hemisphere (Jan/Jul are the
-// extremes for N/S; Apr/Oct guard odd transition windows). DST always *moves
-// clocks forward* (a larger offset), so standard time is the MINIMUM offset.
-const YEAR_SAMPLES = [0, 3, 6, 9].map(
-  (mo) => new Date(Date.UTC(2025, mo, 15, 12, 0, 0)),
-);
-
-function yearOffsets(timeZone: string): number[] {
-  return YEAR_SAMPLES.map((d) => offsetMinutesAt(timeZone, d));
-}
-
-function standardOffsetMinutes(timeZone: string): number {
-  return Math.min(...yearOffsets(timeZone));
-}
-
-function actuallyObservesDST(timeZone: string): boolean {
-  const offs = yearOffsets(timeZone);
-  return Math.max(...offs) !== Math.min(...offs);
-}
+// The dataset asserts a STANDARD-time offset and a DST flag for every IANA id.
+// We don't trust the hand-authored values — zone-info recomputes them from the
+// platform's own tz data and we compare, so a fat-fingered offset or a wrong
+// observesDST fails the build. zone-info is the SAME module the picker uses to
+// resolve a stored zone to its group, so validator and resolver agree.
 
 // Terms that legitimately appear in more than one entry's searchTerms. Each
 // is a genuine real-world ambiguity (a recipient typing it could mean either
@@ -88,7 +54,7 @@ describe("curated-timezones dataset", () => {
   it("every entry's observesDST matches the zone's real DST behaviour", () => {
     for (const tz of CURATED_TIMEZONES) {
       expect(
-        actuallyObservesDST(tz.ianaIdentifier),
+        zoneObservesDST(tz.ianaIdentifier),
         `${tz.ianaIdentifier} (${tz.label})`,
       ).toBe(tz.observesDST);
     }

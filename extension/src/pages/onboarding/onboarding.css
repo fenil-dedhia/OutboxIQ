@@ -95,6 +95,12 @@ select {
   max-width: 320px;
 }
 
+/* The shared TimezonePicker (Session 11) is a self-styled combobox, not a
+   <select>; constrain its width to match the old dropdown. */
+.oq-tz-picker {
+  max-width: 320px;
+}
+
 .oq-detected {
   font-size: 13px;
   color: var(--oq-muted);

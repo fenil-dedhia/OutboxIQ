@@ -163,11 +163,9 @@ button.secondary:hover, button.secondary:focus-visible {
      can't be forced wider than the card. */
   overflow-wrap: anywhere;
 }
-.optimize-tz-select {
-  font: inherit; padding: 6px 28px 6px 8px; border: 1px solid #dadce0;
-  border-radius: 4px; color: #202124; background: #fff; width: 100%;
-  text-overflow: ellipsis;
-}
+/* The shared TimezonePicker (Session 11) is a self-styled combobox; this
+   class now only sets its width within the optimize panel. */
+.optimize-tz-select { width: 100%; }
 /* flex (not inline-flex) so it spans the panel width and the long-email
    span can wrap; flex-start keeps the checkbox at the first text line
    when the email wraps to multiple lines. */

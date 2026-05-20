@@ -32,6 +32,7 @@ export function TimezoneStep({ timezone, timezoneSource, onChange }: Props) {
         <span>Your timezone</span>
         <TimezonePicker
           id="oq-tz-select"
+          className="oq-tz-picker"
           value={timezone}
           onChange={(tz) => onChange(tz, "manual")}
         />
