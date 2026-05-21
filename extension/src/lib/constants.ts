@@ -2,8 +2,9 @@
 
 // Planned public Privacy Policy URL. Per PRE_LAUNCH_CHECKLIST.md, the policy
 // will be hosted as `docs/privacy.md` on GitHub Pages from this same repo
-// (github.com/fenil-dedhia/OutboxIQ), and the onboarding flow, OAuth consent
-// screen, and Settings panel all hard-code the resulting stable URL.
+// (github.com/fenil-dedhia/fashionably-late — repo renamed from OutboxIQ in
+// Session 12, owner-directed), and the onboarding flow, OAuth consent screen,
+// and Settings panel all hard-code the resulting stable URL.
 //
 // IMPORTANT: this link 404s until the policy is written (a deliberate
 // pre-launch task). It is intentionally the real future URL so nothing has to
@@ -11,7 +12,7 @@
 // depends on the Jekyll/Pages config that does not exist yet — the checklist
 // defers pinning the exact stable URL to pre-launch. Change it HERE only.
 export const PRIVACY_POLICY_URL =
-  "https://fenil-dedhia.github.io/OutboxIQ/privacy";
+  "https://fenil-dedhia.github.io/fashionably-late/privacy";
 
 // Recorded in the consent record at consent time. No policy is published yet,
 // so this sentinel marks "consented before a versioned policy existed". When

@@ -347,14 +347,16 @@ work (they don't block it) and *before* naming (they inform it).
 > with the rest of the codebase — only the GCP-side identifiers
 > remain.)
 >
-> **GitHub repo name rename — owner's separate call** (likely with
-> public-launch announcement). Not done in this rename pass to avoid
-> requiring local-clone reconfig + cross-reference URL updates.
-> Consequence: `github.com/fenil-dedhia/OutboxIQ` URLs (in
-> `extension/src/lib/constants.ts` `PRIVACY_POLICY_URL`, this file's
-> footnotes, and a handful of doc references) intentionally still use
-> the old name until the repo gets renamed — they are accurate to the
-> current repo path.
+> **GitHub repo name rename — DONE (Session 12, owner-directed).** The
+> repo was renamed `OutboxIQ` → **`fashionably-late`**
+> (`github.com/fenil-dedhia/fashionably-late`). GitHub auto-redirects the
+> old URL, so existing links/clones keep working. Cascade handled: the
+> local git remote was re-pointed, and `extension/src/lib/constants.ts`
+> `PRIVACY_POLICY_URL` now uses the new Pages path
+> (`https://fenil-dedhia.github.io/fashionably-late/privacy`). **This does
+> NOT settle the launch-blocker below** — the privacy/ToS URL is still
+> *repo-named* (just the new name); the rename-proof / brand-neutral host
+> decision still stands.
 
 The product brand name ("Fashionably Late") may change before launch. The
 rename-impact analysis (Session 7, owner-prompted) established that the
@@ -381,8 +383,9 @@ the verbatim onboarding privacy copy are product-locked spec text — changed
 via PRD amendment, not a find/replace), and nothing more.
 
 **Launch-blocking item surfaced here:** the Privacy/ToS/Pages URLs are
-currently brand-named (`github.com/fenil-dedhia/OutboxIQ/…`), hard-coded in
-`constants.ts` **and** entered into the GCP OAuth consent screen. When the
+currently repo-named (`github.com/fenil-dedhia/fashionably-late/…`), hard-coded
+in `constants.ts` **and** (for Premium v1) entered into the GCP OAuth consent
+screen. When the
 real legal docs are drafted (deferred, see "Legal" above), host them on a
 **rename-proof, brand-neutral or guaranteed-stable URL** so a later repo /
 product rename does not break the consent screen or the in-extension link.
