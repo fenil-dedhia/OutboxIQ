@@ -757,6 +757,49 @@ Accessible via:
 
 #### 5.8.2 Sections
 
+> **Session-12 amendment (2026-05-20, owner-directed) — the Settings panel is
+> BUILT (Free v1).** All seven sections ship in `src/pages/settings/`. The
+> Free-v1 carve-outs below are explicit and deliberate (not omissions to
+> "finish later"):
+> - **Profile and Timezone** — own-timezone override via the shared
+>   `TimezonePicker`. The "Display the user's email address" field and the
+>   "Refresh from Google Calendar" button are **Premium-only** (Free v1 has no
+>   OAuth / no Calendar API — Entry 39) and are **omitted entirely, not
+>   stubbed**.
+> - **Pinned Timezones** (§5.1.3 Step-2 amendment) — view / add / remove /
+>   **reorder**. Reorder is **drag-and-drop + a grip handle**, with arrow-key
+>   reordering for accessibility (owner UX call, Entry 46 — replaced the
+>   originally-built up/down arrows). Reuses the shared `PinnedTimezonesEditor`
+>   (same control as onboarding Step 2). Pinned **order is authoritative** and
+>   surfaces in that order in every picker. A reorder in Settings live-updates
+>   an already-open Schedule Send modal (Entry 47).
+> - **Working Hours** — per-day toggle + times + **Default boundaries**
+>   (Entry-40 framing; schema fields stay `absoluteEarliest`/`absoluteLatest`)
+>   + "Reset to defaults" (with confirm). Edits **autosave only when valid**.
+>   This section edits state only; §5.5 enforcement is untouched (Entries 19/40).
+> - **Feature Toggles** — **exactly two** in Free v1: "Recipient optimized
+>   scheduling" (`recipientOptimization`) and "Auto-reschedule prompt outside
+>   working hours" (`autoRescheduleOnOutsideHours`, scoped to the **regular Send
+>   button**, not Schedule Send). "Unschedule on Reply" is **Premium-only** and
+>   "Schedule confirmation toast" is **moot** (§5.9 removed, Entry 37) — both
+>   **omitted, not stubbed**. Both shipped toggles are **wired to their
+>   consumers**: off → the §5.3.5 Optimize section is hidden / the §5.5.1 guard
+>   does not intercept.
+> - **Recipient Timezone Cache** — searchable list, per-row edit (preserves
+>   resolvedAt) + delete, bulk clear (with confirm), empty state. Free v1's only
+>   `source` is `manual`; a non-manual entry would be a premium-v1 leak and is
+>   surfaced loudly.
+> - **Privacy and Data** — **structure-only for Session 12.** Export/Delete
+>   buttons render and show a "coming soon" treatment (real impl deferred —
+>   §6.1.1); Privacy/ToS are **inert placeholder links**, NOT real URLs (the
+>   hosted URL is a rename-proof pre-launch decision). The Free-v1 "Delete My
+>   Data" copy must **not** mention "revoking backend access" (no backend).
+> - **About** — plugin version (from the live manifest), GitHub repo link, and a
+>   **placeholder** feedback/support link (channel undecided — GitHub Issues the
+>   candidate).
+>
+> Recorded in `notes/session-12-summary.md`; owner-decisions-log Entries 46–48.
+
 **Profile and Timezone**
 - Display the user's email address (read-only).
 - Display the user's current timezone with an option to override.
@@ -1106,9 +1149,16 @@ All local data is stored in the browser's extension storage. Suggested schema:
 }
 ```
 
-> **Implementation note:** the implemented `Fashionably LateState` adds a top-level `schemaVersion` (currently **`2`**; `SCHEMA_VERSION` in `extension/src/lib/constants.ts`) and represents `consent` as **nullable** — it is `null` until the user completes onboarding (PRD §5.1), then set to the object shown above. The schema here describes the shape once consent exists.
+> **Implementation note:** the implemented `OutboxIQState` (a **frozen internal
+> type name** — Entry 30; deliberately *not* renamed with the brand) adds a
+> top-level `schemaVersion` (**currently `3`**; `SCHEMA_VERSION` in
+> `extension/src/lib/constants.ts`) and represents `consent` as **nullable** —
+> it is `null` until the user completes onboarding (PRD §5.1), then set to the
+> object shown above. The schema here describes the shape once consent exists.
 >
 > **Schema v2 (2026-05-16):** added a nullable top-level `lastScheduled` (`{ display, gmailDate, gmailTime } | null`) — supports the §5.3.3 "Last scheduled time" amendment. Purely additive; the v1→v2 "migration" is just `getState()`'s default-merge resolving an absent key to `null` (no explicit version branch yet, per the migration convention in `CLAUDE.md`). Stores only pre-formatted time strings — never email content (§13.2.4, was §7.3.4).
+>
+> **Schema v3 (2026-05-20, Session 11):** added `pinnedTimezones: string[]` (PRD §5.1.3 Step 2). Purely additive (defaults to `[]`), same default-merge migration — and deliberately **no silent default-pinning** of existing/upgraded users (the onboarding *draft* pre-checks the defaults; committed state stays empty until the user pins explicitly). Session 12's §5.8 Settings build added **no** new §7.2 fields (no version bump).
 
 ### 7.3 Backend Service
 

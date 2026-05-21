@@ -165,28 +165,30 @@ Items that must be completed **before Fashionably Late Free v1 can be made publi
 
 ---
 
-## Settings panel (PRD §5.8) — Free v1 feature build, still a stub
+## Settings panel (PRD §5.8) — BUILT (Session 12); two pre-launch wiring tasks remain
 
-The Settings panel is still a placeholder (`src/pages/settings/App.tsx`). It
-must be built before launch because it is the **only** surface for two pieces
-of user data that onboarding can set but not later edit:
-
-- **Recipient Timezone Cache (§5.8.2).** View / edit / delete cached manual
-  recipient timezones and a "Clear all" bulk action. The list/clear APIs
-  already exist (`recipient-cache.ts`: `listCachedRecipients`,
-  `clearRecipientCache`); the panel is the missing UI. Manual entries are
-  cached **indefinitely** (PRD §5.3.5 (j)), so without this surface the user
-  can never correct a wrong pin.
-- **Pinned Timezones (§5.1.3 Step 2 — Session 11).** View / reorder / add /
-  remove the user's pinned zones (`state.pinnedTimezones`). Onboarding is
-  currently the only place to set them; an onboarded user (or an upgraded
-  user, who starts with **no** pins by migration design) needs Settings to
-  manage them. Reuse the onboarding Step-2 chips + add-picker pattern; the
-  shared `TimezonePicker` already renders the "Pinned" section from this field,
-  and the `MAX_PINNED_TIMEZONES` cap is a UI concern to re-apply here.
-
-Both also need the §5.8.2 Profile/Working-Hours/Feature-Toggles/Privacy
-sections. Tracked as a single Free-v1 build (Session 12 candidate).
+> **Session-12 update.** The Settings panel is **built** — all seven §5.8.2
+> sections ship (`src/pages/settings/`): Profile/Timezone, Pinned Timezones
+> (drag-and-drop + keyboard reorder), Working Hours (+ Default boundaries +
+> reset), Feature Toggles (the two Free-v1 toggles, **wired to their
+> consumers**), Recipient Timezone Cache (view / edit / delete / clear-all),
+> Privacy & Data (structure-only), About. Reached via the three §5.8.1 access
+> points (toolbar icon, onboarding completion link, modal gear). The two pieces
+> of user data that previously only onboarding could set — Pinned Timezones and
+> the manual recipient-tz cache — are now fully manageable. See
+> `notes/session-12-summary.md`.
+>
+> **Still pre-launch (NOT done):**
+> - **Export / Delete My Data — real implementation.** The Privacy & Data
+>   buttons render but show "coming soon"; the JSON export (§6.1.1 access) and
+>   the confirmed clear-all (§6.1.1 erasure) are unwired. The Free-v1 "Delete My
+>   Data" copy must **not** mention "revoking backend access" (no backend).
+>   One-PR wiring on the existing structure.
+> - **Privacy Policy / Terms of Service links** render as inert placeholders
+>   (not real URLs) — pending the rename-proof hosted-URL decision under
+>   "Naming / rebrand readiness" + the legal-doc drafting under "Legal".
+> - **Feedback / support channel** in About is a placeholder — channel
+>   undecided (GitHub Issues is the obvious candidate).
 
 ---
 

@@ -1842,6 +1842,101 @@ that preceded the §5.3.5/§5.4 build. They qualify; Entries 26 and 27.
   lesson once more: the data model can be technically sound and still feel
   unsafe in the hand — and only hands-on navigation surfaces it.
 
+## Entry 46 — The §5.8 Settings build, reshaped in hands-on (drag-to-reorder + four rendered-UX fixes)
+
+- **Session:** 12 (Phase 1, owner hands-on after the gate)
+- **Moment:** Phase 1 shipped the Settings panel spec-faithfully — sidebar nav,
+  the three sections, pinned chips with up/down reorder *arrows*, a modal gear
+  icon — green tests, clean build. Owner hands-on against a real install
+  surfaced a string of rendered-UX issues invisible to the spec and to jsdom.
+- **My input (owner):** Drove five corrections as separate calls: (1) replace
+  the horizontal up/down-arrow reorder chips with a **vertical drag-and-drop
+  list + grip handle** ("…or whatever is the convention"); (2) the modal **gear
+  was too small** to read; (3) the timezone dropdown **scrolled on hover**,
+  hiding the top pinned row under the sticky header; (4) the closed picker **cut
+  off most of the label** on onboarding + Settings — widen where there's room;
+  (5) the widened picker then **crowded the onboarding card** — give it room.
+- **What Claude Code would have done without it:** Built the literal spec
+  (arrow-button reorder, default-width picker, a hover-scroll effect that fought
+  the user) and called it done on green tests. Each of the five was invisible to
+  unit tests and to jsdom — they appear only when a human uses the rendered
+  control. Honest credit split: the hover-scroll (#3) was a genuine *bug Claude
+  introduced* (a keyboard-scroll effect that also fired on mouse hover) and the
+  owner caught it; the other four were UX-quality judgments the owner made and
+  Claude implemented (drag-and-drop with a keyboard-arrow fallback for a11y, the
+  sizing, the width, the spacing rhythm). Each shipped with a regression/coverage
+  test.
+- **Outcome:** Commits `dd80ee1`, `00864e6`, `2ad10e5`, `520b250`; the shared
+  `PinnedTimezonesEditor` (drag list + `reorderable` prop) and the
+  `TimezonePicker` hover-scroll gate.
+- **Lesson (for coaching):** the Entry-43/44 lesson, a fourth time —
+  spec-faithful + green tests is not shippable UX. The *felt* experience of a
+  control (does the list move under my cursor? can I read the label? does
+  reordering feel like a list or a poke-the-arrows chore?) is made in hands-on
+  iteration. Drag-to-reorder over arrows is the clearest case: both satisfy
+  "reorder pins," but only one matches what the user's hand expects.
+
+## Entry 47 — Live-sync into an open modal: owner took the risk I recommended against (knowingly)
+
+- **Session:** 12 (Phase 1 hands-on)
+- **Moment:** A pin reorder in Settings didn't reflect in an *already-open*
+  Schedule Send modal (a separate extension context). The owner asked to make it
+  live-update — and, the load-bearing part, asked **"are there any risks?"**
+  before deciding.
+- **My input (owner):** After I laid out the risk taxonomy and **recommended the
+  safe-scoped version** (update the pins but don't reshuffle the dropdown *while
+  it's open*, to avoid an option moving under the cursor mid-click), the owner
+  chose **immediate live-update** — pins update instantly even with the dropdown
+  open — explicitly accepting the reshuffle-under-cursor risk.
+- **What Claude Code would have done without it:** Claude both (a) recommended
+  the safer option and (b) would have built it absent owner input — so this is a
+  case where owner judgment chose the *riskier* path against Claude's lean.
+  Claude's honest contributions: it surfaced the risk taxonomy *unprompted*,
+  held the genuinely-non-negotiable line (pins-only — never live-shift the
+  user's own timezone / preset times / boundaries mid-interaction, which would
+  move the times they're reading), and added the test coverage
+  (`emitStorageChange` in the chrome-mock). The owner's contribution was
+  deciding the reshuffle-while-open tradeoff was acceptable given how rare the
+  interleaving is — a product call made with the risks in front of them.
+- **Outcome:** Commit `884cdd3`; `useLivePinnedTimezones` (pins-only, one
+  listener per open modal, cleaned up on unmount).
+- **Lesson (for coaching):** "be honest about risks" cuts both ways — the point
+  of laying out a risk taxonomy is so the owner can *knowingly* accept a risk
+  the agent would have avoided. The agent's job there isn't to win the
+  recommendation; it's to make the tradeoff legible, hold the truly
+  non-negotiable line (scope), and then implement the owner's call cleanly.
+
+## Entry 48 — Repo rename OutboxIQ → fashionably-late: the Entry-30 deferred call, made
+
+- **Session:** 12 (mid-session, owner-directed)
+- **Moment:** Looking at the public GitHub repo, the owner updated the
+  description and renamed the repo **OutboxIQ → `fashionably-late`** — the rename
+  Entries 30/41 had explicitly deferred as "the owner's separate call."
+- **My input (owner):** Made the call to rename now; chose the slug
+  (`fashionably-late`, matching the npm package); iterated the description copy
+  (kept the original "lands at the right moment" payoff, dropped the Premium
+  "auto-cancels on early replies" claim that Free v1 doesn't build).
+- **What Claude Code would have done without it:** This was the owner exercising
+  a decision Entry 30 reserved for them. Claude's contributions: flagging that
+  the live description advertised an unbuilt/Premium feature (auto-cancel) on the
+  public Free-v1 repo and proposing accurate copy; executing the cascade the
+  rename triggers — `PRIVACY_POLICY_URL` (the only repo-name-*derived* value in
+  code, via the GitHub Pages path), the git remote, and the CLAUDE.md /
+  PRE_LAUNCH naming notes — while explicitly NOT touching the frozen identifiers
+  (`OutboxIQState` type, `outboxiq*` storage keys, `outboxiq-dev` GCP project)
+  Entry 30 froze for breakage reasons; and holding the line that the rename does
+  NOT discharge the rename-proof-Privacy-URL launch-blocker (the Pages URL is
+  still repo-named, just the new name).
+- **Outcome:** Repo renamed on GitHub (owner; GitHub auto-redirects the old
+  URL); cascade commit `92d75e0`; `GITHUB_REPO_URL` constant added for the
+  Phase-3 About link.
+- **Lesson (for coaching):** the Entry-30 brand-independent-identifier framework
+  paid off exactly as designed — the rename touched display copy + one derived
+  URL + docs, and *nothing* load-bearing. The discipline that matters at rename
+  time is knowing which "OutboxIQ" strings are the brand (rename) vs. frozen
+  identities (leave) — a distinction Claude could apply mechanically *because*
+  Entry 30 had drawn it sessions earlier.
+
 ---
 
 *New entries are appended at every session close-out, alongside the session
