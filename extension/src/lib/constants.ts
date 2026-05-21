@@ -14,6 +14,13 @@
 export const PRIVACY_POLICY_URL =
   "https://fenil-dedhia.github.io/fashionably-late/privacy";
 
+// Public GitHub repository (PRD §5.8.2 About → "Link to GitHub repository").
+// Repo-name-derived (renamed OutboxIQ → fashionably-late, Session 12), so it
+// lives here alongside PRIVACY_POLICY_URL — change repo-derived URLs in one
+// place. Unlike the Privacy/ToS URLs, this one is decided + live (public repo).
+export const GITHUB_REPO_URL =
+  "https://github.com/fenil-dedhia/fashionably-late";
+
 // Recorded in the consent record at consent time. No policy is published yet,
 // so this sentinel marks "consented before a versioned policy existed". When
 // the real policy ships with a version, bump this (one place).

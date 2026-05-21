@@ -5,6 +5,8 @@ import { PinnedSection } from "./sections/PinnedSection";
 import { WorkingHoursSection } from "./sections/WorkingHoursSection";
 import { FeatureTogglesSection } from "./sections/FeatureTogglesSection";
 import { CacheSection } from "./sections/CacheSection";
+import { PrivacyDataSection } from "./sections/PrivacyDataSection";
+import { AboutSection } from "./sections/AboutSection";
 
 // PRD §5.8 Settings panel. Sidebar nav + content pane: each §5.8.2 section is a
 // nav item; clicking switches the active section in the main pane. Chosen over
@@ -16,10 +18,18 @@ import { CacheSection } from "./sections/CacheSection";
 // Free v1 carve-outs (Entry 39 / §5.8.2): no email field, no "Refresh from
 // Calendar", no "Unschedule on Reply" / "Schedule confirmation toast" toggles —
 // omitted, not stubbed. Sections: Profile/Timezone, Pinned Timezones, Working
-// Hours, Feature Toggles, Recipient Timezone Cache. (Privacy & Data + About
-// are the remaining Phase-3 sections.)
+// Hours, Feature Toggles, Recipient Timezone Cache, Privacy & Data, About.
+// (Privacy & Data is structure-only — Export/Delete + Privacy/ToS links are
+// stubs pending the pre-launch data-export/erasure + hosted-URL work.)
 
-type SectionId = "profile" | "pinned" | "hours" | "toggles" | "cache";
+type SectionId =
+  | "profile"
+  | "pinned"
+  | "hours"
+  | "toggles"
+  | "cache"
+  | "privacy"
+  | "about";
 
 const NAV: { id: SectionId; label: string }[] = [
   { id: "profile", label: "Profile & timezone" },
@@ -27,6 +37,8 @@ const NAV: { id: SectionId; label: string }[] = [
   { id: "hours", label: "Working hours" },
   { id: "toggles", label: "Feature toggles" },
   { id: "cache", label: "Recipient timezone cache" },
+  { id: "privacy", label: "Privacy & data" },
+  { id: "about", label: "About" },
 ];
 
 export function App() {
@@ -105,6 +117,8 @@ export function App() {
               onClearAll={settings.clearCache}
             />
           )}
+          {active === "privacy" && <PrivacyDataSection />}
+          {active === "about" && <AboutSection />}
         </main>
       </div>
     </div>

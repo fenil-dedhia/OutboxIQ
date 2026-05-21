@@ -55,6 +55,16 @@ describe("Settings App (PRD §5.8)", () => {
     expect(
       screen.getByRole("heading", { name: /feature toggles/i }),
     ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /privacy & data/i }));
+    expect(
+      screen.getByRole("heading", { name: /privacy & data/i }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /^about$/i }));
+    expect(
+      screen.getByRole("heading", { name: /^about$/i }),
+    ).toBeInTheDocument();
   });
 
   it("shows the user's stored timezone in the Profile picker", async () => {
