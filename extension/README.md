@@ -16,4 +16,4 @@ v1 in development. No feature code yet — this folder currently contains only a
 - `src/lib/` — shared utilities (timezone resolution, working-hours logic, storage helpers).
 - `public/icons/` — extension icons (16, 48, 128 px).
 
-See [`../Fashionably Late_PRD.md`](../Fashionably Late_PRD.md) for the full spec.
+See [`../Fashionably_Late_PRD.md`](../Fashionably_Late_PRD.md) for the full spec.

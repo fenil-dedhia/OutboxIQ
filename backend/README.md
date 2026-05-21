@@ -25,4 +25,4 @@ When a user schedules an email via Fashionably Late, the extension registers the
 
 - `src/` — service source code (HTTP endpoints, Pub/Sub webhook handler, WebSocket events, encryption helpers).
 
-See **§13** of [`../Fashionably Late_PRD.md`](../Fashionably Late_PRD.md) for the full preserved Premium v1 spec (§13.1 Unschedule-on-Reply — was §5.6; §13.2 backend service — was §7.3; §13.3 Premium Option-B OAuth — the Entry-31 design). §5.6/§7.3 are now stubs that point to §13.
+See **§13** of [`../Fashionably_Late_PRD.md`](../Fashionably_Late_PRD.md) for the full preserved Premium v1 spec (§13.1 Unschedule-on-Reply — was §5.6; §13.2 backend service — was §7.3; §13.3 Premium Option-B OAuth — the Entry-31 design). §5.6/§7.3 are now stubs that point to §13.
