@@ -26,7 +26,7 @@ const TOGGLES: ToggleDef[] = [
     key: "autoRescheduleOnOutsideHours",
     label: "Auto-reschedule prompt outside working hours",
     description:
-      "When you click Send outside your working hours, offer to reschedule it for your next working window.",
+      "When you click the regular Send button (not Schedule Send) outside your working hours, offer to reschedule it for your next working window.",
   },
 ];
 
