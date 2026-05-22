@@ -19,6 +19,13 @@
 > SCHEMA_VERSION bump** (the build added no §7.2 fields). The repo was renamed
 > **OutboxIQ → `fashionably-late`** (owner-directed; Entry-30 "owner's separate
 > call").
+>
+> **Post-close-out addendum (2026-05-22).** During the Session-13 carry item
+> "owner hands-on of the §5.3.5 cache-miss → real scheduled-send" (the one path
+> never driven live, Sessions 10–11), the owner exercised it on real Gmail and
+> it **failed** — exposing a shippability bug. It is now **found + fixed +
+> regression-tested** and pushed; tests **320 → 326**. Full write-up: **§i**
+> below. Treated as part of this session's close-out per owner direction.
 
 ## a. What landed (per phase, per commit)
 
@@ -196,7 +203,65 @@ modal: owner chose immediate over the safe-scoped option I recommended), **48**
      end-to-end now that all sections coexist.)
 2. Then **Free-v1 pre-launch hardening**: the deferred Export/Delete wiring
    (§6.1.1) + the hosted Privacy/ToS URL decision (rename-proof) + the feedback
-   channel (GitHub Issues candidate); the §5.3.5 cache-miss →
-   real-scheduled-send live check (still un-driven from S10–11); the two
-   Gmail-API probes; a screen-reader a11y pass.
+   channel (GitHub Issues candidate); the §5.3.5 **cache-hit-on-reuse**
+   round-trip live check (the **cache-miss → real-scheduled-send** chain is now
+   driven + fixed — see §i); the two Gmail-API probes; a screen-reader a11y
+   pass.
 3. Session 13 prompt arrives separately.
+
+## i. Post-close-out fix (2026-05-22) — §5.3.5 Optimize → real scheduled-send (multi-dialog race)
+
+**Trigger.** Owner hands-on of the §5.3.5 Optimize-for-recipient → *real*
+scheduled send — the single path flagged "un-driven-live" since Session 10.
+Scenario: ~2 PM ET, recipient timezone set to **London**, "Morning peak (9 AM
+their time)". Expected: schedule for **Sat May 23, 4:00 AM ET** (= 9 AM BST
+next morning). Actual: the compute + confirmation line were **correct**, but
+clicking Schedule fell back to Gmail's **native** Schedule-send menu instead of
+completing the send.
+
+**Diagnosis (data-driven; two wrong guesses before the dump settled it).**
+
+- The time math was right (`computeOptimizeSendTime` → May 23 4:00 AM;
+  `formatForGmail` → `"May 23, 2026"` / `"4:00 AM"`), and a manual **Pick
+  Custom** with the *same* value scheduled fine — so the failure was specific to
+  the automation path, not the value or `scheduleAt` per se.
+- A temporary diagnostic (un-gated the `run()` catch log + dumped the dialog) on
+  a real install gave the answer: **`dialogs=2`**, and the row dump showed "Pick
+  date & time" still classed **`Az AM`**. Root cause: **Gmail's compose window
+  is itself a `[role="dialog"]`.** Two failure modes followed from that:
+  1. `findScheduleDialog()`'s "use the last dialog" fallback could return the
+     **compose** dialog before the schedule rows rendered (they mount a tick
+     after the dialog node) → the immediate `.Az.AM` query found nothing →
+     intermittent **`"Pick date & time" row not found`**.
+  2. The custom picker mounts as a **fresh** dialog (Gmail tears the menu node
+     down). My first fix over-corrected by pinning `pick.closest('[role=
+     "dialog"]')` *before* the click; that reference went stale → **`waitFor
+     timeout (custom date/time inputs)`**, picker visibly open but uncontrolled
+     (the "native menu + picker both showing" screenshot).
+
+**Fix (shipped, `schedule-actions.ts`).** (1) `waitFor` the **`.Az.AM` row
+itself, document-wide**, before clicking — fixes both the multi-dialog
+ambiguity and the render race. (2) After clicking, locate the picker by its
+**contents** via the new exported `findPickerFields(dialogs)` — the dialog
+holding one date-shaped (`MMM D, YYYY`) + one time-shaped (`h:mm A`) pre-filled
+input — never by node identity or dialog order, so it can't grab the compose
+window's To/Subject fields. (3) Confirm scoped to that same picker dialog.
+`schedulePreset` (Quick Options) hardened identically (`waitFor` the matching
+row, document-wide) since it shared the latent race.
+
+**Tests + housekeeping.** New `schedule-actions.test.ts` (6 tests) covers the
+`findPickerFields` multi-dialog disambiguation (compose-vs-picker, dialog order,
+needs-both-date-and-time, subject-mentions-a-time false-positive, combined-value
+guard). Temporary diagnostics removed; the catch log re-gated to DEV. **320 →
+326 tests**; typecheck / lint / build / tier-split clean. Owner confirmed it
+schedules reliably on repeat attempts on live Gmail.
+
+**Not an owner-decisions-log entry.** This was a hands-on-surfaced *bug fix*,
+not a trajectory-changing owner/PM decision — Entries 46–48 remain Session 12's
+log. The reusable knowledge (compose-is-also-a-dialog; picker mounts fresh) is
+recorded where a future session will hit it: `research/pick-date-time-probe.md`
+(2026-05-22 result-log entry) + a new CLAUDE.md gotcha.
+
+**Residual (carries to Session 13).** Only the §5.3.5 **cache-hit-on-reuse**
+round-trip remains un-driven-live; the cache-miss → real-send chain is now
+proven end-to-end.

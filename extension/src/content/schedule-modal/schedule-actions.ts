@@ -75,19 +75,21 @@ export async function openNativeScheduleDialog(): Promise<void> {
 export async function schedulePreset(preset: SchedulePreset): Promise<void> {
   await openNativeScheduleDialog();
   await withInterceptionSuppressed(async () => {
-    const dialog = await waitFor(findScheduleDialog, { label: "dialog" });
-    const rows = Array.from(
-      dialog.querySelectorAll<HTMLElement>(SEL_DIALOG_PRESET),
-    );
     const { rowKey } = formatForGmail(preset.wall);
-    const row = rows.find((r) =>
-      (r.textContent ?? "").replace(/\s+/g, " ").includes(rowKey),
+    // Wait for the MATCHING preset row directly (document-wide over dialogs),
+    // for the same multi-dialog + render-race reason as scheduleAt: a dialog
+    // chosen too early (the compose window, or before the rows render) yields
+    // zero rows. Match by CONTENT (the embedded date+time), never position —
+    // Gmail's extra "Last scheduled time" row shifts indices.
+    const row = await waitFor<HTMLElement>(
+      () =>
+        Array.from(
+          document.querySelectorAll<HTMLElement>(SEL_DIALOG_PRESET),
+        ).find((r) =>
+          (r.textContent ?? "").replace(/\s+/g, " ").includes(rowKey),
+        ) ?? null,
+      { label: `preset row "${rowKey}"` },
     );
-    if (!row) {
-      throw new Error(
-        `no native preset row matched "${rowKey}" (${rows.length} rows)`,
-      );
-    }
     if (isDev()) {
       console.info(
         `[Fashionably Late] §5.3 preset "${preset.id}" → row "${rowKey}"`,
@@ -121,6 +123,42 @@ function findConfirmButton(dialog: HTMLElement): HTMLElement | null {
   );
 }
 
+export interface PickerFields {
+  dateInput: HTMLInputElement;
+  timeInput: HTMLInputElement;
+  dialog: HTMLElement;
+}
+
+// Match Gmail's pre-filled custom-picker fields by value SHAPE:
+//   date — "May 16, 2026"   (MMM D, YYYY)
+//   time — "1:33 PM"        (h:mm A)
+const DATE_VALUE = /[A-Za-z]{3,9}\s+\d{1,2},?\s+\d{4}/;
+const TIME_VALUE = /\d{1,2}:\d{2}\s*[AP]M/i;
+
+/**
+ * Locate the custom "Pick date & time" picker's two inputs among the open
+ * dialogs. Gmail keeps several [role="dialog"] nodes mounted at once (the
+ * compose window is itself a role=dialog) and mounts the picker as a FRESH
+ * dialog when "Pick date & time" is clicked, so we can't pin a node reference
+ * or assume which dialog is "the" schedule dialog. Instead we identify the
+ * picker by its CONTENTS: per the Session-4 probe it holds exactly two
+ * pre-filled inputs whose values look like a date and a time. Matching those
+ * shapes pins the picker unambiguously and never the compose window's
+ * To/Subject inputs. Returns null until such a dialog exists (caller polls).
+ * Exported for unit testing the multi-dialog disambiguation.
+ */
+export function findPickerFields(dialogs: HTMLElement[]): PickerFields | null {
+  for (const dialog of dialogs) {
+    const ins = Array.from(dialog.querySelectorAll<HTMLInputElement>("input"));
+    const dateInput = ins.find((i) => DATE_VALUE.test(i.value));
+    const timeInput = ins.find((i) => TIME_VALUE.test(i.value));
+    if (dateInput && timeInput && dateInput !== timeInput) {
+      return { dateInput, timeInput, dialog };
+    }
+  }
+  return null;
+}
+
 /**
  * Schedule at a specific time via Gmail's custom "Pick date & time" path.
  * Drives: open dialog → click "Pick date & time" (`.Az.AM`) → set the two
@@ -130,31 +168,40 @@ function findConfirmButton(dialog: HTMLElement): HTMLElement | null {
 export async function scheduleAt(when: ScheduleAtStrings): Promise<void> {
   await openNativeScheduleDialog();
   await withInterceptionSuppressed(async () => {
-    const dialog = await waitFor(findScheduleDialog, { label: "dialog" });
-    const pick = dialog.querySelector<HTMLElement>(SEL_DIALOG_PICK_DATETIME);
-    if (!pick) throw new Error('"Pick date & time" row not found');
+    // (1) Wait for the "Pick date & time" ROW itself, document-wide — NOT
+    // merely "a dialog that has presets". Gmail keeps multiple [role="dialog"]
+    // elements mounted at once (the compose window is itself a role=dialog),
+    // and the schedule menu's rows render a tick AFTER the dialog node appears.
+    // The old "resolve a dialog, then query it once" approach raced: it could
+    // hand back the COMPOSE dialog before the schedule rows existed, and the
+    // `.Az.AM` query found nothing → intermittent "Pick date & time row not
+    // found" (live diag 2026-05-22: dialogs=2; the row IS `.Az.AM`, so the
+    // selector was right — the failure was dialog/timing). Polling for the row
+    // fixes both. `.Az.AM` uniquely marks it (presets are `.Az` only).
+    const pick = await waitFor<HTMLElement>(
+      () => document.querySelector<HTMLElement>(SEL_DIALOG_PICK_DATETIME),
+      { label: "Pick date & time row" },
+    );
     await fireFull(pick, "Pick date & time");
 
-    // Picker swaps into the same dialog; wait for its two inputs.
-    const inputs = await waitFor(
-      () => {
-        const dlg = findScheduleDialog();
-        const found = dlg
-          ? Array.from(dlg.querySelectorAll<HTMLInputElement>("input"))
-          : [];
-        return found.length >= 2 ? found : null;
-      },
+    // (2) Clicking the row swaps the menu out for the date/time picker, which
+    // Gmail renders as a FRESHLY-MOUNTED dialog (it tears the menu's node down).
+    // A reference captured before the click goes stale → "custom date/time
+    // inputs" timeout (2026-05-22). So re-query fresh each poll and let
+    // findPickerFields identify the picker by its CONTENTS (a date-shaped and a
+    // time-shaped input value), never by node identity or dialog order.
+    const fields = await waitFor(
+      () =>
+        findPickerFields(
+          Array.from(document.querySelectorAll<HTMLElement>('[role="dialog"]')),
+        ),
       { label: "custom date/time inputs" },
     );
-    const [dateInput, timeInput] = inputs; // probe-confirmed order
-    if (!dateInput || !timeInput) {
-      throw new Error("custom date/time inputs missing");
-    }
-    setNativeValue(dateInput, when.gmailDate);
-    setNativeValue(timeInput, when.gmailTime);
+    setNativeValue(fields.dateInput, when.gmailDate);
+    setNativeValue(fields.timeInput, when.gmailTime);
 
-    const dlg = findScheduleDialog();
-    const confirm = dlg ? findConfirmButton(dlg) : null;
+    // (3) Confirm — scoped to the picker dialog we just identified.
+    const confirm = findConfirmButton(fields.dialog);
     if (!confirm) throw new Error("custom-path confirm button not found");
     if (isDev()) console.info("[Fashionably Late] §5.3.4 custom-path confirm");
     await fireFull(confirm, "custom Schedule send");

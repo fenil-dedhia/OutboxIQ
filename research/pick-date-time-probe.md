@@ -222,3 +222,38 @@ as-is; it's a throwaway diagnostic that has served its purpose.)
 that scheduling through the Fashionably Late modal closes both Gmail's dialog
 and our modal and produces exactly one scheduled email (expected fine;
 not a known bug).
+
+### 2026-05-22 — §5.3.5 Optimize → real scheduled-send driven LIVE; multi-dialog race found + fixed
+
+The §5.3.5 Optimize-for-recipient path's **real** scheduled send (flagged
+un-driven-live since Session 10) was finally exercised end-to-end on consumer
+Gmail during the Session-12 close-out (owner hands-on). It works — but only
+after fixing a **multi-dialog race** in `schedule-actions.ts` that this probe's
+single-shot `live()` recipe never surfaced (the probe runs the chain once, fast,
+in isolation; the live failure was intermittent and timing-dependent):
+
+- **Gmail's compose window is ALSO a `[role="dialog"]`.** So ≥2 dialogs are
+  mounted during scheduling (live diag: `dialogs=2`). The shipped
+  `findScheduleDialog()` had a "use the last dialog" fallback that could return
+  the **compose** dialog before the schedule menu's rows rendered (the rows
+  mount a tick after the dialog node appears). The immediate `.Az.AM` query then
+  found nothing → intermittent **`"Pick date & time" row not found`**. Live diag
+  confirmed the row's class is **still `Az AM`** — the selector was right; the
+  failure was dialog-selection/timing.
+- **The custom picker mounts as a FRESH dialog**, not inside the menu's node
+  (Gmail tears the menu down). Pinning a reference to the row's dialog
+  (`pick.closest('[role="dialog"]')`, captured before the click) went stale →
+  the date/time inputs were never "in" it → **`waitFor timeout (custom
+  date/time inputs)`**, picker visibly open but uncontrolled.
+
+**Fix (shipped):** (1) `waitFor` the `.Az.AM` ROW itself, **document-wide**,
+before clicking — handles both the multi-dialog ambiguity and the render race;
+(2) after clicking, find the picker by its **contents** via `findPickerFields()`
+— the dialog holding one date-shaped (`MMM D, YYYY`) and one time-shaped
+(`h:mm A`) pre-filled input — never by node identity or dialog order, so it
+cannot grab the compose window's To/Subject inputs. `schedulePreset` (Quick
+Options) was hardened the same way (`waitFor` the matching row, document-wide).
+Regression test: `extension/src/content/schedule-modal/schedule-actions.test.ts`
+(`findPickerFields` disambiguation). The "residual smoke test" note above is now
+**discharged for the Optimize path**; only the cache-hit-on-reuse round-trip
+remains un-driven-live.
