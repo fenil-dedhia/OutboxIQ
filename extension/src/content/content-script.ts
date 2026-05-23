@@ -29,6 +29,7 @@ import { openScheduleModal } from "./schedule-modal/mount";
 import { openNativeScheduleDialog } from "./schedule-modal/schedule-actions";
 import { installRegularSendGuard } from "./regular-send/regular-send-guard";
 import { startConfigWatch } from "./regular-send/config-cache";
+import { claimPageInstall } from "./page-install-latch";
 
 const RETRY_DELAY_MS = 300;
 const MAX_ATTEMPTS = 4;
@@ -121,18 +122,30 @@ function handleScheduleSend(): void {
   })();
 }
 
-// Latches the post-onboarding install so the storage listener can be a
-// no-op once integration is wired up. Module-scoped: one Gmail tab = one
-// content-script instance = one latch.
+// Latches the post-onboarding install so the storage listener can be a no-op
+// once integration is wired up. Module-scoped — dedupes WITHIN this instance.
+// Cross-INSTANCE dedupe (an orphaned-after-reload instance + a re-injected one
+// sharing one tab) is handled by the page-level claimPageInstall() below, since
+// a module flag is independent per instance. See page-install-latch.ts.
 let integrationsInstalled = false;
 
 /** Install §5.2 / §5.5.1 / §5.3 integrations against the just-read state.
- * Idempotent — guarded by `integrationsInstalled`. Returns true iff this
- * call performed the install (used by the bootstrap to gate the
- * onboarding-launch fallback). */
+ * Idempotent both WITHIN this instance (`integrationsInstalled`) and ACROSS
+ * instances in the same tab (`claimPageInstall`). Returns true iff integrations
+ * are in place (so the bootstrap skips the onboarding-launch fallback) — which
+ * includes the case where a sibling instance already owns them. */
 function enableIntegrationsIfOnboarded(state: OutboxIQState): boolean {
   if (integrationsInstalled) return true;
   if (state.user.onboardingCompletedAt === null) return false;
+  // Onboarded → claim the single per-page install. If a sibling content-script
+  // instance in this tab already claimed it (orphaned-after-reload + re-inject),
+  // do NOT install a second §5.5.1 guard — two guards on `document` would block
+  // each other's Send replay. Latch locally so our storage listener stops
+  // retrying, and report "in place" so onboarding isn't reopened.
+  if (!claimPageInstall()) {
+    integrationsInstalled = true;
+    return true;
+  }
   installComposeIntegration({ onScheduleSend: handleScheduleSend });
   startConfigWatch({
     timezone: state.user.timezone,
