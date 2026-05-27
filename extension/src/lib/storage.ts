@@ -276,6 +276,18 @@ export async function getOnboardingDraft(): Promise<OnboardingDraft> {
   return { ...createDefaultDraft(), ...stored };
 }
 
+/**
+ * The raw stored draft as persisted, or null if none exists. Unlike
+ * getOnboardingDraft(), this does NOT default-merge — so a caller can tell
+ * "user has an in-progress onboarding" (object) from "no draft" (null). Used
+ * by the §6.1.1 data export to include the draft only when one is present
+ * (a fully-onboarded user has none — completeOnboarding clears it).
+ */
+export async function getStoredOnboardingDraft(): Promise<OnboardingDraft | null> {
+  const stored = await rawGet<OnboardingDraft>(STORAGE_KEY_ONBOARDING_DRAFT);
+  return stored ?? null;
+}
+
 export async function saveOnboardingDraft(
   draft: OnboardingDraft,
 ): Promise<void> {

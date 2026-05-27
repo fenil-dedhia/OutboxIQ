@@ -463,6 +463,11 @@ body {
   margin: 0 0 12px;
 }
 
+.fl-set-notice--error {
+  color: var(--fl-danger);
+  background: #fce8e6;
+}
+
 .fl-set-legal-links {
   font-size: 14px;
   margin: 4px 0 0;
