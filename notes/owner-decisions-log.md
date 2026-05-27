@@ -1937,6 +1937,63 @@ that preceded the §5.3.5/§5.4 build. They qualify; Entries 26 and 27.
   identities (leave) — a distinction Claude could apply mechanically *because*
   Entry 30 had drawn it sessions earlier.
 
+## Entry 49 — Recipient timezone inference from email Date-headers: explored, deferred (not Free-v1 work now)
+
+- **Session:** 13 (pre-session brainstorm, owner + PM thinking partner)
+- **Moment:** The owner raised an idea: a recipient's past emails carry their
+  UTC offset in the `Date:` header, so the extension could in principle infer a
+  recipient's timezone on-device — no API, no backend — and (esp. for travelers)
+  be more accurate than a static stored zone. The hope was this could pull part
+  of the "automatic" experience into Free v1 earlier than planned, framed
+  honestly as a confident *suggestion* that falls back to asking, never a silent
+  guarantee.
+- **My input (owner):** After working through it, the owner concluded the idea
+  should be **logged and deferred, not probed or built** this session — choosing
+  pre-launch hardening for Session 13 instead.
+- **The reasoning (why deferred, honestly):**
+  1. **Offset ≠ timezone, and the gap is unclosable from one sample.** A `Date:`
+     offset (e.g. `-0700`) can't distinguish e.g. Los Angeles-on-DST from
+     Arizona-no-DST, and the offset is *self-reported by the sender's device* —
+     phones with wrong clocks, VPNs, scheduled sends, and travelers all write
+     "lying" offsets. So inference can **never** be 100%-confident timezone, which
+     means **the manual-pick fallback never goes away.** Inference therefore can't
+     *replace* asking (the owner's own framing) — it could at most *seed* the
+     existing manual picker with a confident, human-confirmed default.
+  2. **The grand "automatic in Free v1" version is Premium-shaped.** The useful
+     cold-send case (suggest a zone for someone you're about to email but aren't
+     currently threaded with) almost certainly needs the **Gmail API**
+     (`messages` read scope) — the data isn't in the compose-time DOM. Adding a
+     Gmail read scope **reintroduces the OAuth + CASA/consent-verification gate
+     that Entry 39's whole purpose was to remove.** That's a large cost.
+  3. **The only clearly Free-v1-shaped slice is the thread-reply case** — when
+     replying inside an existing thread, the recipient's past messages are
+     already rendered in the DOM (no API, no scope). Multiple samples in a long
+     thread can even partly resolve the DST ambiguity (observe a shift across a
+     boundary). But the prize is bounded: it only helps on a cache **miss in a
+     thread**, and the §5.3.5 manual cache is indefinite-TTL (Session 10) so each
+     recipient benefits at most **once**. It's a one-time first-setup convenience,
+     not the automatic vision.
+  4. **§11 read:** header-offset-for-scheduling is **not** what §11's "recipient
+     profiling" ban targets (that's behavioral/engagement profiling) — so not a
+     "do not build". But the *brand framing* ("we read your recipients' past
+     emails") needs care given the privacy-first positioning — a lightweight
+     owner call, relevant only if the thread-DOM version is ever pursued.
+- **What Claude Code would have done without it:** N/A for build (nothing built).
+  The decision is recorded so the idea is **captured, not lost** — a future
+  session could revisit the thread-reply slice with a cheap DOM probe ("are
+  past-message Date offsets reachable in an open Gmail thread?") if priorities
+  change. The honest counterfactual: the agent's lean was that the prize is small
+  relative to the likely API/scope cost, and a probe is only worth it for the
+  thread-only slice; the owner agreed and chose to defer entirely for now.
+- **Outcome:** No code. Idea logged here; Session 13 proceeds to pre-launch
+  hardening (Export/Delete My Data + the §5.3.5 live check).
+- **Lesson (for coaching):** worth distinguishing "infer so we don't have to
+  ask" (impossible here — offset can't be ground truth) from "infer so the ask
+  is one tap" (possible, but bounded). Naming that distinction early stopped a
+  plausible-sounding feature from being scoped on a hope; the deferral is
+  eyes-open, and the reasoning is preserved so revisiting it later starts from
+  evidence, not from scratch.
+
 ---
 
 *New entries are appended at every session close-out, alongside the session
