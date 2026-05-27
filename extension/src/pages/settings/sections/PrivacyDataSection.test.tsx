@@ -54,8 +54,10 @@ describe("PrivacyDataSection (PRD §5.8.2)", () => {
     expect(filename).toMatch(
       /^fashionably-late-data-export-\d{4}-\d{2}-\d{2}\.json$/,
     );
-    // The exported payload carries the schema version (re-importable later).
+    // The exported payload carries the schema version (re-importable later)...
     expect(contents).toContain('"schemaVersion"');
+    // ...but not the non-Free-v1 toggle that would mislead a user.
+    expect(contents).not.toContain("unscheduleOnReply");
   });
 
   it("Privacy Policy + Terms links are inert placeholders, not real URLs", () => {

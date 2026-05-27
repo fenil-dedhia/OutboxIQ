@@ -7,6 +7,7 @@ import {
   downloadJsonFile,
   deleteAllData,
   OWNED_STORAGE_KEYS,
+  EXPORT_OMITTED_TOGGLE_KEYS,
   EXPORT_APPLICATION_NAME,
   type FashionablyLateDataExport,
 } from "./data-management";
@@ -70,6 +71,38 @@ describe("assembleDataExport (PRD §6.1.1 export payload)", () => {
     };
     const withDraft = assembleDataExport(stateOf(), draft, NOW);
     expect(withDraft.data[STORAGE_KEY_ONBOARDING_DRAFT]).toEqual(draft);
+  });
+
+  it("strips the known-inert (non-Free-v1) toggle keys from the export", () => {
+    const file = assembleDataExport(stateOf(), null, NOW);
+    const toggles = (file.data[STORAGE_KEY_STATE] as Record<string, unknown>)
+      .featureToggles as Record<string, unknown>;
+    // The two Free-v1 toggles remain...
+    expect(toggles).toHaveProperty("recipientOptimization");
+    expect(toggles).toHaveProperty("autoRescheduleOnOutsideHours");
+    // ...the Premium / removed / dropped ones are gone.
+    for (const key of EXPORT_OMITTED_TOGGLE_KEYS) {
+      expect(toggles).not.toHaveProperty(key);
+    }
+  });
+
+  it("still exports a NEW toggle not on the deny-list (only known-dead keys are stripped)", () => {
+    const state = stateOf();
+    const augmented = {
+      ...state,
+      featureToggles: { ...state.featureToggles, someNewFreeV1Toggle: true },
+    } as unknown as OutboxIQState;
+    const file = assembleDataExport(augmented, null, NOW);
+    const toggles = (file.data[STORAGE_KEY_STATE] as Record<string, unknown>)
+      .featureToggles as Record<string, unknown>;
+    expect(toggles.someNewFreeV1Toggle).toBe(true);
+  });
+
+  it("does not mutate the input state (filters on a copy)", () => {
+    const state = stateOf();
+    assembleDataExport(state, null, NOW);
+    // The live state still has every toggle — only the export FILE drops them.
+    expect(state.featureToggles).toHaveProperty("unscheduleOnReply");
   });
 });
 

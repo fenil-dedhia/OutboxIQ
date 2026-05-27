@@ -5,14 +5,19 @@
 // binding §6.1.2 point) no backend/account/token to revoke (§11 / Entry 39).
 //
 // Design note (anti-omission): the export embeds the WHOLE state object as
-// returned by getState(), never an enumerated subset of fields. So a field a
-// future session adds to OutboxIQState is exported automatically, with no
-// change to this module — there is no second place a field can be silently
-// dropped. (Owner decision, Session 13.)
+// returned by getState() — never an enumerated allow-list of fields. So a field
+// a future session adds to OutboxIQState is exported automatically, with no
+// change here. The ONE exception is a small, explicit DENY-list of known-inert
+// featureToggles keys (EXPORT_OMITTED_TOGGLE_KEYS) that are stripped from the
+// export FILE only — they would mislead a user (Free v1 neither uses nor shows
+// them). A new, genuinely-Free-v1 toggle is not on that list, so it still
+// exports automatically; only the named dead keys are dropped. The stored
+// schema is unchanged. (Owner decisions, Session 13.)
 
 import {
   getState,
   getStoredOnboardingDraft,
+  type FeatureToggles,
   type OnboardingDraft,
   type OutboxIQState,
 } from "./storage";
@@ -45,15 +50,41 @@ export interface FashionablyLateDataExport {
   data: Record<string, unknown>;
 }
 
+/**
+ * featureToggles keys present in the stored schema but NOT part of Free v1 —
+ * so they are stripped from the export file (only). Typed as keyof
+ * FeatureToggles, so renaming/removing a toggle is a compile error here,
+ * forcing a deliberate review. Each is never surfaced in the Free-v1 UI:
+ *  - unscheduleOnReply        — Premium v1 only (PRD §5.6).
+ *  - scheduleConfirmationToast — moot: tied to §5.9 Undo, which was removed
+ *                                (Entry 37; Gmail shows its own confirmation).
+ *  - alwaysScheduleOutsideHours — §5.5.2 auto-suppress, dropped for v1.
+ * (Owner decision, Session 13: a `true` here would imply an active feature.)
+ */
+export const EXPORT_OMITTED_TOGGLE_KEYS: readonly (keyof FeatureToggles)[] = [
+  "unscheduleOnReply",
+  "scheduleConfirmationToast",
+  "alwaysScheduleOutsideHours",
+];
+
 /** Pure assembly of the export payload from already-loaded data. Kept separate
  * from the storage read so the anti-omission guarantee is directly testable:
- * pass a state with an extra field and it appears in the output, unchanged. */
+ * pass a state with an extra top-level field and it appears in the output. The
+ * only filtering is EXPORT_OMITTED_TOGGLE_KEYS within featureToggles. */
 export function assembleDataExport(
   state: OutboxIQState,
   draft: OnboardingDraft | null,
   now: Date,
 ): FashionablyLateDataExport {
-  const data: Record<string, unknown> = { [STORAGE_KEY_STATE]: state };
+  // Strip the known-inert toggle keys from a COPY — the stored state is
+  // untouched; this only shapes the export file.
+  const featureToggles: Record<string, unknown> = { ...state.featureToggles };
+  for (const key of EXPORT_OMITTED_TOGGLE_KEYS) {
+    delete featureToggles[key];
+  }
+  const exportedState: Record<string, unknown> = { ...state, featureToggles };
+
+  const data: Record<string, unknown> = { [STORAGE_KEY_STATE]: exportedState };
   if (draft !== null) {
     data[STORAGE_KEY_ONBOARDING_DRAFT] = draft;
   }
