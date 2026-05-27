@@ -13,20 +13,25 @@
 // `preventDefault`s the replayed gesture, so the email never goes. The symptom
 // is "Send now anyway does nothing."
 //
-// The fix is a PAGE-level latch: a flag on `window`, which is the one object
-// shared by every injected instance in the tab. The first instance to claim it
-// installs the integrations; any later instance (orphaned-then-reinjected, or a
-// static + scripting double-fire race on install) sees the claim and skips
-// installing a second guard. First-claim-wins is deliberate: we cannot tear
-// down another instance's closure-scoped guard from here, but the winning
-// guard's send/schedule path is pure DOM (`fireFull`, the Gmail recipe), so it
-// keeps working even when that instance is the orphaned one — strictly better
-// than two guards that cancel each other. (A Gmail refresh restores a single
-// live instance; that is the existing dev/update guidance.)
+// THE SHARED CHANNEL MUST BE THE DOM, NOT `window`. The original fix put the
+// latch on `window` — but a JS property on `window` is NOT shared across
+// instances after a reload: the orphaned instance and the re-injected instance
+// run in SEPARATE isolated worlds, each with its OWN `window`, so the flag set
+// by one is invisible to the other and BOTH install a guard — i.e. the
+// window-latch failed to cover the very reload case it was written for (the
+// "Send now anyway does nothing" bug resurfaced). The underlying page DOM and
+// its attributes ARE shared across every isolated world in the tab, so a marker
+// attribute on `document.documentElement` dedupes reliably. First-claim-wins is
+// deliberate: we cannot tear down another instance's closure-scoped guard from
+// here, but the winning guard's send/schedule path is pure DOM (`fireFull`, the
+// Gmail recipe), so it keeps working even when that instance is the orphaned one
+// — strictly better than two guards that cancel each other. The marker resets
+// on a Gmail page reload (a fresh document drops JS-set attributes), which is
+// the existing recovery guidance and restores a single live instance.
 
-interface FlaggedWindow extends Window {
-  __fashionablyLateIntegrationsInstalled?: true;
-}
+/** Marker attribute on <html>. Visible to every isolated world in the tab
+ * (unlike a `window` property), so it dedupes across re-injected instances. */
+const INSTALL_ATTR = "data-fashionably-late-installed";
 
 /**
  * Atomically claim the single per-page integration install.
@@ -37,15 +42,15 @@ interface FlaggedWindow extends Window {
  *
  * Synchronous and never throws: `enableIntegrationsIfOnboarded` runs to
  * completion without yielding, so check-and-set cannot interleave between
- * instances. If `window` is somehow unreadable we fail toward claiming (a
- * single instance still installs); a duplicate can only arise across instances,
- * which by definition share a reachable `window`.
+ * instances. If the DOM is somehow unreadable we fail toward claiming (a single
+ * instance still installs); a duplicate can only arise across instances, which
+ * by definition share a reachable document.
  */
 export function claimPageInstall(): boolean {
   try {
-    const w = window as FlaggedWindow;
-    if (w.__fashionablyLateIntegrationsInstalled === true) return false;
-    w.__fashionablyLateIntegrationsInstalled = true;
+    const el = document.documentElement;
+    if (el.getAttribute(INSTALL_ATTR) === "1") return false;
+    el.setAttribute(INSTALL_ATTR, "1");
     return true;
   } catch {
     return true;
@@ -53,10 +58,10 @@ export function claimPageInstall(): boolean {
 }
 
 /** Test-only: clear the page latch so each case starts unclaimed (jsdom shares
- * one `window` across a file). Not used by production code. */
+ * one document across a file). Not used by production code. */
 export function __resetPageInstallForTest(): void {
   try {
-    delete (window as FlaggedWindow).__fashionablyLateIntegrationsInstalled;
+    document.documentElement.removeAttribute(INSTALL_ATTR);
   } catch {
     /* ignore */
   }
