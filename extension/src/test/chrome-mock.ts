@@ -57,6 +57,11 @@ export function installChromeMock(): void {
       },
     },
     runtime: {
+      // Present + truthy = a live (non-orphaned) extension context. The page-
+      // ownership check (page-install-latch.ts) reads this; an orphaned content
+      // script reads `undefined` here. Tests that exercise the orphaned path
+      // delete it explicitly.
+      id: "fashionably-late-test",
       getURL: (path: string) => `chrome-extension://test/${path}`,
       // Mirrors manifest.config.ts `version`; the §5.8.2 About section reads
       // the version from here. Tests that assert dynamic reads override it.

@@ -29,7 +29,7 @@ import { openScheduleModal } from "./schedule-modal/mount";
 import { openNativeScheduleDialog } from "./schedule-modal/schedule-actions";
 import { installRegularSendGuard } from "./regular-send/regular-send-guard";
 import { startConfigWatch } from "./regular-send/config-cache";
-import { claimPageInstall } from "./page-install-latch";
+import { claimPageOwnership } from "./page-install-latch";
 
 const RETRY_DELAY_MS = 300;
 const MAX_ATTEMPTS = 4;
@@ -124,28 +124,27 @@ function handleScheduleSend(): void {
 
 // Latches the post-onboarding install so the storage listener can be a no-op
 // once integration is wired up. Module-scoped — dedupes WITHIN this instance.
-// Cross-INSTANCE dedupe (an orphaned-after-reload instance + a re-injected one
-// sharing one tab) is handled by the page-level claimPageInstall() below, since
-// a module flag is independent per instance. See page-install-latch.ts.
+// Cross-INSTANCE coordination (an orphaned-after-reload instance + a re-injected
+// one sharing one tab) is handled by page OWNERSHIP: this instance claims it,
+// and every handler checks isCurrentOwner() so only the newest live instance
+// acts. See page-install-latch.ts.
 let integrationsInstalled = false;
 
 /** Install §5.2 / §5.5.1 / §5.3 integrations against the just-read state.
- * Idempotent both WITHIN this instance (`integrationsInstalled`) and ACROSS
- * instances in the same tab (`claimPageInstall`). Returns true iff integrations
- * are in place (so the bootstrap skips the onboarding-launch fallback) — which
- * includes the case where a sibling instance already owns them. */
+ * Idempotent WITHIN this instance (`integrationsInstalled`); ACROSS instances
+ * in the same tab, page ownership (`claimPageOwnership` + the handlers'
+ * isCurrentOwner() checks) ensures only the newest live instance acts. Returns
+ * true iff integrations are in place (so bootstrap skips the onboarding-launch
+ * fallback). */
 function enableIntegrationsIfOnboarded(state: OutboxIQState): boolean {
   if (integrationsInstalled) return true;
   if (state.user.onboardingCompletedAt === null) return false;
-  // Onboarded → claim the single per-page install. If a sibling content-script
-  // instance in this tab already claimed it (orphaned-after-reload + re-inject),
-  // do NOT install a second §5.5.1 guard — two guards on `document` would block
-  // each other's Send replay. Latch locally so our storage listener stops
-  // retrying, and report "in place" so onboarding isn't reopened.
-  if (!claimPageInstall()) {
-    integrationsInstalled = true;
-    return true;
-  }
+  // Become the active instance for this tab (last-writer-wins). A previously
+  // loaded copy orphaned by an extension reload keeps its document listeners,
+  // but every §5.2/§5.5.1 handler checks isCurrentOwner() and goes inert once
+  // we claim here / once its context dies — so only THIS newest live copy acts.
+  // Claim BEFORE installing so our handlers own the page the instant they exist.
+  claimPageOwnership();
   installComposeIntegration({ onScheduleSend: handleScheduleSend });
   startConfigWatch({
     timezone: state.user.timezone,

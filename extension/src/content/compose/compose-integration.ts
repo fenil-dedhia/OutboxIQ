@@ -27,6 +27,7 @@ import {
   fireFull,
 } from "../../lib/schedule/gmail-recipe";
 import { SCHEDULE_SEND_LABEL } from "../../lib/constants";
+import { isCurrentOwner } from "../page-install-latch";
 
 /** Passed to the modal opener. §5.2 only needs the triggering item; §5.3 will
  * extend this (recipients, subject) when it reads the compose window. */
@@ -231,6 +232,9 @@ function multipleComposeWindows(): boolean {
 // guard, so there is no leaky module state to reset.
 function makeInterceptor(onScheduleSend: (ctx: ScheduleSendContext) => void) {
   return (e: Event): void => {
+    // Orphaned/superseded copy (post-reload) — stay inert so the newest live
+    // instance owns interception (page-install-latch). Never block here.
+    if (!isCurrentOwner()) return;
     if (suppressInterception) return;
     let menuItem: HTMLElement | null;
     try {
@@ -323,6 +327,8 @@ export function installComposeIntegration(
 
     observer = new MutationObserver((mutations) => {
       try {
+        // Orphaned/superseded copy — let the active instance's observer relabel.
+        if (!isCurrentOwner()) return;
         // 1. Newly inserted menuitems get the correct CURRENT label
         //    immediately (a freshly opened dropdown never flashes wrong).
         for (const m of mutations) {

@@ -1,52 +1,62 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import {
-  claimPageInstall,
-  __resetPageInstallForTest,
+  claimPageOwnership,
+  isCurrentOwner,
+  __resetPageOwnershipForTest,
 } from "./page-install-latch";
 
-// The latch lives on a <html> attribute (shared across isolated worlds), which
-// jsdom shares across cases in a file, so reset before AND after each so neither
-// order-dependence nor leakage into other test files can occur.
-beforeEach(() => __resetPageInstallForTest());
-afterEach(() => __resetPageInstallForTest());
+// Single-active-instance page ownership (PRD §5.2 / §5.5.1). The marker is a
+// <html> attribute (shared across isolated worlds), which jsdom shares across
+// cases in a file, so reset before AND after each. NOTE: the real two-instance
+// orphan scenario is single-world-impossible to reproduce here — these tests
+// prove the token + liveness LOGIC; the live behavior is hands-on verified.
 
-const INSTALL_ATTR = "data-fashionably-late-installed";
+const OWNER_ATTR = "data-fashionably-late-owner";
 
-describe("claimPageInstall (PRD §5.5.1 cross-instance idempotency)", () => {
-  it("first caller in a fresh page wins the claim", () => {
-    expect(claimPageInstall()).toBe(true);
+beforeEach(() => __resetPageOwnershipForTest());
+afterEach(() => __resetPageOwnershipForTest());
+
+describe("page ownership (PRD §5.2 / §5.5.1 single-active-instance)", () => {
+  it("a fresh page with nothing claimed defaults to acting (single instance)", () => {
+    // No claim yet → a lone live instance must still act.
+    expect(document.documentElement.getAttribute(OWNER_ATTR)).toBeNull();
+    expect(isCurrentOwner()).toBe(true);
   });
 
-  it("a second caller (e.g. a re-injected instance) loses the claim", () => {
-    expect(claimPageInstall()).toBe(true); // instance A installs
-    expect(claimPageInstall()).toBe(false); // instance B must skip
-    expect(claimPageInstall()).toBe(false); // and stays skipped
+  it("after claiming, this instance is the owner", () => {
+    claimPageOwnership();
+    expect(document.documentElement.getAttribute(OWNER_ATTR)).not.toBeNull();
+    expect(isCurrentOwner()).toBe(true);
   });
 
-  it("a reset page (new tab / refresh) lets the next caller win again", () => {
-    expect(claimPageInstall()).toBe(true);
-    __resetPageInstallForTest(); // simulates a fresh document
-    expect(claimPageInstall()).toBe(true);
+  it("a newer instance's claim supersedes us — we go inert", () => {
+    claimPageOwnership(); // we own it...
+    expect(isCurrentOwner()).toBe(true);
+    // ...then a newer instance (separate world, shares the DOM) claims. We
+    // can't share its token, so simulate by overwriting the marker.
+    document.documentElement.setAttribute(OWNER_ATTR, "fl-newer-instance");
+    expect(isCurrentOwner()).toBe(false);
   });
 
-  it("the claim lives on the shared DOM, not on this world's window", () => {
-    claimPageInstall();
-    // Page-scoped (not call-scoped): the marker is on <html>.
-    expect(document.documentElement.getAttribute(INSTALL_ATTR)).toBe("1");
-    // It must NOT be a window property — that is exactly what failed to dedupe
-    // across a reloaded instance's separate isolated world (the resurfaced
-    // "Send now anyway does nothing" bug).
-    expect(
-      (window as unknown as Record<string, unknown>)
-        .__fashionablyLateIntegrationsInstalled,
-    ).toBeUndefined();
+  it("an orphaned context never acts, even while it still holds the token", () => {
+    claimPageOwnership();
+    expect(isCurrentOwner()).toBe(true);
+    // Simulate the extension context being severed (orphaned after reload):
+    // chrome.runtime.id becomes undefined.
+    const runtime = chrome.runtime as unknown as { id?: string };
+    const savedId = runtime.id;
+    delete runtime.id;
+    try {
+      expect(isCurrentOwner()).toBe(false);
+    } finally {
+      runtime.id = savedId;
+    }
   });
 
-  it("sees a claim made by a DIFFERENT isolated world (the reload case)", () => {
-    // Another content-script instance (separate world, separate `window`) would
-    // not share our window — but it DOES share the DOM. Simulate its claim by
-    // setting the attribute directly, then assert we correctly skip installing.
-    document.documentElement.setAttribute(INSTALL_ATTR, "1");
-    expect(claimPageInstall()).toBe(false);
+  it("reset clears the claim (new tab / Gmail refresh)", () => {
+    claimPageOwnership();
+    __resetPageOwnershipForTest();
+    expect(document.documentElement.getAttribute(OWNER_ATTR)).toBeNull();
+    expect(isCurrentOwner()).toBe(true); // unclaimed default
   });
 });

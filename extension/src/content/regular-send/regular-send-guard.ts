@@ -46,6 +46,7 @@ import {
   openNativeScheduleDialog,
 } from "../schedule-modal/schedule-actions";
 import { getCachedConfig } from "./config-cache";
+import { isCurrentOwner } from "../page-install-latch";
 import {
   openRegularSendWarning,
   type RegularSendWarningHandle,
@@ -188,6 +189,10 @@ async function doSnap(
 
 function makeHandler(opts: RegularSendGuardOptions, s: GuardState) {
   return (e: Event): void => {
+    // Orphaned/superseded copy (post-reload) — never intercept, so the newest
+    // live guard owns the Send and our replay can't be re-blocked by a stale
+    // guard (page-install-latch). Returning lets the gesture proceed.
+    if (!isCurrentOwner()) return;
     if (s.suppressed) return; // our own replay gesture
 
     // While our modal is up, keep blocking native send attempts only — never

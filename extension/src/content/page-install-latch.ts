@@ -1,67 +1,87 @@
-// PRD §5.5.1 hardening — cross-instance install idempotency.
+// PRD §5.2 / §5.5.1 hardening — single-ACTIVE-instance page ownership.
 //
-// The content script's module-scoped `integrationsInstalled` latch dedupes
-// installs WITHIN one instance, but it cannot dedupe across two SEPARATE
-// content-script instances living in the same Gmail tab. That happens after an
-// extension reload/update while a Gmail tab stays open: the old instance is
-// orphaned (its `chrome.*` context is invalidated) but its document-level
-// listeners survive, and the service worker re-injects a fresh instance (the
-// `scripting` install-time activation). Two instances → two §5.5.1 send guards
-// on `document` at capture phase, each with its own state. When one replays
-// the native Send ("Send now anyway"/"Reschedule"), the OTHER guard — whose
-// `suppressed` flag is false — re-detects the same violation and
-// `preventDefault`s the replayed gesture, so the email never goes. The symptom
-// is "Send now anyway does nothing."
+// Reloading/updating the extension while a Gmail tab stays open leaves the OLD
+// content-script instance ORPHANED: its document-level listeners survive, but
+// its chrome.* context is severed, and a FRESH instance is injected on top. Two
+// instances then fight over the same compose, with three symptoms but ONE
+// cause:
+//   • two §5.5.1 send guards — one replays the native Send, the other re-blocks
+//     it → "Send now anyway does nothing";
+//   • two §5.2 interceptors — the orphaned one can win a Schedule-Send click but
+//     can't read storage (severed context), so it falls back to Gmail's NATIVE
+//     modal instead of ours;
+//   • observers/handlers churning against each other (e.g. continuous chevron /
+//     relabel activity on compose open).
 //
-// THE SHARED CHANNEL MUST BE THE DOM, NOT `window`. The original fix put the
-// latch on `window` — but a JS property on `window` is NOT shared across
-// instances after a reload: the orphaned instance and the re-injected instance
-// run in SEPARATE isolated worlds, each with its OWN `window`, so the flag set
-// by one is invisible to the other and BOTH install a guard — i.e. the
-// window-latch failed to cover the very reload case it was written for (the
-// "Send now anyway does nothing" bug resurfaced). The underlying page DOM and
-// its attributes ARE shared across every isolated world in the tab, so a marker
-// attribute on `document.documentElement` dedupes reliably. First-claim-wins is
-// deliberate: we cannot tear down another instance's closure-scoped guard from
-// here, but the winning guard's send/schedule path is pure DOM (`fireFull`, the
-// Gmail recipe), so it keeps working even when that instance is the orphaned one
-// — strictly better than two guards that cancel each other. The marker resets
-// on a Gmail page reload (a fresh document drops JS-set attributes), which is
-// the existing recovery guidance and restores a single live instance.
+// The fix makes only ONE instance ACT: the newest LIVE one. Ownership is a
+// last-writer-wins token in a `<html>` attribute — the DOM is the one channel
+// shared across every isolated world in the tab. (A JS property on `window` is
+// NOT shared across a reloaded instance's separate world, which is exactly why
+// the earlier window-latch failed to dedupe the reload case it was written for.)
+// Every §5.2/§5.3/§5.5.1 handler calls isCurrentOwner() and no-ops when false,
+// so an orphaned or superseded copy is inert WITHOUT having to tear its
+// listeners down. isCurrentOwner() also requires a live extension context, so an
+// orphaned copy that still holds the token (the brief window before a new copy
+// claims) is inert too. No Gmail refresh needed after an extension update.
+//
+// Unit tests prove the token + liveness logic but CANNOT reproduce the real
+// two-instance orphan scenario (the test env is single-world) — that is
+// hands-on verified: reload the extension with Gmail open and WITHOUT
+// refreshing, then confirm Schedule Send still opens OUR modal and an off-hours
+// "Send now anyway" actually sends.
 
-/** Marker attribute on <html>. Visible to every isolated world in the tab
- * (unlike a `window` property), so it dedupes across re-injected instances. */
-const INSTALL_ATTR = "data-fashionably-late-installed";
+const OWNER_ATTR = "data-fashionably-late-owner";
 
-/**
- * Atomically claim the single per-page integration install.
- *
- * @returns `true` if THIS caller won the claim and should install the
- *   integrations; `false` if another content-script instance in this tab has
- *   already claimed it and this caller should skip installing.
- *
- * Synchronous and never throws: `enableIntegrationsIfOnboarded` runs to
- * completion without yielding, so check-and-set cannot interleave between
- * instances. If the DOM is somehow unreadable we fail toward claiming (a single
- * instance still installs); a duplicate can only arise across instances, which
- * by definition share a reachable document.
- */
-export function claimPageInstall(): boolean {
+// Unique per content-script EXECUTION. The module is re-evaluated in each
+// injected instance (even within one isolated world a fresh execution re-runs
+// module init), so each instance gets its own token.
+const MY_TOKEN = `fl-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+/** Whether THIS content script's extension context is still connected. An
+ * orphaned (post-reload) instance reads `undefined` here and never acts. */
+function contextAlive(): boolean {
   try {
-    const el = document.documentElement;
-    if (el.getAttribute(INSTALL_ATTR) === "1") return false;
-    el.setAttribute(INSTALL_ATTR, "1");
-    return true;
+    return Boolean(chrome?.runtime?.id);
   } catch {
-    return true;
+    return false;
   }
 }
 
-/** Test-only: clear the page latch so each case starts unclaimed (jsdom shares
- * one document across a file). Not used by production code. */
-export function __resetPageInstallForTest(): void {
+/**
+ * Claim page ownership for THIS instance (last-writer-wins). The content script
+ * calls this once, just before installing its integrations, so the most
+ * recently loaded LIVE instance becomes the owner and older/orphaned instances
+ * go inert. Synchronous and never throws.
+ */
+export function claimPageOwnership(): void {
   try {
-    document.documentElement.removeAttribute(INSTALL_ATTR);
+    document.documentElement.setAttribute(OWNER_ATTR, MY_TOKEN);
+  } catch {
+    /* best-effort; isCurrentOwner() defaults to acting when nothing is
+       claimed, so a single live instance still works */
+  }
+}
+
+/**
+ * Whether THIS instance should act. True only when its extension context is
+ * alive AND it is the current owner — or nobody has claimed yet (the single-
+ * instance / fresh-page default, and the unit-test default). Called at the top
+ * of every §5.2/§5.3/§5.5.1 handler so a superseded or orphaned copy no-ops.
+ */
+export function isCurrentOwner(): boolean {
+  if (!contextAlive()) return false;
+  try {
+    const owner = document.documentElement.getAttribute(OWNER_ATTR);
+    return owner === null || owner === MY_TOKEN;
+  } catch {
+    return true; // can't read the DOM → don't disable a live instance
+  }
+}
+
+/** Test-only: clear the ownership marker so each case starts unclaimed. */
+export function __resetPageOwnershipForTest(): void {
+  try {
+    document.documentElement.removeAttribute(OWNER_ATTR);
   } catch {
     /* ignore */
   }
