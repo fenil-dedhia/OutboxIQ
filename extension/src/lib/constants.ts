@@ -1,18 +1,21 @@
 // Single source of truth for cross-cutting constants.
 
-// Planned public Privacy Policy URL. Per PRE_LAUNCH_CHECKLIST.md, the policy
-// will be hosted as `docs/privacy.md` on GitHub Pages from this same repo
-// (github.com/fenil-dedhia/fashionably-late — repo renamed from OutboxIQ in
-// Session 12, owner-directed), and the onboarding flow, OAuth consent screen,
-// and Settings panel all hard-code the resulting stable URL.
+// Public legal URLs. The Privacy Policy and Terms of Service are hosted on
+// GitHub Pages from this repo's `docs/legal/` folder (privacy-policy.md /
+// terms-of-service.md, Session 13), each pinned to a stable permalink in its
+// front matter (/legal/privacy/, /legal/terms/) so the URL is decoupled from
+// the filename. Surfaced by onboarding (Welcome consent) and Settings → Privacy
+// & data. Change repo/host-derived URLs HERE only.
 //
-// IMPORTANT: this link 404s until the policy is written (a deliberate
-// pre-launch task). It is intentionally the real future URL so nothing has to
-// change at launch. The exact path form (`/privacy` vs `/privacy.html`)
-// depends on the Jekyll/Pages config that does not exist yet — the checklist
-// defers pinning the exact stable URL to pre-launch. Change it HERE only.
+// IMPORTANT: these 404 until GitHub Pages is enabled for the repo (Settings →
+// Pages → main → /docs) and the docs' "[DATE TBD]" placeholders are filled —
+// both deliberate pre-launch tasks (PRE_LAUNCH "Legal"). The URLs are the real
+// final ones, so nothing in code changes at launch.
 export const PRIVACY_POLICY_URL =
-  "https://fenil-dedhia.github.io/fashionably-late/privacy";
+  "https://fenil-dedhia.github.io/fashionably-late/legal/privacy/";
+
+export const TERMS_OF_SERVICE_URL =
+  "https://fenil-dedhia.github.io/fashionably-late/legal/terms/";
 
 // Public GitHub repository (PRD §5.8.2 About → "Link to GitHub repository").
 // Repo-name-derived (renamed OutboxIQ → fashionably-late, Session 12), so it
@@ -20,6 +23,13 @@ export const PRIVACY_POLICY_URL =
 // place. Unlike the Privacy/ToS URLs, this one is decided + live (public repo).
 export const GITHUB_REPO_URL =
   "https://github.com/fenil-dedhia/fashionably-late";
+
+// PRD §5.8.2 About — author credit + support channel (owner decision,
+// Session 13: the feedback channel is the founder's email). SUPPORT_EMAIL
+// matches the contact in docs/legal/privacy-policy.md §9.
+export const AUTHOR_NAME = "Fenil Dedhia";
+export const AUTHOR_URL = "https://www.linkedin.com/in/fenildedhia/";
+export const SUPPORT_EMAIL = "fenil.h.dedhia@gmail.com";
 
 // Recorded in the consent record at consent time. No policy is published yet,
 // so this sentinel marks "consented before a versioned policy existed". When

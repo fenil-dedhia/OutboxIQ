@@ -13,6 +13,8 @@ import { seedStorage } from "../../../test/chrome-mock";
 import {
   STORAGE_KEY_STATE,
   STORAGE_KEY_ONBOARDING_DRAFT,
+  PRIVACY_POLICY_URL,
+  TERMS_OF_SERVICE_URL,
 } from "../../../lib/constants";
 
 // PRD §5.8.2 Privacy & Data. Session 13: Export My Data is a real local JSON
@@ -60,15 +62,16 @@ describe("PrivacyDataSection (PRD §5.8.2)", () => {
     expect(contents).not.toContain("unscheduleOnReply");
   });
 
-  it("Privacy Policy + Terms links are inert placeholders, not real URLs", () => {
+  it("Privacy Policy + Terms link to the hosted legal docs in a new tab", () => {
     render(<PrivacyDataSection />);
     const privacy = screen.getByRole("link", { name: /privacy policy/i });
     const terms = screen.getByRole("link", { name: /terms of service/i });
+    expect(privacy).toHaveAttribute("href", PRIVACY_POLICY_URL);
+    expect(terms).toHaveAttribute("href", TERMS_OF_SERVICE_URL);
     for (const link of [privacy, terms]) {
-      expect(link).toHaveAttribute("aria-disabled", "true");
-      expect(link).toHaveAttribute("title", "Available at launch");
-      // Placeholder hash, never a real http(s) URL.
-      expect(link.getAttribute("href") ?? "").not.toMatch(/^https?:/);
+      expect(link.getAttribute("href") ?? "").toMatch(/^https:\/\//);
+      expect(link).toHaveAttribute("target", "_blank");
+      expect(link.getAttribute("rel") ?? "").toContain("noopener");
     }
   });
 

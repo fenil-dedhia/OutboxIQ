@@ -60,7 +60,7 @@ export function installChromeMock(): void {
       getURL: (path: string) => `chrome-extension://test/${path}`,
       // Mirrors manifest.config.ts `version`; the §5.8.2 About section reads
       // the version from here. Tests that assert dynamic reads override it.
-      getManifest: () => ({ version: "0.0.1" }),
+      getManifest: () => ({ version: "1.0.0" }),
       sendMessage: async () => undefined,
       onMessage: { addListener: () => undefined },
       onInstalled: { addListener: () => undefined },

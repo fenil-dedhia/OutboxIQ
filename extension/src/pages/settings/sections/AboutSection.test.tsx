@@ -1,9 +1,15 @@
 import { render, screen } from "@testing-library/react";
 import { describe, it, expect, afterEach } from "vitest";
 import { AboutSection } from "./AboutSection";
-import { GITHUB_REPO_URL } from "../../../lib/constants";
+import {
+  AUTHOR_NAME,
+  AUTHOR_URL,
+  GITHUB_REPO_URL,
+  SUPPORT_EMAIL,
+} from "../../../lib/constants";
 
-// PRD §5.8.2 About — version (from the live manifest), GitHub link, feedback.
+// PRD §5.8.2 About — version (from the live manifest), author credit, GitHub
+// link, feedback (the founder's email).
 
 describe("AboutSection (PRD §5.8.2)", () => {
   const origGetManifest = chrome.runtime.getManifest;
@@ -33,10 +39,18 @@ describe("AboutSection (PRD §5.8.2)", () => {
     expect(link).toHaveAttribute("href", GITHUB_REPO_URL);
   });
 
-  it("feedback is a placeholder until a channel is decided", () => {
+  it("credits the author with a link to their profile", () => {
     render(<AboutSection />);
-    const feedback = screen.getByRole("link", { name: /coming soon/i });
-    expect(feedback).toHaveAttribute("aria-disabled", "true");
-    expect(feedback.getAttribute("href") ?? "").not.toMatch(/^https?:/);
+    const link = screen.getByRole("link", { name: AUTHOR_NAME });
+    expect(link).toHaveAttribute("href", AUTHOR_URL);
+    expect(link).toHaveAttribute("target", "_blank");
+  });
+
+  it("feedback is a mailto link to the support email", () => {
+    render(<AboutSection />);
+    const feedback = screen.getByRole("link", { name: SUPPORT_EMAIL });
+    expect(feedback.getAttribute("href") ?? "").toContain(
+      `mailto:${SUPPORT_EMAIL}`,
+    );
   });
 });

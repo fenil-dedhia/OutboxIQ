@@ -6,12 +6,16 @@ import {
   exportFilename,
   serializeDataExport,
 } from "../../../lib/data-management";
+import {
+  PRIVACY_POLICY_URL,
+  TERMS_OF_SERVICE_URL,
+} from "../../../lib/constants";
 
 // PRD §5.8.2 "Privacy and Data". Export My Data (§6.1.1 right to access) and
-// Delete My Data (§6.1.1 right to erasure) are both wired (Session 13). The
-// Privacy/ToS links remain deliberate placeholders — the real hosted URL is a
-// rename-proof / brand-neutral pre-launch decision (PRE_LAUNCH "Naming /
-// rebrand readiness"), so we must NOT point at a real URL.
+// Delete My Data (§6.1.1 right to erasure) are both wired (Session 13), and the
+// Privacy Policy / Terms of Service now link to the hosted docs
+// (docs/legal/*.md on GitHub Pages; see constants.ts). The URLs 404 until Pages
+// is enabled + the docs' dates are filled — accepted pre-launch (PRE_LAUNCH).
 //
 // Free v1 is local-only (§6.1.2 tier amendment): export reads only
 // chrome.storage.local and downloads a file on-device; delete clears only
@@ -28,22 +32,6 @@ interface PrivacyDataSectionProps {
   /** Called after a successful erasure so the page can show a coherent
    * post-delete (un-onboarded) state. */
   onDataDeleted?: () => void;
-}
-
-// A placeholder link: link-styled but inert (aria-disabled + a tooltip), and
-// preventDefault so the #*-todo hash can't navigate. Reused for Privacy/ToS.
-function PlaceholderLink({ id, children }: { id: string; children: string }) {
-  return (
-    <a
-      href={`#${id}`}
-      className="fl-set-disabled-link"
-      aria-disabled="true"
-      title="Available at launch"
-      onClick={(e) => e.preventDefault()}
-    >
-      {children}
-    </a>
-  );
 }
 
 // Two-step confirmation for the irreversible local wipe: the user must type
@@ -211,9 +199,17 @@ export function PrivacyDataSection({ onDataDeleted }: PrivacyDataSectionProps) {
       )}
 
       <p className="fl-set-legal-links">
-        <PlaceholderLink id="privacy-todo">Privacy Policy</PlaceholderLink>
+        <a href={PRIVACY_POLICY_URL} target="_blank" rel="noopener noreferrer">
+          Privacy Policy
+        </a>
         <span aria-hidden="true"> · </span>
-        <PlaceholderLink id="terms-todo">Terms of Service</PlaceholderLink>
+        <a
+          href={TERMS_OF_SERVICE_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Terms of Service
+        </a>
       </p>
 
       {showDeleteModal && (

@@ -11,7 +11,9 @@ import { defineManifest } from "@crxjs/vite-plugin";
 export default defineManifest({
   manifest_version: 3,
   name: "Fashionably Late",
-  version: "0.0.1",
+  // First public release (owner, Session 13). SemVer: 0.x.y was the pre-release
+  // dev placeholder; 1.0.0 marks the first stable/shipped version.
+  version: "1.0.0",
   // Pins a STABLE unpacked-extension ID (dicnmcmhapcfceodecocnkaacjdpplnm).
   // Without this the dev ID changes every load, which would break the OAuth
   // redirect URI (https://<id>.chromiumapp.org/) on every reload (Session 7

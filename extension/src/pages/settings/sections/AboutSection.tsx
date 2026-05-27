@@ -1,6 +1,12 @@
-import { GITHUB_REPO_URL } from "../../../lib/constants";
+import {
+  AUTHOR_NAME,
+  AUTHOR_URL,
+  GITHUB_REPO_URL,
+  SUPPORT_EMAIL,
+} from "../../../lib/constants";
 
-// PRD §5.8.2 "About" — plugin version, GitHub repo link, feedback/support link.
+// PRD §5.8.2 "About" — plugin version, author credit, GitHub repo link, and a
+// feedback/support channel (the founder's email — owner decision, Session 13).
 
 // Version from the live manifest (single source of truth — manifest.config.ts
 // `version`). Guarded: if getManifest is unavailable, show "—" rather than
@@ -26,6 +32,14 @@ export function AboutSection() {
           <dd>{version}</dd>
         </div>
         <div className="fl-set-about-row">
+          <dt>Built by</dt>
+          <dd>
+            <a href={AUTHOR_URL} target="_blank" rel="noopener noreferrer">
+              {AUTHOR_NAME}
+            </a>
+          </dd>
+        </div>
+        <div className="fl-set-about-row">
           <dt>Source code</dt>
           <dd>
             <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
@@ -36,16 +50,8 @@ export function AboutSection() {
         <div className="fl-set-about-row">
           <dt>Feedback &amp; support</dt>
           <dd>
-            {/* No support channel decided yet — placeholder (flagged in the
-                Session-12 close-out; GitHub Issues is the obvious candidate). */}
-            <a
-              href="#feedback-todo"
-              className="fl-set-disabled-link"
-              aria-disabled="true"
-              title="Available at launch"
-              onClick={(e) => e.preventDefault()}
-            >
-              Coming soon
+            <a href={`mailto:${SUPPORT_EMAIL}?subject=Fashionably%20Late%20feedback`}>
+              {SUPPORT_EMAIL}
             </a>
           </dd>
         </div>
