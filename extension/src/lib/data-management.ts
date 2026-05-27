@@ -1,8 +1,8 @@
-// PRD §6.1.1 GDPR data rights — "right to access" (export). Free v1 is
-// local-only (§6.1.2 tier amendment): export reads ONLY chrome.storage.local
-// and writes a file on-device. Nothing is ever transmitted — no network, no
-// telemetry (§11 / Entry 39). The erasure half ("right to erasure") is added
-// here in Phase 2.
+// PRD §6.1.1 GDPR data rights — "right to access" (export) and "right to
+// erasure" (delete). Free v1 is local-only (§6.1.2 tier amendment): both touch
+// ONLY chrome.storage.local. Export writes a file on-device; erasure clears the
+// owned keys. Nothing is ever transmitted — no network, no telemetry, and (the
+// binding §6.1.2 point) no backend/account/token to revoke (§11 / Entry 39).
 //
 // Design note (anti-omission): the export embeds the WHOLE state object as
 // returned by getState(), never an enumerated subset of fields. So a field a
@@ -16,7 +16,11 @@ import {
   type OnboardingDraft,
   type OutboxIQState,
 } from "./storage";
-import { STORAGE_KEY_STATE, STORAGE_KEY_ONBOARDING_DRAFT } from "./constants";
+import {
+  STORAGE_KEY_STATE,
+  STORAGE_KEY_ONBOARDING_DRAFT,
+  STORAGE_KEY_AUTH,
+} from "./constants";
 
 /** Stable marker written into the export file so a future Import feature can
  * recognise it before writing anything back. */
@@ -109,5 +113,44 @@ export function downloadJsonFile(filename: string, contents: string): void {
     a.remove();
   } finally {
     URL.revokeObjectURL(url);
+  }
+}
+
+// --- §6.1.1 right to erasure ------------------------------------------------
+
+/**
+ * Every chrome.storage.local key this extension owns (the constants.ts set).
+ * Erasure clears EXACTLY these — never the whole namespace blind, so a key
+ * another extension happened to write is untouched. STORAGE_KEY_AUTH is inert
+ * in Free v1 (no OAuth — Entry 39), so it is normally absent; it is still
+ * removed here for an exhaustive wipe (a no-op when absent).
+ */
+export const OWNED_STORAGE_KEYS: readonly string[] = [
+  STORAGE_KEY_STATE,
+  STORAGE_KEY_ONBOARDING_DRAFT,
+  STORAGE_KEY_AUTH,
+];
+
+/**
+ * Irreversibly delete ALL local Fashionably Late data (PRD §6.1.1 right to
+ * erasure). Free v1 is local-only (§6.1.2): there is no backend, account, or
+ * token to revoke — this clears chrome.storage.local and nothing else.
+ *
+ * Keys are removed one at a time so a single failing key is SURFACED rather
+ * than masking the rest (§6.7 graceful degradation — never a silent half-wipe).
+ * After a successful call, getState() returns defaults (un-onboarded).
+ */
+export async function deleteAllData(): Promise<void> {
+  const failed: string[] = [];
+  for (const key of OWNED_STORAGE_KEYS) {
+    try {
+      await chrome.storage.local.remove(key);
+    } catch (err) {
+      console.error(`[Fashionably Late] failed to delete "${key}":`, err);
+      failed.push(key);
+    }
+  }
+  if (failed.length > 0) {
+    throw new Error(`Could not delete: ${failed.join(", ")}`);
   }
 }

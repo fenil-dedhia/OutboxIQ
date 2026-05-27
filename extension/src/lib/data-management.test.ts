@@ -5,14 +5,17 @@ import {
   serializeDataExport,
   exportFilename,
   downloadJsonFile,
+  deleteAllData,
+  OWNED_STORAGE_KEYS,
   EXPORT_APPLICATION_NAME,
   type FashionablyLateDataExport,
 } from "./data-management";
-import { createDefaultState, type OutboxIQState } from "./storage";
+import { createDefaultState, getState, type OutboxIQState } from "./storage";
 import { seedStorage } from "../test/chrome-mock";
 import {
   STORAGE_KEY_STATE,
   STORAGE_KEY_ONBOARDING_DRAFT,
+  STORAGE_KEY_AUTH,
 } from "./constants";
 
 // PRD §6.1.1 "right to access" — local-only JSON export (§6.1.2 / §11 / Entry
@@ -193,6 +196,95 @@ describe("downloadJsonFile", () => {
     globalThis.fetch = fetchSpy as unknown as typeof fetch;
     try {
       downloadJsonFile("x.json", "{}");
+      expect(fetchSpy).not.toHaveBeenCalled();
+    } finally {
+      globalThis.fetch = original;
+    }
+  });
+});
+
+describe("deleteAllData (PRD §6.1.1 right to erasure)", () => {
+  it("owns exactly the three constants.ts storage keys", () => {
+    expect([...OWNED_STORAGE_KEYS].sort()).toEqual(
+      [STORAGE_KEY_STATE, STORAGE_KEY_ONBOARDING_DRAFT, STORAGE_KEY_AUTH].sort(),
+    );
+  });
+
+  it("clears every owned key but leaves unrelated keys untouched (not a blind wipe)", async () => {
+    seedStorage({
+      [STORAGE_KEY_STATE]: createDefaultState(),
+      [STORAGE_KEY_ONBOARDING_DRAFT]: { stepIndex: 1 },
+      [STORAGE_KEY_AUTH]: { accessToken: "x" },
+      someoneElsesKey: { keep: true },
+    });
+
+    await deleteAllData();
+
+    for (const key of OWNED_STORAGE_KEYS) {
+      expect(await chrome.storage.local.get(key)).toEqual({});
+    }
+    // A key the extension does not own is left alone.
+    expect(await chrome.storage.local.get("someoneElsesKey")).toEqual({
+      someoneElsesKey: { keep: true },
+    });
+  });
+
+  it("leaves getState() at defaults / un-onboarded after the wipe", async () => {
+    seedStorage({
+      [STORAGE_KEY_STATE]: {
+        ...createDefaultState(),
+        user: {
+          email: "",
+          timezone: "Asia/Tokyo",
+          timezoneSource: "manual",
+          onboardingCompletedAt: "2026-01-01T00:00:00.000Z",
+        },
+      },
+    });
+
+    await deleteAllData();
+
+    const after = await getState();
+    expect(after).toEqual(createDefaultState());
+    expect(after.user.onboardingCompletedAt).toBeNull();
+  });
+
+  it("surfaces a partial failure instead of reporting silent success (§6.7)", async () => {
+    seedStorage({
+      [STORAGE_KEY_STATE]: createDefaultState(),
+      [STORAGE_KEY_ONBOARDING_DRAFT]: { stepIndex: 0 },
+      [STORAGE_KEY_AUTH]: { accessToken: "x" },
+    });
+    const realRemove = chrome.storage.local.remove;
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    chrome.storage.local.remove = vi.fn((key: string) => {
+      if (key === STORAGE_KEY_AUTH) {
+        return Promise.reject(new Error("quota error"));
+      }
+      return (realRemove as (k: string) => Promise<void>)(key);
+    }) as typeof chrome.storage.local.remove;
+
+    try {
+      // The failing key is named in the surfaced error...
+      await expect(deleteAllData()).rejects.toThrow(STORAGE_KEY_AUTH);
+      // ...and the keys that COULD be removed still were (no abort-on-first).
+      expect(await chrome.storage.local.get(STORAGE_KEY_STATE)).toEqual({});
+      expect(
+        await chrome.storage.local.get(STORAGE_KEY_ONBOARDING_DRAFT),
+      ).toEqual({});
+    } finally {
+      chrome.storage.local.remove = realRemove;
+      errorSpy.mockRestore();
+    }
+  });
+
+  it("does not transmit anything (no network call)", async () => {
+    const original = globalThis.fetch;
+    const fetchSpy = vi.fn();
+    globalThis.fetch = fetchSpy as unknown as typeof fetch;
+    try {
+      seedStorage({ [STORAGE_KEY_STATE]: createDefaultState() });
+      await deleteAllData();
       expect(fetchSpy).not.toHaveBeenCalled();
     } finally {
       globalThis.fetch = original;

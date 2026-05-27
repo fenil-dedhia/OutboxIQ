@@ -7,6 +7,7 @@ import { FeatureTogglesSection } from "./sections/FeatureTogglesSection";
 import { CacheSection } from "./sections/CacheSection";
 import { PrivacyDataSection } from "./sections/PrivacyDataSection";
 import { AboutSection } from "./sections/AboutSection";
+import { ONBOARDING_PAGE_PATH } from "../../lib/constants";
 
 // PRD §5.8 Settings panel. Sidebar nav + content pane: each §5.8.2 section is a
 // nav item; clicking switches the active section in the main pane. Chosen over
@@ -41,9 +42,54 @@ const NAV: { id: SectionId; label: string }[] = [
   { id: "about", label: "About" },
 ];
 
+/** §6.1.1 post-erasure: open onboarding so the user can set up fresh (the wipe
+ * left the extension un-onboarded). Guarded — never blow up if the API/path is
+ * unavailable (§6.7); the toolbar icon also re-opens onboarding when un-onboarded. */
+function openOnboarding(): void {
+  try {
+    window.location.assign(chrome.runtime.getURL(ONBOARDING_PAGE_PATH));
+  } catch (err) {
+    console.error("[Fashionably Late] could not open onboarding:", err);
+  }
+}
+
 export function App() {
   const settings = useSettings();
   const [active, setActive] = useState<SectionId>("profile");
+  // Set once the user erases all data (§6.1.1). We switch to a terminal
+  // confirmation rather than re-rendering the editable sections against
+  // now-deleted data — the extension is un-onboarded after a wipe.
+  const [dataDeleted, setDataDeleted] = useState(false);
+
+  if (dataDeleted) {
+    return (
+      <div className="fl-set-shell">
+        <header className="fl-set-header">
+          <h1>Fashionably Late — Settings</h1>
+        </header>
+        <main className="fl-set-main">
+          <section
+            className="fl-set-section"
+            aria-labelledby="fl-set-deleted-h"
+          >
+            <h2 id="fl-set-deleted-h">Your data has been deleted</h2>
+            <p className="fl-set-help">
+              All your Fashionably Late data has been removed from this browser.
+              The extension is back to a clean state — the next time you use it,
+              setup will start fresh.
+            </p>
+            <button
+              type="button"
+              className="fl-set-btn"
+              onClick={openOnboarding}
+            >
+              Set up Fashionably Late again
+            </button>
+          </section>
+        </main>
+      </div>
+    );
+  }
 
   // §6.7 graceful degradation: getState() default-merges, so `state` is always
   // well-formed once loaded; until then, a plain loading line (never blow up).
@@ -117,7 +163,9 @@ export function App() {
               onClearAll={settings.clearCache}
             />
           )}
-          {active === "privacy" && <PrivacyDataSection />}
+          {active === "privacy" && (
+            <PrivacyDataSection onDataDeleted={() => setDataDeleted(true)} />
+          )}
           {active === "about" && <AboutSection />}
         </main>
       </div>

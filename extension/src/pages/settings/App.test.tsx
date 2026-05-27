@@ -1,4 +1,10 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { App } from "./App";
 import { seedStorage } from "../../test/chrome-mock";
@@ -118,5 +124,37 @@ describe("Settings App (PRD §5.8)", () => {
     const options = screen.getAllByRole("option");
     expect(options[0]).toHaveTextContent("Eastern Time");
     expect(options[1]).toHaveTextContent("Pacific Time");
+  });
+
+  // §6.1.1 right to erasure: after a confirmed wipe the page swaps to a
+  // terminal confirmation (un-onboarded), not the editable sections.
+  it("shows a post-delete confirmation screen after erasing all data", async () => {
+    seedStorage({ [STORAGE_KEY_STATE]: createDefaultState() });
+    render(<App />);
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: /privacy & data/i }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /delete my data/i }));
+    const dialog = screen.getByRole("dialog");
+    fireEvent.change(within(dialog).getByRole("textbox"), {
+      target: { value: "delete" },
+    });
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: /delete my data/i }),
+    );
+
+    expect(
+      await screen.findByRole("heading", {
+        name: /your data has been deleted/i,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /set up fashionably late again/i }),
+    ).toBeInTheDocument();
+    // The editable sections are gone.
+    expect(
+      screen.queryByRole("heading", { name: /privacy & data/i }),
+    ).toBeNull();
   });
 });

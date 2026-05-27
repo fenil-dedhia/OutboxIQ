@@ -1,22 +1,34 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   buildDataExport,
+  deleteAllData,
   downloadJsonFile,
   exportFilename,
   serializeDataExport,
 } from "../../../lib/data-management";
 
-// PRD §5.8.2 "Privacy and Data". Export My Data is wired (§6.1.1 right to
-// access — Session 13); Delete My Data is still structure-only ("coming soon")
-// until Phase 2. The Privacy/ToS links are deliberate placeholders — the real
-// hosted URL is a rename-proof / brand-neutral pre-launch decision (PRE_LAUNCH
-// "Naming / rebrand readiness"), so we must NOT point at a real URL.
+// PRD §5.8.2 "Privacy and Data". Export My Data (§6.1.1 right to access) and
+// Delete My Data (§6.1.1 right to erasure) are both wired (Session 13). The
+// Privacy/ToS links remain deliberate placeholders — the real hosted URL is a
+// rename-proof / brand-neutral pre-launch decision (PRE_LAUNCH "Naming /
+// rebrand readiness"), so we must NOT point at a real URL.
 //
 // Free v1 is local-only (§6.1.2 tier amendment): export reads only
-// chrome.storage.local and downloads a file on-device — no network, no
-// telemetry (§11 / Entry 39).
+// chrome.storage.local and downloads a file on-device; delete clears only
+// chrome.storage.local. There is NO backend, account, or token to revoke — the
+// delete copy must never imply otherwise (§6.1.2). No network, no telemetry
+// (§11 / Entry 39).
 
 type Notice = { text: string; tone: "info" | "error" };
+
+/** Typed-confirmation word for the irreversible delete (case-insensitive). */
+const CONFIRM_WORD = "delete";
+
+interface PrivacyDataSectionProps {
+  /** Called after a successful erasure so the page can show a coherent
+   * post-delete (un-onboarded) state. */
+  onDataDeleted?: () => void;
+}
 
 // A placeholder link: link-styled but inert (aria-disabled + a tooltip), and
 // preventDefault so the #*-todo hash can't navigate. Reused for Privacy/ToS.
@@ -34,8 +46,89 @@ function PlaceholderLink({ id, children }: { id: string; children: string }) {
   );
 }
 
-export function PrivacyDataSection() {
+// Two-step confirmation for the irreversible local wipe: the user must type
+// "delete" before the destructive button enables. Copy is local-only — it must
+// NOT mention backend/servers/account/token revocation (§6.1.2 — Free v1 has
+// none). Backdrop click / Cancel / Escape close harmlessly.
+function DeleteDataModal({
+  onCancel,
+  onConfirm,
+  busy,
+}: {
+  onCancel: () => void;
+  onConfirm: () => void;
+  busy: boolean;
+}) {
+  const [text, setText] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const confirmed = text.trim().toLowerCase() === CONFIRM_WORD;
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  return (
+    <div className="fl-set-modal-backdrop" role="presentation" onClick={onCancel}>
+      <div
+        className="fl-set-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="fl-set-del-h"
+        aria-describedby="fl-set-del-body"
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => {
+          if (e.key === "Escape" && !busy) onCancel();
+        }}
+      >
+        <h2 id="fl-set-del-h">Delete all data?</h2>
+        <p id="fl-set-del-body">
+          This permanently deletes all your Fashionably Late data stored in this
+          browser — your timezone, working hours, pinned timezones, saved
+          recipient timezones, and preferences. This can&rsquo;t be undone.
+        </p>
+        <label className="fl-set-field-label" htmlFor="fl-set-del-input">
+          To confirm, type <code>delete</code> below.
+        </label>
+        <input
+          id="fl-set-del-input"
+          ref={inputRef}
+          className="fl-set-modal-input"
+          type="text"
+          value={text}
+          autoComplete="off"
+          spellCheck={false}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && confirmed && !busy) onConfirm();
+          }}
+        />
+        <div className="fl-set-modal-actions">
+          <button
+            type="button"
+            className="fl-set-btn"
+            onClick={onCancel}
+            disabled={busy}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="fl-set-btn fl-set-btn-danger-solid"
+            onClick={onConfirm}
+            disabled={!confirmed || busy}
+          >
+            {busy ? "Deleting…" : "Delete my data"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function PrivacyDataSection({ onDataDeleted }: PrivacyDataSectionProps) {
   const [notice, setNotice] = useState<Notice | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // §6.1.1 right to access: serialize all local data to a JSON file and
   // download it on-device. Fully local (§6.1.2 / §11) — no network call.
@@ -56,6 +149,27 @@ export function PrivacyDataSection() {
     }
   }
 
+  // §6.1.1 right to erasure: irreversibly clear all local data, then hand off
+  // to the page so it can show the un-onboarded post-delete state.
+  async function handleConfirmDelete(): Promise<void> {
+    setDeleting(true);
+    try {
+      await deleteAllData();
+      setShowDeleteModal(false);
+      onDataDeleted?.();
+    } catch (err) {
+      console.error("[Fashionably Late] data deletion failed:", err);
+      setShowDeleteModal(false);
+      // §6.7: a partial failure must not look like success.
+      setNotice({
+        text: "Couldn't delete all your data — some may still be on this device. Please try again.",
+        tone: "error",
+      });
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   return (
     <section className="fl-set-section" aria-labelledby="fl-set-privacy-h">
       <h2 id="fl-set-privacy-h">Privacy &amp; data</h2>
@@ -72,16 +186,13 @@ export function PrivacyDataSection() {
         >
           Export my data
         </button>
-        {/* TODO(§6.1.1 right to erasure): wire to a confirmed clear-all of
-            local storage. NOTE: Free-v1 copy must NOT mention "revoking
-            backend access" (there is no backend — Entry 39); the §5.8.2
-            backend-revocation wording is Premium-only. Stubbed until Phase 2. */}
         <button
           type="button"
           className="fl-set-btn fl-set-btn-danger"
-          onClick={() =>
-            setNotice({ text: "Data deletion is coming soon.", tone: "info" })
-          }
+          onClick={() => {
+            setNotice(null);
+            setShowDeleteModal(true);
+          }}
         >
           Delete my data
         </button>
@@ -104,6 +215,14 @@ export function PrivacyDataSection() {
         <span aria-hidden="true"> · </span>
         <PlaceholderLink id="terms-todo">Terms of Service</PlaceholderLink>
       </p>
+
+      {showDeleteModal && (
+        <DeleteDataModal
+          busy={deleting}
+          onCancel={() => setShowDeleteModal(false)}
+          onConfirm={() => void handleConfirmDelete()}
+        />
+      )}
     </section>
   );
 }

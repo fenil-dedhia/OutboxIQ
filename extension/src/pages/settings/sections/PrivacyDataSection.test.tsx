@@ -1,14 +1,28 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { PrivacyDataSection } from "./PrivacyDataSection";
 import { downloadJsonFile } from "../../../lib/data-management";
+import { createDefaultState } from "../../../lib/storage";
+import { seedStorage } from "../../../test/chrome-mock";
+import {
+  STORAGE_KEY_STATE,
+  STORAGE_KEY_ONBOARDING_DRAFT,
+} from "../../../lib/constants";
 
-// PRD §5.8.2 Privacy & Data. Phase 1 (Session 13): Export My Data is wired to a
-// real local JSON download (§6.1.1 right to access). Delete My Data is still
-// "coming soon" until Phase 2. Privacy/ToS links remain inert placeholders.
+// PRD §5.8.2 Privacy & Data. Session 13: Export My Data is a real local JSON
+// download (§6.1.1 right to access); Delete My Data is a typed-confirmation
+// irreversible local wipe (§6.1.1 right to erasure). Privacy/ToS links remain
+// inert placeholders.
 
-// Mock only the DOM download trigger; the rest of the export pipeline
-// (buildDataExport → serializeDataExport) runs for real over the chrome mock.
+// Mock only the DOM download trigger; the rest of export (buildDataExport →
+// serializeDataExport) and ALL of deleteAllData run for real over the chrome
+// mock — so the delete tests assert the keys are actually cleared.
 vi.mock("../../../lib/data-management", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("../../../lib/data-management")>();
@@ -44,12 +58,6 @@ describe("PrivacyDataSection (PRD §5.8.2)", () => {
     expect(contents).toContain('"schemaVersion"');
   });
 
-  it("Delete still shows a 'coming soon' notice (wired in Phase 2)", () => {
-    render(<PrivacyDataSection />);
-    fireEvent.click(screen.getByRole("button", { name: /delete my data/i }));
-    expect(screen.getByRole("status")).toHaveTextContent(/coming soon/i);
-  });
-
   it("Privacy Policy + Terms links are inert placeholders, not real URLs", () => {
     render(<PrivacyDataSection />);
     const privacy = screen.getByRole("link", { name: /privacy policy/i });
@@ -60,5 +68,104 @@ describe("PrivacyDataSection (PRD §5.8.2)", () => {
       // Placeholder hash, never a real http(s) URL.
       expect(link.getAttribute("href") ?? "").not.toMatch(/^https?:/);
     }
+  });
+
+  describe("Delete My Data (§6.1.1 right to erasure)", () => {
+    function openDeleteModal() {
+      fireEvent.click(screen.getByRole("button", { name: /delete my data/i }));
+      return screen.getByRole("dialog");
+    }
+
+    it("opens a confirmation modal rather than deleting immediately", () => {
+      render(<PrivacyDataSection />);
+      expect(screen.queryByRole("dialog")).toBeNull();
+      openDeleteModal();
+      expect(screen.getByRole("dialog")).toBeInTheDocument();
+    });
+
+    it("keeps the destructive button disabled until 'delete' is typed (case-insensitive, trimmed)", () => {
+      render(<PrivacyDataSection />);
+      const dialog = openDeleteModal();
+      const confirm = within(dialog).getByRole("button", {
+        name: /delete my data/i,
+      });
+      const input = within(dialog).getByRole("textbox");
+
+      expect(confirm).toBeDisabled();
+      fireEvent.change(input, { target: { value: "nope" } });
+      expect(confirm).toBeDisabled();
+      fireEvent.change(input, { target: { value: "  DELETE  " } });
+      expect(confirm).toBeEnabled();
+    });
+
+    it("Cancel closes the modal and deletes nothing", async () => {
+      seedStorage({ [STORAGE_KEY_STATE]: createDefaultState() });
+      render(<PrivacyDataSection />);
+      const dialog = openDeleteModal();
+      fireEvent.click(within(dialog).getByRole("button", { name: /cancel/i }));
+
+      expect(screen.queryByRole("dialog")).toBeNull();
+      expect(await chrome.storage.local.get(STORAGE_KEY_STATE)).not.toEqual({});
+    });
+
+    it("confirming wipes all owned data and notifies the page (onDataDeleted)", async () => {
+      seedStorage({
+        [STORAGE_KEY_STATE]: createDefaultState(),
+        [STORAGE_KEY_ONBOARDING_DRAFT]: { stepIndex: 1 },
+      });
+      const onDataDeleted = vi.fn();
+      render(<PrivacyDataSection onDataDeleted={onDataDeleted} />);
+      const dialog = openDeleteModal();
+      fireEvent.change(within(dialog).getByRole("textbox"), {
+        target: { value: "delete" },
+      });
+      fireEvent.click(
+        within(dialog).getByRole("button", { name: /delete my data/i }),
+      );
+
+      await waitFor(() => expect(onDataDeleted).toHaveBeenCalledTimes(1));
+      expect(await chrome.storage.local.get(STORAGE_KEY_STATE)).toEqual({});
+      expect(
+        await chrome.storage.local.get(STORAGE_KEY_ONBOARDING_DRAFT),
+      ).toEqual({});
+    });
+
+    it("uses local-only copy — no backend / server / revoke / token language (§6.1.2)", () => {
+      render(<PrivacyDataSection />);
+      const dialog = openDeleteModal();
+      expect(dialog.textContent ?? "").not.toMatch(
+        /backend|server|revoke|account|token/i,
+      );
+    });
+
+    it("surfaces an error (and does NOT claim success) if the wipe fails", async () => {
+      seedStorage({ [STORAGE_KEY_STATE]: createDefaultState() });
+      const onDataDeleted = vi.fn();
+      const realRemove = chrome.storage.local.remove;
+      const errorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      chrome.storage.local.remove = vi.fn(() =>
+        Promise.reject(new Error("boom")),
+      ) as typeof chrome.storage.local.remove;
+
+      try {
+        render(<PrivacyDataSection onDataDeleted={onDataDeleted} />);
+        const dialog = openDeleteModal();
+        fireEvent.change(within(dialog).getByRole("textbox"), {
+          target: { value: "delete" },
+        });
+        fireEvent.click(
+          within(dialog).getByRole("button", { name: /delete my data/i }),
+        );
+
+        const alert = await screen.findByRole("alert");
+        expect(alert).toHaveTextContent(/couldn't delete/i);
+        expect(onDataDeleted).not.toHaveBeenCalled();
+      } finally {
+        chrome.storage.local.remove = realRemove;
+        errorSpy.mockRestore();
+      }
+    });
   });
 });
