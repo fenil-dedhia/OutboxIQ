@@ -49,9 +49,9 @@ We may add, change, or remove features in future versions of the extension. Chan
 
 ## 4. License to use the extension
 
-We grant you a personal, non-exclusive, non-transferable, revocable license to install and use the Free version of the Fashionably Late extension for your own personal or internal business use, subject to these terms.
+We grant you a non-exclusive license to install and use the Free version of the Fashionably Late extension for your own personal or internal business use, subject to these terms.
 
-The extension's source code is published in a public repository on GitHub for portfolio and transparency purposes. **The source code is not open source.** All rights to the source code are reserved by Fenil Dedhia. The public repository is **not** a grant of license to copy, modify, distribute, or create derivative works of the source code. Reuse of the source code requires prior written permission. The license under which a future public release of source code (if any) may be offered is a separate decision that has not been made.
+The extension's source code is published in a public repository on GitHub under the **Apache License, Version 2.0**. The license text is available at <https://www.apache.org/licenses/LICENSE-2.0> and in the repository's `LICENSE` file. Use of the source code (including copying, modification, distribution, and creation of derivative works) is governed by the terms of that license rather than by this Section 4.
 
 ---
 

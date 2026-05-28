@@ -28,9 +28,9 @@ Fenil Dedhia operates Fashionably Late as a solo founder. References to "we," "u
 
 ## 2. Scope of this policy
 
-This policy covers the **Free version** of the Fashionably Late Chrome extension (referred to here as "Fashionably Late" or "the extension"). 
+This policy covers the **Free version** of the Fashionably Late Chrome extension (referred to here as "Fashionably Late" or "the extension").
 
-A paid Premium version of Fashionably Late may be offered in the future. That version is not yet available and is not covered by this policy. If and when Premium becomes available, separate or expanded privacy terms will be published and disclosed before any user can sign up. The current Free version's data handling will not change as a result.
+A paid Premium version of Fashionably Late may be offered in the future. If it is, it will be released as a **separate Chrome Web Store extension** — a distinct listing, with a distinct installation, distinct permissions, and its own privacy policy. There is no in-product upgrade from the Free extension to a Premium extension; users who want Premium would install it separately, and its data handling would be disclosed in its own policy before any user could sign up. **The Free version's data handling described in this policy will not change as a result of Premium being launched.**
 
 ---
 
@@ -131,7 +131,7 @@ Fashionably Late is not directed at children under 13 (or under 16 in the EU/EEA
 
 If this policy changes materially, the change will be reflected in the version of the policy published at `https://fashionablylate.app/legal/privacy` (or its successor URL, with redirects from the prior URL maintained). The "Last updated" date at the top of this document will be revised. Material changes that affect how user data is handled will be accompanied by a notice in the extension itself (e.g., a one-time prompt on next use) before the new policy takes effect.
 
-If a future version of Fashionably Late (such as a Premium tier) introduces fundamentally different data handling, that will be disclosed separately, in advance, with the opportunity to opt in or to continue using the Free version on the current terms.
+A future Premium version of Fashionably Late, if released, will be a **separate Chrome Web Store extension** with its own installation and its own privacy policy (see Section 2). Users will opt in to Premium's data handling by choosing to install that separate extension; **the Free version's privacy terms described in this policy are not affected by Premium's launch.**
 
 ---
 

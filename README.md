@@ -50,4 +50,6 @@ Then load it in Chrome: go to `chrome://extensions`, enable **Developer mode**, 
 
 ## License
 
-**All rights reserved.** This repository is public for portfolio and evaluation purposes only — see [`LICENSE`](./LICENSE). No reuse, copying, modification, or distribution is permitted without prior written permission. The eventual public-launch licensing model is a separate decision tracked in [`PRE_LAUNCH_CHECKLIST.md`](./PRE_LAUNCH_CHECKLIST.md).
+Fashionably Late is licensed under the **Apache License, Version 2.0** — see [`LICENSE`](./LICENSE) for the full text and [`NOTICE`](./NOTICE) for the copyright notice. You're free to use, modify, fork, and commercialize the code under the terms of that license.
+
+For commercial inquiries beyond what Apache 2.0 already permits (custom support, indemnification beyond Apache's terms, co-branded distribution, etc.), see [`COMMERCIAL.md`](./COMMERCIAL.md).

@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "description": "Fashionably Late — Chrome MV3 extension that enhances Gmail's Schedule Send.",
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
