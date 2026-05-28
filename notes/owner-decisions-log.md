@@ -1994,6 +1994,106 @@ that preceded the §5.3.5/§5.4 build. They qualify; Entries 26 and 27.
   eyes-open, and the reasoning is preserved so revisiting it later starts from
   evidence, not from scratch.
 
+## Entry 50 — Export hides non-Free-v1 feature flags (owner caught the confusing dead toggles)
+
+- **Session:** 13 (Phase-1 hands-on)
+- **Moment:** Inspecting the freshly-wired Export JSON, the owner noticed the
+  `featureToggles` block listed five flags but the Settings UI shows only two,
+  and asked whether the other three should be in the file "because it might
+  confuse users." The three: `unscheduleOnReply` (Premium v1), and the inert
+  `scheduleConfirmationToast` (moot — §5.9 Undo removed, Entry 37) and
+  `alwaysScheduleOutsideHours` (§5.5.2 dropped).
+- **My input (owner):** After I laid out the trade-off — keep a faithful full
+  dump (honours the Phase-1 "export the whole object, never hand-pick" decision,
+  fully re-importable) vs. hide the three (cleaner, but hand-picks fields) — the
+  owner chose **hide the three dead flags**. `unscheduleOnReply: true` in
+  particular read like an active feature that doesn't exist in Free v1.
+- **What Claude Code would have done without it:** Claude had *just* built the
+  export to dump the whole state object precisely so nothing is silently omitted
+  — and would have shipped it that way. The owner's read of it as a *user-facing
+  trust artifact* (not just a data dump) flipped the call. Claude's contribution:
+  correcting the owner's "all three are Premium" mental model (only one is —
+  the others are removed/dropped), and implementing the narrowing safely as a
+  keyof-typed **deny-list** (not an allow-list), so a genuinely-new Free-v1
+  toggle still exports automatically and only the named dead keys drop; filtered
+  on a copy so the stored schema is untouched.
+- **Outcome:** Commit `e5568bc`; `EXPORT_OMITTED_TOGGLE_KEYS` + tests (deny-list
+  stripped, new toggle still exported, input not mutated).
+- **Lesson (for coaching):** "export everything, omit nothing" is the right
+  engineering instinct for a *data dump*, but the export is *also* something a
+  user reads — and a `true` next to a feature that doesn't exist is worse than a
+  missing field. The deeper fix is to stop *storing* dead fields (a schema
+  cleanup), which the deny-list defers honestly rather than papering over.
+
+## Entry 51 — The duplicate-instance bug: a wrong-assumption fix, then the right one, then "don't force-reload"
+
+- **Session:** 13 (mid-session, owner bug reports)
+- **Moment:** The owner hit "Send now anyway does nothing" (the §5.5.1 soft
+  warning wouldn't send) — the *third* time this bug family surfaced — plus a
+  chevron-click loop and Schedule Send opening Gmail's native modal instead of
+  ours. Root cause (one, not three): reloading the extension with Gmail open
+  leaves an **orphaned** content-script instance (listeners alive, chrome.*
+  context severed) alongside a fresh one, and the two fight.
+- **My input (owner):** The owner reported each symptom precisely, asked the
+  load-bearing question — *"I didn't refresh Gmail; is that why?"* (it was) —
+  ran the clean-slate retest that confirmed the unifying diagnosis, and then made
+  two calls: (1) approved building the durable fix, (2) after I laid out that
+  force-reloading users' Gmail on every update would be intrusive for an email
+  tool and is unnecessary once the fix is in, chose to **rely on the ownership
+  fix and NOT auto-reload**.
+- **What Claude Code would have done without it:** Claude's *first* fix this
+  session (`d7c54f7`, a DOM-attribute latch) rested on a wrong assumption it had
+  itself written a session earlier — that the latch could dedupe to one copy and
+  the survivor would be fine — when the survivor could be the *dead* orphaned
+  copy. The owner's hands-on ("it resurfaced") is what exposed that the fix was
+  incomplete; without it Claude would have considered the bug closed. The right
+  fix (`3c74e55`, newest-LIVE-copy-wins + orphaned-copies-inert via a context
+  liveness check) followed. Claude's contributions: the eventual correct model,
+  and holding the line that auto-reloading inboxes is the wrong trade — but the
+  *diagnosis* depended on the owner's report, and the auto-reload restraint was
+  the owner's explicit product call.
+- **Outcome:** Commits `d7c54f7` (superseded) → `3c74e55` (durable). Owner
+  confirmed the blocking symptom resolves after one Gmail refresh and accepted
+  the approach. Caveat: the two-copy orphan scenario is single-world-impossible
+  to unit-test (session-13-summary §f).
+- **Lesson (for coaching):** two lessons. (1) A fix built on an untested
+  assumption about a platform's runtime model (here: whether `window` / a
+  reloaded content script share state) isn't done until it's driven in the real
+  runtime — green tests on single-world jsdom proved nothing about the
+  two-world reality. (2) "Make the bug impossible" is tempting (force-reload),
+  but the cure can be worse than the disease for the user; the owner was right
+  that a non-intrusive fix that *handles* the orphan beats one that *prevents*
+  it by yanking people out of their inbox.
+
+## Entry 52 — Premium v1 kept out of this project; the Free-v1-only remaining-session roadmap
+
+- **Session:** 13 (close-out)
+- **Moment:** Asked what Session 14 looks like, the owner set the remaining
+  roadmap — **Accessibility pass → Workspace compatibility → security audit →
+  comprehensive hands-on testing** — and directed that **anything Premium-v1
+  scope be left out of this repo/project**.
+- **My input (owner):** Defined the roadmap and the scope boundary. This
+  sharpens Entry 32's tier-split (Premium = a *later* track) into "Premium is
+  not part of *this* project at all."
+- **What Claude Code would have done without it:** Claude's own Session-14 sketch
+  had already put Premium v1 out of immediate scope, so the roadmap aligned.
+  Claude's load-bearing contribution was **refusing to silently act on the
+  ambiguous "out of this repo"**: the repo holds the deliberately-*preserved*,
+  inert, verified premium-v1 OAuth/People stack (`src/premium-v1/`), the untouched
+  `backend/`, `PREMIUM_LAUNCH_CHECKLIST.md`, and PRD §13 — all locked by Entry 39
+  / CLAUDE.md as "preserved, not deleted." Physically deleting built+tested work
+  is hard to reverse, so Claude recorded the directive, honoured it in the
+  roadmap (no Premium work planned), and **flagged the physical removal as a
+  decision needing explicit owner go-ahead** rather than executing it.
+- **Outcome:** Free-v1-only roadmap recorded (session-13-summary §h). Premium v1
+  code/docs **left in place pending an explicit "remove it" decision**; offered
+  as a clean dedicated task if the owner confirms.
+- **Lesson (for coaching):** an ambiguous scope instruction that would *delete
+  preserved work* is exactly the case to surface, not assume. "Leave Premium out
+  of the project" almost certainly means the roadmap; it *might* mean the files —
+  and the cost of guessing wrong (discarding Sessions 7–9 verified work) is high
+  and one-directional, so confirm.
+
 ---
 
 *New entries are appended at every session close-out, alongside the session

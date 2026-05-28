@@ -112,6 +112,16 @@ Items that must be completed **before Fashionably Late Free v1 can be made publi
 
 ## Legal
 
+> **Session-13 update.** Free v1 is feature-complete, so the legal docs were
+> drafted and are **live**: `docs/legal/privacy.md` + `docs/legal/terms.md`,
+> hosted on GitHub Pages at the custom apex domain
+> `https://fashionablylate.app/legal/privacy` + `/legal/terms` (note: NO hyphen
+> — distinct from the repo `fashionably-late`), and linked from onboarding +
+> Settings. **Remaining before public launch:** fill the `[DATE TBD — set on
+> publication]` placeholders in both docs (Last-updated / Effective dates), and
+> the **license review** below. The detailed bullets that follow describe the
+> *content requirements* the drafts already satisfy.
+
 - **Privacy Policy (Free v1 version).** Draft is intentionally deferred until Free v1 is feature-complete, and must accurately describe what Free v1 actually does: **local-first only — `chrome.storage.local`, no Fashionably Late server, no backend, no refresh token** (OAuth `access_type=online`, access tokens held transiently in the extension). There is **no backend data flow** to describe for Free v1, and **no Maps data flow** (Google Maps was removed from product scope — PRD §5.4.1 / §13.2). Per Entry 32 / PRD §6.1 amendment this is **correct legal framing for the data Free v1 touches, not a tiering of compliance** — Free v1 is fully GDPR-compliant on a naturally lighter posture. When drafted, host as `docs/privacy.md` on **GitHub Pages** from this same repository (rename-proof URL caveat under "Naming / rebrand readiness"). The OAuth consent screen, onboarding flow, and Settings panel hard-code the resulting stable URL.
 - **Terms of Service (Free v1 version).** Same deferral and hosting plan: `docs/terms.md` on GitHub Pages.
 - **Premium v1 legal addendum.** The heavier Privacy Policy / ToS language covering **backend processing** (per-user-encrypted refresh tokens, active scheduled-message records, EU data residency, the Unschedule-on-Reply data flow) is a **Premium v1** gate — tracked in `PREMIUM_LAUNCH_CHECKLIST.md`. It is an addition layered on the Free v1 docs, not a rewrite.
@@ -178,17 +188,20 @@ Items that must be completed **before Fashionably Late Free v1 can be made publi
 > the manual recipient-tz cache — are now fully manageable. See
 > `notes/session-12-summary.md`.
 >
-> **Still pre-launch (NOT done):**
-> - **Export / Delete My Data — real implementation.** The Privacy & Data
->   buttons render but show "coming soon"; the JSON export (§6.1.1 access) and
->   the confirmed clear-all (§6.1.1 erasure) are unwired. The Free-v1 "Delete My
->   Data" copy must **not** mention "revoking backend access" (no backend).
->   One-PR wiring on the existing structure.
-> - **Privacy Policy / Terms of Service links** render as inert placeholders
->   (not real URLs) — pending the rename-proof hosted-URL decision under
->   "Naming / rebrand readiness" + the legal-doc drafting under "Legal".
-> - **Feedback / support channel** in About is a placeholder — channel
->   undecided (GitHub Issues is the obvious candidate).
+> **Session-13 update — all three DONE:**
+> - **Export / Delete My Data — WIRED (§6.1.1).** Export downloads the full
+>   local state (anti-omission; minus the 3 non-Free-v1 toggles — Entry 50) as
+>   JSON, fully on-device. Delete is a typed-"delete" confirmation → irreversible
+>   wipe of the owned `outboxiq*` keys → terminal "deleted" screen / re-onboard.
+>   Copy is local-only (no backend/revoke language — §6.1.2). Owner hands-on
+>   verified.
+> - **Privacy Policy / Terms of Service links — LIVE.** Now real new-tab links to
+>   `https://fashionablylate.app/legal/privacy` + `/legal/terms` (custom apex
+>   domain, GitHub Pages from `docs/legal/`). Constants in `src/lib/constants.ts`.
+>   Remaining: the docs still carry `[DATE TBD]` placeholders (see "Legal").
+> - **Feedback / support channel — DECIDED.** About links to a `mailto:` support
+>   email (the founder's address); a "Built by" row links to LinkedIn. Version
+>   bumped to **1.0.0** (first public release).
 
 ---
 
@@ -436,6 +449,7 @@ PRD §6.3 mandates WCAG AA: keyboard-navigable controls, labelled fields, AA con
 - **Step-change focus & announcements.** Advancing between onboarding steps does not move keyboard focus to the new step and there is no `aria-live` region announcing the change, so a keyboard/screen-reader user is left on a removed control. (PRD §6.3 live regions, §8.9 keyboard accessibility.)
 - ~~**Consent control markup.** The consent `<label>` wrapped the Privacy Policy `<a>`; nesting an interactive element inside a label is invalid and let a link click also toggle consent.~~ **RESOLVED in Session 3 (commit `a5fa897`)** — the link was pulled out of the label into a separate element; consent now registers only via the checkbox's own `onChange` (see `Welcome.tsx`, with an explicit guard comment). Kept here struck-through rather than deleted so the consent-gate concern and its resolution remain on the record. (Stale "currently wraps" wording corrected at Session 5 close-out — it had been flagged stale but never fixed earlier in Session 5.)
 - **Contrast / focus indicators.** Spot-check muted text (`#5f6368` on white) and the disabled-button treatment against AA; confirm a visible focus ring on every custom control.
+- **Modal focus traps.** The Delete-confirmation modal (Settings → Privacy & data, Session 13) and the §5.3 Schedule Send modal need a proper focus trap + restore-focus-on-close. The delete modal currently has focus-on-open + Escape only (no trap) — a known Session-13 gap to close in the Session-14 accessibility pass.
 - **Keyboard-only + screen-reader walkthrough** of the full onboarding flow (and every subsequent UI) before submission.
 
 - **Trigger:** before Chrome Web Store submission; re-run after any significant UI change.
