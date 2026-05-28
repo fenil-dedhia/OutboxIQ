@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // Pinned-timezone helpers (PRD §5.1.3 Step 2, Session 11). The user pins up to
 // MAX_PINNED_TIMEZONES zones (stored as canonical IANA ids on OutboxIQState);
 // every TimezonePicker surfaces them in a "Pinned" section above "All

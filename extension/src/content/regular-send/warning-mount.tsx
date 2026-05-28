@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // PRD §5.5.1 — Shadow-DOM mount for the regular-Send soft warning.
 //
 // Byte-for-byte the same isolation pattern as schedule-modal/mount.tsx (see

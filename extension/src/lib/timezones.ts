@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // IANA timezone list for the onboarding dropdown. Uses the runtime-provided
 // list (no bundled data, keeps the extension small); falls back to a small
 // curated set only if the engine lacks Intl.supportedValuesOf.

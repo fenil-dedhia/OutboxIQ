@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // PRD §5.3 scheduling actions — turn a modal choice into a real native
 // scheduled send by driving Gmail's own UI through the verified recipe
 // (research/scheduled-send-api-spike.md + research/pick-date-time-probe.md

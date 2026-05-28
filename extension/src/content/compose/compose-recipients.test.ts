@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 import { describe, it, expect, beforeEach } from "vitest";
 import { readComposeRecipients } from "./compose-recipients";
 

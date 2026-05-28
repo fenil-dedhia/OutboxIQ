@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // PRD §5.3.5 (b)/(c)/(e) — read the compose's To+CC recipients from Gmail's
 // compose DOM. BCC is excluded by spec (preserves the BCC privacy contract;
 // §11). No People API, no autocomplete enrichment beyond what Gmail already

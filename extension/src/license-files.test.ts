@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // Regression guard against accidental deletion of the repo-root LICENSE and
 // NOTICE files. Apache 2.0 obligations (its §4 redistribution clause) hinge
 // on both files being present in distributions; this is the cheapest, most
@@ -45,4 +48,30 @@ describe("repo-root license files", () => {
     expect(text).toContain("Commercial Licensing");
     expect(text).toContain("Apache License, Version 2.0");
   });
+});
+
+// Spot-check: a handful of representative source files carry the SPDX
+// identifier at the top. Not exhaustive (overkill for ~100 files) — five
+// files across src/lib, src/pages, src/content, plus one test file and one
+// top-level config file. Catches a refactor that strips the header from
+// the most-edited files without becoming maintenance noise itself.
+describe("SPDX-License-Identifier headers on representative files", () => {
+  const reps = [
+    "extension/src/lib/constants.ts",
+    "extension/src/pages/settings/App.tsx",
+    "extension/src/content/content-script.ts",
+    "extension/src/background/service-worker.ts",
+    "extension/src/lib/constants.test.ts",
+    "extension/vite.config.ts",
+  ];
+
+  for (const path of reps) {
+    it(`${path} starts with the SPDX identifier`, () => {
+      const text = read(path);
+      // First ~120 chars cover the two-line header + a blank line.
+      const head = text.slice(0, 120);
+      expect(head).toContain("Copyright 2026 Fenil Dedhia");
+      expect(head).toContain("SPDX-License-Identifier: Apache-2.0");
+    });
+  }
 });

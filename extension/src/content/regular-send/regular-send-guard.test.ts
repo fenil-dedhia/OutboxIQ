@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 // PRD §5.5.1 coverage — the deterministic core of the highest-criticality

@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // PRD §5.5.1 — synchronous working-hours config snapshot.
 //
 // Why this exists: §5.5.1 must decide "is *now* outside working hours?"

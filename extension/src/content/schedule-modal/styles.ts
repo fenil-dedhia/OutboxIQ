@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // Styles for the §5.3 modal. Injected INTO the shadow root (page CSS does not
 // cross the boundary, so Gmail can neither break us nor be broken by us —
 // the isolation we chose in decision #2). Visually mirrors Gmail's native

@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // Shadow-DOM mount for the §5.3 modal (decision #2: hard CSS isolation).
 //
 // React + Shadow DOM quirks learned here (also recorded in CLAUDE.md so

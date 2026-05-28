@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // Recipient-timezone cache (PRD §5.4.1 step 1, §5.4.2). A typed layer over
 // the `recipientCache` array already in OutboxIQState (§7.2) — no schema
 // bump (the field has existed since the original schema). Pure storage +

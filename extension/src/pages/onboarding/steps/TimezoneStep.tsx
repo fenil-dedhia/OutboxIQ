@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 import type { TimezoneSource } from "../../../lib/storage";
 import { TimezonePicker } from "../../../lib/components/TimezonePicker";
 import { PinnedTimezonesEditor } from "../../../lib/components/PinnedTimezonesEditor";

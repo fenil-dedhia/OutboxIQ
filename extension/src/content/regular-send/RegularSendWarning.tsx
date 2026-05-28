@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // PRD §5.5.1 — the regular-Send soft warning (thin wrapper).
 //
 // Renders the SAME locked-pattern WorkingHoursWarning the §5.3 Schedule Send

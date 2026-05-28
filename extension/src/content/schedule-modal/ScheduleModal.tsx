@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // PRD §5.3 — Enhanced Schedule Send Modal.
 //
 // Interaction model (owner-directed refinement 2026-05-16): the modal is

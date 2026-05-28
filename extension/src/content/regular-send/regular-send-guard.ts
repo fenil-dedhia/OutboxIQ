@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // ============================================================================
 // PRD §5.5.1 — regular "Send" button guard. THE HIGHEST-CRITICALITY MODULE.
 //

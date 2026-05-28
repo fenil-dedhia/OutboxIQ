@@ -1,3 +1,6 @@
+/* Copyright 2026 Fenil Dedhia */
+/* SPDX-License-Identifier: Apache-2.0 */
+
 /* PRD §5.8 Settings page. Shares onboarding's visual language (same accent,
    borders, system font) — one product, two pages. Self-contained to this page;
    the shared TimezonePicker / PinnedTimezonesEditor bring their own styles. */

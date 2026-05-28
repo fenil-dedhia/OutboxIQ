@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 import { useEffect, useMemo, useState } from "react";
 import { TimezonePicker } from "../../../lib/components/TimezonePicker";
 import { resolveCuratedEntry } from "../../../lib/timezone/search";

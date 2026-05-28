@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 import { defineManifest } from "@crxjs/vite-plugin";
 
 // MV3 manifest. **Free v1 holds NO OAuth and makes NO Google API calls**

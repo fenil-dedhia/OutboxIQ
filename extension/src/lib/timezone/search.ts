@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // Curated-timezone search + resolution (Session 11, Phase 2). Pure functions
 // consumed by the shared TimezonePicker. No DOM, no React — unit-testable in
 // isolation.

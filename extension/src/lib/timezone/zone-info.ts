@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // Intl/ICU-derived facts about an arbitrary IANA zone (Session 11). This is
 // the single source of truth used by BOTH the curated-dataset validation
 // tests and the picker's "resolve a stored zone to its curated group" logic

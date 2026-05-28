@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // Typed message contract between the content script and the service worker.
 // Content scripts can't open extension tabs (no chrome.tabs), so they ask the
 // service worker to do it.

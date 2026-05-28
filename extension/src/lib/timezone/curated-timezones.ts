@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // Curated timezone dataset (PRD §5.1.3 / §5.3.5 / §5.8.2 — Session 11).
 //
 // ─── Why this file exists ────────────────────────────────────────────────

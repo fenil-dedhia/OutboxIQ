@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // PRD §5.3.5 (h) — compute the §5.3.5 Optimize-for-X send time.
 //
 // Given: a recipient timezone, a target hour in recipient time (9 AM or

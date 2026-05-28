@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // Formats wall-clock time the way Gmail's custom "Pick date & time" inputs
 // expect, plus a human display string. Formats confirmed by the Session 4
 // probe (research/pick-date-time-probe.md Result log):

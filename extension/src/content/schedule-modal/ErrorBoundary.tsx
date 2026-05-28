@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // PRD §5.2.3 hardening — render-time fallback for the §5.3 modal.
 //
 // Why this exists (Session 4 honest gap → Session 5): a throw during React

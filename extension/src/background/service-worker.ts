@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // Fashionably Late service worker (PRD §7.1.1).
 //
 // Owns opening the onboarding tab (PRD §5.1.2). It has the chrome.tabs API and

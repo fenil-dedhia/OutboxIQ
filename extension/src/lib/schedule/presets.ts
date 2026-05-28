@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // PRD §5.3.3 — the three Quick Options, computed in the user's configured
 // timezone and updating dynamically with the day of week.
 //

@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // PRD §6.1.1 GDPR data rights — "right to access" (export) and "right to
 // erasure" (delete). Free v1 is local-only (§6.1.2 tier amendment): both touch
 // ONLY chrome.storage.local. Export writes a file on-device; erasure clears the

@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // PRD §5.2 / §5.5.1 hardening — single-ACTIVE-instance page ownership.
 //
 // Reloading/updating the extension while a Gmail tab stays open leaves the OLD

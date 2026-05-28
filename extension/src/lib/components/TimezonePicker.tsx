@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // Shared IANA timezone picker (PRD §5.3.5 item (k) — BINDING ARCHITECTURAL
 // CONSTRAINT). The same component implementation is used by:
 //

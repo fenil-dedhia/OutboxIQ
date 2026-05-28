@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // Generates DEV PLACEHOLDER extension icons — a garish magenta square with
 // "OQ" in white. Deliberately ugly so it can never be mistaken for final
 // branding. Real brand assets are a pre-launch task (PRE_LAUNCH_CHECKLIST.md);

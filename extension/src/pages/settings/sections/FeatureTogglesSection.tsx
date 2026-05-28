@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 import type { FeatureToggles } from "../../../lib/storage";
 
 // PRD §5.8.2 "Feature Toggles" — Free-v1 scope. Exactly TWO toggles:

@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // Minimal in-memory chrome.* mock for jsdom unit tests. Only the surface the
 // code under test touches (storage.local, runtime, tabs/windows) is mocked.
 

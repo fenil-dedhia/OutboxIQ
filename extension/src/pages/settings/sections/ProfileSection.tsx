@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 import { TimezonePicker } from "../../../lib/components/TimezonePicker";
 
 // PRD §5.8.2 "Profile and Timezone" — Free v1 scope (Entry 39). The user's

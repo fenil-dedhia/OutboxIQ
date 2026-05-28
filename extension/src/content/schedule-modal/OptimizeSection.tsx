@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // PRD §5.3.5 Fashionably Late Optimize Section — items (a)–(n).
 //
 // Rendered inside the §5.3 modal below Quick Options + Pick Custom (spec (a)).

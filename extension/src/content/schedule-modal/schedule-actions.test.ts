@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // Regression tests for the §5.3.4 custom "Pick date & time" path's
 // multi-dialog disambiguation (findPickerFields). These guard the Session-13
 // live-Gmail bug: Gmail keeps several [role="dialog"] nodes mounted at once

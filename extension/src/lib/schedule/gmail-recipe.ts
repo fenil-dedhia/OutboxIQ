@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // ============================================================================
 // SINGLE POINT OF FAILURE FOR GMAIL UI CHANGES.
 //

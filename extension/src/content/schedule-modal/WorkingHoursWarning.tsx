@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // PRD §5.5 — the soft-warning modal (locked pattern, CLAUDE.md "Locked
 // product decisions"). NOT a hard block and NOT a silent auto-snap: it
 // names the specific violation and offers exactly three explicit choices —

@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // PRD §5.5 — Auto-Reschedule on Outside Working Hours (the *decision* logic).
 //
 // Pure and deterministic, like presets.ts / gmail-format.ts: given a chosen

@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // PRD §5.4.1 recipient-timezone resolution — FREE v1 (zero Google API).
 //
 // Free v1 makes **no Google API calls and holds no OAuth scopes** (owner

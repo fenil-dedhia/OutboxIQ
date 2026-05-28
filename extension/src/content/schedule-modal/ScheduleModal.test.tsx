@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // Integration test for the §5.5 trigger split locked by Entry 40:
 //   • Case 1 — Optimize-for-X computed time crosses Default boundaries:
 //     §5.5 warning is SUPPRESSED; the schedule fires directly.

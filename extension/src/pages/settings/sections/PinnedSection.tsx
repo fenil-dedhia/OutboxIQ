@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 import { PinnedTimezonesEditor } from "../../../lib/components/PinnedTimezonesEditor";
 import { MAX_PINNED_TIMEZONES } from "../../../lib/timezone/pinned";
 

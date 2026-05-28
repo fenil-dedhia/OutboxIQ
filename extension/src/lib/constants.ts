@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // Single source of truth for cross-cutting constants.
 
 // Public legal URLs — LIVE on the custom domain `fashionablylate.app` (apex,

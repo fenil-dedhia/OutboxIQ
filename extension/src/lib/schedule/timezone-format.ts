@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // PRD §5.3.2 — the modal subtitle: "Times shown in [Abbr] ([City/Region])."
 // e.g. "Times shown in EDT (New York)."
 //

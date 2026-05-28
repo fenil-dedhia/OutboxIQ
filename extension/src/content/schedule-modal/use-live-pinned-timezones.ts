@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 import { useEffect, useState } from "react";
 import { STORAGE_KEY_STATE } from "../../lib/constants";
 import type { OutboxIQState } from "../../lib/storage";

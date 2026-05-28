@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // PRD §5.2 — Compose Window Integration.
 //
 // Two responsibilities, both anchored on the locale-independent

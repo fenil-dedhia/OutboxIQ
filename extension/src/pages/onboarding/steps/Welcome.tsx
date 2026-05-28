@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 import { PRIVACY_POLICY_URL } from "../../../lib/constants";
 
 interface Props {

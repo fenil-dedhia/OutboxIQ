@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // Fashionably Late Gmail content script (PRD §7.1.2).
 //
 // On Gmail load: if onboarding isn't complete, ask the service worker to open

@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // Shared Pinned-Timezones editor (PRD §5.1.3 Step 2 + §5.8.2). The "chips +
 // add-picker + at-cap remove-all" pattern, extracted from onboarding Step 2 so
 // the onboarding step and the Settings "Pinned Timezones" section render the

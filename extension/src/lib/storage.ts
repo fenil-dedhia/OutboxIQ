@@ -1,3 +1,6 @@
+// Copyright 2026 Fenil Dedhia
+// SPDX-License-Identifier: Apache-2.0
+
 // Typed wrapper over chrome.storage.local implementing the PRD §7.2 schema.
 // This is the local-first state layer every other feature reads; onboarding
 // (PRD §5.1) is what first populates it. Nothing here is ever transmitted.
