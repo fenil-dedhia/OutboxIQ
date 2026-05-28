@@ -3,8 +3,15 @@ title: Terms of Service
 permalink: /legal/terms
 ---
 
-**Last updated:** [DATE TBD — set on publication]
-**Effective date:** [DATE TBD — set on publication]
+<!--
+  Date convention: when editing this document, update only the
+  "Last updated:" date to the date of the change. The "Effective date:"
+  stays at May 27, 2026 unless a future change is significant enough to
+  constitute a new effective version (an owner judgment call).
+-->
+
+**Last updated:** May 27, 2026
+**Effective date:** May 27, 2026
 
 ## Summary
 
