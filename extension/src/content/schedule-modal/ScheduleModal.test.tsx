@@ -255,6 +255,65 @@ describe("ScheduleModal a11y — focus trap (Session 14)", () => {
   });
 });
 
+// Session 16 security audit: affirmative XSS guard. The recipient name flows
+// from Gmail's compose DOM (the chip's `data-name` attribute), and a SENDER
+// controls their own display name — so recipient data is attacker-influenceable
+// in principle. The full audit found no `innerHTML` / `dangerouslySetInnerHTML`
+// / other unsafe sinks in production source: every render of recipient data
+// goes through React `{value}` text rendering, which escapes by default. This
+// regression test pins that property so a future refactor that introduced an
+// unsafe sink (e.g. a markdown renderer, or `dangerouslySetInnerHTML` for
+// formatting) would fail loudly here.
+describe("ScheduleModal — XSS guard (Session 16 security audit)", () => {
+  it("renders an attacker-flavored recipient display name as escaped text, never HTML", () => {
+    const malicious: ComposeRecipient = {
+      // The kind of name a hostile sender could put in a chip: HTML-flavored
+      // text + an event handler + a <script> tag. React `{value}` text
+      // rendering must escape ALL of it.
+      email: "attacker@example.com",
+      displayName:
+        '<img src=x onerror="window.__xss=1"><script>window.__xss=1</script>',
+      field: "To",
+    };
+    delete (window as unknown as { __xss?: number }).__xss;
+
+    render(
+      <ScheduleModal
+        timezone="America/New_York"
+        workingHours={createDefaultState().workingHours}
+        lastScheduled={null}
+        recipients={[malicious]}
+        pinnedTimezones={[]}
+        optimizeEnabled={true}
+        onScheduled={vi.fn()}
+        onOpenSettings={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+
+    // The malicious display name appears in the Optimize recipient <select> as
+    // an <option>'s text content (the only place a single-recipient compose
+    // renders the recipient before the user engages). React must have escaped
+    // the angle brackets — the literal text node carries them.
+    expect(
+      screen.getByText(malicious.displayName as string),
+    ).toBeInTheDocument();
+
+    // The rendered DOM must NOT have parsed an <img> or <script> element from
+    // the recipient name. (If a future refactor introduced an unsafe sink,
+    // these queries would find injected nodes.)
+    const injectedImg = document.querySelector('img[src="x"]');
+    const injectedScript = Array.from(document.querySelectorAll("script")).find(
+      (s) => /window\.__xss/.test(s.textContent ?? ""),
+    );
+    expect(injectedImg).toBeNull();
+    expect(injectedScript).toBeUndefined();
+
+    // And the onerror payload definitely never executed.
+    expect((window as unknown as { __xss?: number }).__xss).toBeUndefined();
+  });
+});
+
 describe("ScheduleModal — §5.8.2 recipientOptimization toggle", () => {
   it("renders the Optimize section when enabled", () => {
     render(

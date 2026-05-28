@@ -119,4 +119,39 @@ describe("CacheSection (PRD §5.8.2)", () => {
     expect(screen.queryByRole("alertdialog")).toBeNull();
     expect(onClearAll).not.toHaveBeenCalled();
   });
+
+  // Session 16 security audit: affirmative XSS guard. Cached recipient name +
+  // email originated from Gmail's compose DOM (chip `data-name` /
+  // `data-hovercard-id`), where the sender controls their own display name.
+  // Every render in CacheSection goes through React `{value}` text rendering,
+  // which escapes by default. This regression test pins that property — a
+  // future refactor that introduced an unsafe sink would fail here.
+  it("renders attacker-flavored cached name/email as escaped text, never HTML", () => {
+    const malicious: RecipientCacheEntry = {
+      email: '"><img src=x onerror="window.__xssCache=1">@evil.example',
+      name: '<script>window.__xssCache=1</script><img src=x onerror="window.__xssCache=1">',
+      timezone: "Asia/Tokyo",
+      source: "manual",
+      resolvedAt: "2026-05-01T10:00:00.000Z",
+    };
+    delete (window as unknown as { __xssCache?: number }).__xssCache;
+
+    renderSection([malicious]);
+
+    // Name renders as escaped text (React text-node), present verbatim.
+    expect(screen.getByText(malicious.name as string)).toBeInTheDocument();
+    // Email renders as escaped text too.
+    expect(screen.getByText(malicious.email)).toBeInTheDocument();
+
+    // No injected HTML elements parsed from the data.
+    const injectedImg = document.querySelector('img[src="x"]');
+    const injectedScript = Array.from(document.querySelectorAll("script")).find(
+      (s) => /window\.__xssCache/.test(s.textContent ?? ""),
+    );
+    expect(injectedImg).toBeNull();
+    expect(injectedScript).toBeUndefined();
+    expect(
+      (window as unknown as { __xssCache?: number }).__xssCache,
+    ).toBeUndefined();
+  });
 });
