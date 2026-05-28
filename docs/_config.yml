@@ -1,17 +1,3 @@
-# GitHub Pages config for the Fashionably Late docs site (served from /docs on
-# the default branch). Its only job today is to render the legal docs
-# (docs/legal/*.md) as styled HTML pages instead of raw markdown.
-#
-# The legal pages set their own stable permalinks in front matter
-# (/legal/privacy/, /legal/terms/), so their public URLs are decoupled from the
-# filenames:
-#   https://fenil-dedhia.github.io/fashionably-late/legal/privacy/
-#   https://fenil-dedhia.github.io/fashionably-late/legal/terms/
-# Those exact URLs are the source of truth in extension/src/lib/constants.ts.
-#
-# NOTE (owner): Pages must be enabled once in the repo (Settings → Pages →
-# Source: Deploy from a branch → main → /docs). Until then these URLs 404 by
-# design — the same accepted pre-launch state the links were already in.
 title: Fashionably Late
-description: Recipient-aware Schedule Send for Gmail.
-theme: minima
+description: A Chrome extension that enhances Gmail's Schedule Send with timezone-aware scheduling.
+url: https://fashionablylate.app

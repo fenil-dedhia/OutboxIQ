@@ -1,10 +1,7 @@
 ---
-layout: page
 title: Privacy Policy
-permalink: /legal/privacy/
+permalink: /legal/privacy
 ---
-
-# Privacy Policy
 
 **Last updated:** [DATE TBD — set on publication]
 **Effective date:** [DATE TBD — set on publication]
@@ -132,7 +129,7 @@ Fashionably Late is not directed at children under 13 (or under 16 in the EU/EEA
 
 ## 11. Changes to this policy
 
-If this policy changes materially, the change will be reflected in the version of the policy published at `https://fashionably-late.app/legal/privacy` (or its successor URL, with redirects from the prior URL maintained). The "Last updated" date at the top of this document will be revised. Material changes that affect how user data is handled will be accompanied by a notice in the extension itself (e.g., a one-time prompt on next use) before the new policy takes effect.
+If this policy changes materially, the change will be reflected in the version of the policy published at `https://fashionablylate.app/legal/privacy` (or its successor URL, with redirects from the prior URL maintained). The "Last updated" date at the top of this document will be revised. Material changes that affect how user data is handled will be accompanied by a notice in the extension itself (e.g., a one-time prompt on next use) before the new policy takes effect.
 
 If a future version of Fashionably Late (such as a Premium tier) introduces fundamentally different data handling, that will be disclosed separately, in advance, with the opportunity to opt in or to continue using the Free version on the current terms.
 
@@ -144,4 +141,4 @@ This policy and any disputes arising from it are governed by the laws of the Sta
 
 ---
 
-*This policy is published at https://fashionably-late.app/legal/privacy. The source markdown is maintained in the public Fashionably Late repository on GitHub; the policy's revision history is auditable there.*
+*This policy is published at https://fashionablylate.app/legal/privacy. The source markdown is maintained in the public Fashionably Late repository on GitHub; the policy's revision history is auditable there.*

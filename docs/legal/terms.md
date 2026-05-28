@@ -1,10 +1,7 @@
 ---
-layout: page
 title: Terms of Service
-permalink: /legal/terms/
+permalink: /legal/terms
 ---
-
-# Terms of Service
 
 **Last updated:** [DATE TBD — set on publication]
 **Effective date:** [DATE TBD — set on publication]
@@ -73,7 +70,7 @@ You may not:
 
 ## 6. Your data
 
-The Free version of Fashionably Late does not collect, transmit, or store your data on any server. All data the extension handles lives on your device. Full details are in the **Privacy Policy** at `https://fashionably-late.app/legal/privacy`.
+The Free version of Fashionably Late does not collect, transmit, or store your data on any server. All data the extension handles lives on your device. Full details are in the **Privacy Policy** at `https://fashionablylate.app/legal/privacy`.
 
 You retain full control of and full responsibility for the data the extension stores on your device, including your settings, preferences, and the local cache of recipient timezones. You can export or delete this data at any time using the in-extension Settings panel.
 
@@ -124,7 +121,7 @@ Sections 5 ("What you may not do"), 6 ("Your data," to the extent of the Privacy
 
 ## 11. Changes to these terms
 
-We may change these terms from time to time. The current version of the terms will be available at `https://fashionably-late.app/legal/terms` (or its successor URL, with redirects from the prior URL maintained). The "Last updated" date at the top will be revised.
+We may change these terms from time to time. The current version of the terms will be available at `https://fashionablylate.app/legal/terms` (or its successor URL, with redirects from the prior URL maintained). The "Last updated" date at the top will be revised.
 
 Material changes that affect your rights or obligations will be accompanied by a notice in the extension itself (e.g., a one-time prompt on next use) before the new terms take effect. If you do not agree to a material change, your remedy is to stop using the extension.
 
@@ -159,4 +156,4 @@ Email: fenil.h.dedhia@gmail.com
 
 ---
 
-*These terms are published at https://fashionably-late.app/legal/terms. The source markdown is maintained in the public Fashionably Late repository on GitHub; the terms' revision history is auditable there.*
+*These terms are published at https://fashionablylate.app/legal/terms. The source markdown is maintained in the public Fashionably Late repository on GitHub; the terms' revision history is auditable there.*
