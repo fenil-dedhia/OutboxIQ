@@ -160,4 +160,30 @@ describe("Settings App (PRD §5.8)", () => {
       screen.queryByRole("heading", { name: /privacy & data/i }),
     ).toBeNull();
   });
+
+  // Session 14 a11y (Gap D — PRD §6.3): focus must move to the terminal
+  // heading so a keyboard/SR user is notified of the irreversible state
+  // change. The trigger button is now detached, so the delete-modal's
+  // focus-restore can't help — this is the substitute.
+  it("focuses the 'data has been deleted' heading on transition", async () => {
+    seedStorage({ [STORAGE_KEY_STATE]: createDefaultState() });
+    render(<App />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: /privacy & data/i }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /delete my data/i }));
+    const dialog = screen.getByRole("dialog");
+    fireEvent.change(within(dialog).getByRole("textbox"), {
+      target: { value: "delete" },
+    });
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: /delete my data/i }),
+    );
+
+    const deletedH2 = await screen.findByRole("heading", {
+      name: /your data has been deleted/i,
+    });
+    expect(deletedH2).toHaveAttribute("tabindex", "-1");
+    await waitFor(() => expect(document.activeElement).toBe(deletedH2));
+  });
 });

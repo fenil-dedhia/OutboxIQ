@@ -1,7 +1,7 @@
 // Copyright 2026 Fenil Dedhia
 // SPDX-License-Identifier: Apache-2.0
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSettings } from "./useSettings";
 import { ProfileSection } from "./sections/ProfileSection";
 import { PinnedSection } from "./sections/PinnedSection";
@@ -64,6 +64,15 @@ export function App() {
   // now-deleted data — the extension is un-onboarded after a wipe.
   const [dataDeleted, setDataDeleted] = useState(false);
 
+  // Session 14 a11y (Gap D): when the user lands on the terminal "deleted"
+  // screen, move focus to the new heading so a keyboard/SR user is notified
+  // of the state change (the trigger button has just been unmounted, so the
+  // delete-modal's focus-restore is a no-op here — this is the substitute).
+  const deletedHeadingRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    if (dataDeleted) deletedHeadingRef.current?.focus();
+  }, [dataDeleted]);
+
   if (dataDeleted) {
     return (
       <div className="fl-set-shell">
@@ -75,7 +84,9 @@ export function App() {
             className="fl-set-section"
             aria-labelledby="fl-set-deleted-h"
           >
-            <h2 id="fl-set-deleted-h">Your data has been deleted</h2>
+            <h2 id="fl-set-deleted-h" ref={deletedHeadingRef} tabIndex={-1}>
+              Your data has been deleted
+            </h2>
             <p className="fl-set-help">
               All your Fashionably Late data has been removed from this browser.
               The extension is back to a clean state — the next time you use it,

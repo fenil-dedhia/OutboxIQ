@@ -1,8 +1,9 @@
 // Copyright 2026 Fenil Dedhia
 // SPDX-License-Identifier: Apache-2.0
 
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
+import { useState } from "react";
 import { PinnedTimezonesEditor } from "./PinnedTimezonesEditor";
 import { DEFAULT_PINNED_TIMEZONES } from "../constants";
 
@@ -121,5 +122,82 @@ describe("PinnedTimezonesEditor — reorder (Settings §5.8.2)", () => {
       "Asia/Kolkata",
       "America/Los_Angeles",
     ]);
+  });
+
+  // Session 14 a11y (Gap D — PRD §6.3 live regions):
+  describe("a11y: reorder announcement (Session 14)", () => {
+    function Controlled({ initial }: { initial: string[] }) {
+      const [arr, setArr] = useState(initial);
+      return (
+        <PinnedTimezonesEditor pinned={arr} onChange={setArr} reorderable />
+      );
+    }
+
+    it("renders a polite aria-live region (silent on initial mount)", () => {
+      render(<Controlled initial={pins} />);
+      const live = document.querySelector(
+        '[role="status"][aria-live="polite"]',
+      );
+      expect(live).not.toBeNull();
+      expect(live?.textContent?.trim()).toBe("");
+    });
+
+    it("announces the new position when a row is moved via arrow keys", async () => {
+      render(<Controlled initial={pins} />);
+      // Move row 0 down — the moved row's new index becomes 1 (of 3).
+      fireEvent.keyDown(grips()[0]!, { key: "ArrowDown" });
+      await waitFor(() => {
+        const live = document.querySelector(
+          '[role="status"][aria-live="polite"]',
+        );
+        expect(live?.textContent ?? "").toMatch(/position 2 of 3/i);
+      });
+    });
+
+    it("announces a drag-and-drop reorder result", async () => {
+      render(<Controlled initial={pins} />);
+      const items = screen.getAllByRole("listitem");
+      fireEvent.dragStart(items[0]!);
+      fireEvent.dragOver(items[2]!);
+      fireEvent.drop(items[2]!);
+      await waitFor(() => {
+        const live = document.querySelector(
+          '[role="status"][aria-live="polite"]',
+        );
+        // The dragged row (LA, index 0) moved to position 3.
+        expect(live?.textContent ?? "").toMatch(/position 3 of 3/i);
+      });
+    });
+
+    it("does NOT announce on add or remove (only on true reorders)", () => {
+      function ControlledRemovable({ initial }: { initial: string[] }) {
+        const [arr, setArr] = useState(initial);
+        return (
+          <PinnedTimezonesEditor pinned={arr} onChange={setArr} reorderable />
+        );
+      }
+      render(<ControlledRemovable initial={pins} />);
+      // Remove the first row.
+      fireEvent.click(screen.getAllByRole("button", { name: /^Remove/ })[0]!);
+      const live = document.querySelector(
+        '[role="status"][aria-live="polite"]',
+      );
+      // A remove changes the array length; the effect bails on non-reorders.
+      expect(live?.textContent?.trim()).toBe("");
+    });
+
+    it("does NOT render a reorder live region in non-reorderable mode (onboarding)", () => {
+      render(
+        <PinnedTimezonesEditor
+          pinned={pins}
+          onChange={vi.fn()}
+          reorderable={false}
+        />,
+      );
+      const live = document.querySelector(
+        '.fl-ptz [role="status"][aria-live="polite"]',
+      );
+      expect(live).toBeNull();
+    });
   });
 });

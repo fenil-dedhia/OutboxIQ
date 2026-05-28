@@ -49,12 +49,25 @@ export function PinnedTimezonesEditor({
   const atCap = pinned.length >= MAX_PINNED_TIMEZONES;
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
+  // Session 14 a11y (Gap D): aria-live announcement of reorder results.
+  // Plain HTML5 DnD is mouse-only; the arrow-key reorder on the grip is the
+  // keyboard path, and an AT user needs the new position spoken back to
+  // confirm the move. Announcements fire at the source (handlers), not via
+  // a prop-diff effect — the diff approach can't distinguish "user moved A
+  // down" from "user moved B up" (both look identical in the array swap).
+  const [reorderAnnouncement, setReorderAnnouncement] = useState("");
 
   // Resolve each stored id to its friendly label; an unresolved id
   // (legacy/unknown) falls back to the raw id rather than vanishing (§6.7).
   function chipLabel(id: string): string {
     const entry = resolveCuratedEntry(id);
     return entry ? pinnedChipLabel(entry) : id;
+  }
+
+  function announceMove(zone: string, toIndex: number, total: number): void {
+    setReorderAnnouncement(
+      `Moved ${chipLabel(zone)} to position ${toIndex + 1} of ${total}.`,
+    );
   }
 
   function addPinned(tz: string): void {
@@ -72,16 +85,26 @@ export function PinnedTimezonesEditor({
     if (disabled) return;
     if (e.key === "ArrowUp" && index > 0) {
       e.preventDefault();
-      onChange(movePinned(pinned, index, -1));
+      const next = movePinned(pinned, index, -1);
+      onChange(next);
+      announceMove(pinned[index]!, index - 1, next.length);
     } else if (e.key === "ArrowDown" && index < pinned.length - 1) {
       e.preventDefault();
-      onChange(movePinned(pinned, index, 1));
+      const next = movePinned(pinned, index, 1);
+      onChange(next);
+      announceMove(pinned[index]!, index + 1, next.length);
     }
   }
 
   function onDrop(targetIndex: number): void {
-    if (dragIndex !== null)
-      onChange(reorderPinned(pinned, dragIndex, targetIndex));
+    if (dragIndex !== null) {
+      const movedId = pinned[dragIndex]!;
+      const next = reorderPinned(pinned, dragIndex, targetIndex);
+      onChange(next);
+      // The dragged row's final position is its index in the new array
+      // (reorderPinned semantics — insert at target after removing source).
+      announceMove(movedId, next.indexOf(movedId), next.length);
+    }
     setDragIndex(null);
     setOverIndex(null);
   }
@@ -89,6 +112,14 @@ export function PinnedTimezonesEditor({
   return (
     <div className="fl-ptz">
       <style>{PTZ_CSS}</style>
+
+      {/* Polite aria-live region for reorder announcements. Visually hidden;
+          empty on initial mount so it's silent on render. */}
+      {reorderable && (
+        <div role="status" aria-live="polite" className="fl-ptz-sr-only">
+          {reorderAnnouncement}
+        </div>
+      )}
 
       {pinned.length > 0 &&
         (reorderable ? (
@@ -203,6 +234,10 @@ export function PinnedTimezonesEditor({
 const PTZ_CSS = `
 .fl-ptz { font: inherit; }
 .fl-ptz *, .fl-ptz *::before, .fl-ptz *::after { box-sizing: border-box; }
+.fl-ptz-sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
 
 /* Horizontal chips (onboarding). */
 .fl-ptz-chips {
