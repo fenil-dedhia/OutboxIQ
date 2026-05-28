@@ -8,6 +8,8 @@ Items that must be completed **before Fashionably Late Free v1 can be made publi
 > - **A CASA assessment is still Free-v1-blocking.** Only *Tier 2* moved. Free v1 keeps the **restricted** Gmail scopes (`gmail.compose`, `gmail.modify`), so it still needs *a* CASA assessment before public OAuth Production — plausibly **Tier 1** without a backend, tier-to-confirm. "No backend" ≠ "no assessment". (See "Google / OAuth" below.)
 > - **Premium v1 is a paid tier, not "v2".** The existing "v1 vs. v2 decisions" section is about *post-launch additive* directions (a later generation) — a distinct concept from the Premium tier. Don't conflate them.
 
+> **SUPERSEDING NOTE (2026-05-27, owner-directed — Entry 52, with Entries 53–54).** Premium v1 is now **out of scope of this project entirely.** If/when Premium is built, it will be a fork of this (Apache-2.0) Free v1 repo into a separate private repo, with its own Chrome Web Store listing (Pattern Y) and its own launch checklist. Consequences for *this* document: (1) `PREMIUM_LAUNCH_CHECKLIST.md` no longer exists in this repo — its content went away with the Premium directories; references below should be read as "out of scope of this project (Entry 52)". (2) The "CASA assessment still Free-v1-blocking" carry-over above was already superseded by the Entry-39 pivot (Free v1 makes no Google API call, holds no OAuth scope — no CASA, no consent-screen verification gate). (3) The Free-v1 launch surface is now narrower and clearer: legal docs (dated 2026-05-27), brand/icons, Chrome Web Store listing & submission, accessibility, Workspace compatibility, security audit, comprehensive hands-on testing. No OAuth or CASA work remains for Free v1 in this repo.
+
 ---
 
 ## Google / OAuth
@@ -117,14 +119,20 @@ Items that must be completed **before Fashionably Late Free v1 can be made publi
 > hosted on GitHub Pages at the custom apex domain
 > `https://fashionablylate.app/legal/privacy` + `/legal/terms` (note: NO hyphen
 > — distinct from the repo `fashionably-late`), and linked from onboarding +
-> Settings. **Remaining before public launch:** fill the `[DATE TBD — set on
-> publication]` placeholders in both docs (Last-updated / Effective dates), and
-> the **license review** below. The detailed bullets that follow describe the
-> *content requirements* the drafts already satisfy.
+> Settings. The detailed bullets below describe the *content requirements* the
+> drafts already satisfy.
+>
+> **Update 2026-05-27 — date placeholders RESOLVED.** The `[DATE TBD — set on
+> publication]` placeholders in both docs have been filled with **May 27,
+> 2026** (Last-updated *and* Effective date in each file). A top-of-file HTML
+> comment encodes the forward convention: future edits update only
+> "Last updated:"; "Effective date:" stays at May 27, 2026 unless a future
+> change is significant enough to warrant a new effective version. The
+> **license review** below is also now RESOLVED — see Entry 53 (Apache 2.0).
 
 - **Privacy Policy (Free v1 version).** Draft is intentionally deferred until Free v1 is feature-complete, and must accurately describe what Free v1 actually does: **local-first only — `chrome.storage.local`, no Fashionably Late server, no backend, no refresh token** (OAuth `access_type=online`, access tokens held transiently in the extension). There is **no backend data flow** to describe for Free v1, and **no Maps data flow** (Google Maps was removed from product scope — PRD §5.4.1 / §13.2). Per Entry 32 / PRD §6.1 amendment this is **correct legal framing for the data Free v1 touches, not a tiering of compliance** — Free v1 is fully GDPR-compliant on a naturally lighter posture. When drafted, host as `docs/privacy.md` on **GitHub Pages** from this same repository (rename-proof URL caveat under "Naming / rebrand readiness"). The OAuth consent screen, onboarding flow, and Settings panel hard-code the resulting stable URL.
 - **Terms of Service (Free v1 version).** Same deferral and hosting plan: `docs/terms.md` on GitHub Pages.
-- **Premium v1 legal addendum.** The heavier Privacy Policy / ToS language covering **backend processing** (per-user-encrypted refresh tokens, active scheduled-message records, EU data residency, the Unschedule-on-Reply data flow) is a **Premium v1** gate — tracked in `PREMIUM_LAUNCH_CHECKLIST.md`. It is an addition layered on the Free v1 docs, not a rewrite.
+- ~~**Premium v1 legal addendum.**~~ **Out of scope of this project (Entry 52, 2026-05-27).** A future Premium build (in a separate private fork — Pattern Y) will ship its own Chrome Web Store listing with its own privacy policy + ToS covering whatever backend processing it actually does. The Free v1 docs in this repo are not affected and do not need a Premium addendum here. (Original item struck-through, not deleted, so the historical scope is on the record.)
 - ~~**License review.**~~ **RESOLVED 2026-05-27 (owner-decisions-log Entry 53): Apache License, Version 2.0** (see `LICENSE` + `NOTICE` at repo root), with a `COMMERCIAL.md` companion document signalling that commercial-licensing inquiries are welcome (posture only — Apache 2.0 already permits commercial use, so `COMMERCIAL.md` is signal, not legal restriction). The Terms of Service §4 and the README License section were updated to match. Apache 2.0 makes inbound contributions clean (contributors grant a license to the project on the same terms as the outbound license, per the Apache 2.0 §5 inbound-= outbound principle); a separate CLA is not required for v1. The earlier exploration of a "royalty-on-commercial-use" / source-available direction (Elastic v2, BUSL) was rejected: the owner chose contributor-friendliness and OSS norms over commercial protection — anyone may use, modify, and commercialize the Free v1 code freely. *Original item retained struck-through above per Entry-4 discipline.*
 - Privacy Policy and Terms of Service are linked from the extension's onboarding flow and the Settings panel, per PRD §5.1.3 and §5.8.2.
 
@@ -143,35 +151,97 @@ Items that must be completed **before Fashionably Late Free v1 can be made publi
 
 ## Chrome Web Store
 
-- Chrome Web Store developer account created and verified.
-- Store listing prepared: description, screenshots, promotional images, support links.
-- Submission and review. Extensions requesting sensitive permissions typically take 1–3 weeks to review.
-- Justify the `https://mail.google.com/*` host permission for review (it drives the install-time "read and change your data on mail.google.com" warning users see). Keep permissions minimal — currently `storage` + that one host permission only; no `tabs`, no `identity`/OAuth yet.
+The expanded list below replaces the prior four-bullet sketch as the
+authoritative pre-submission checklist. Items are roughly ordered from
+hard-blocking to polish.
+
+### Developer account + submission mechanics
+
+- **Chrome Web Store developer account.** $5 one-time registration fee.
+  Tie it to a long-term-stable Google account the owner controls (not a
+  workplace account that could be deactivated).
+- **`extension/manifest.config.ts` completeness.** Confirm pre-submission:
+  `name` (`Fashionably Late`), `version` (currently `1.0.0` — bump on each
+  resubmission), `description` (≤132 chars), `icons` (16 / 48 / 128 — real
+  brand artwork, not the dev placeholders), `permissions` declared and
+  justified (`storage`, `scripting`), `host_permissions`
+  (`https://mail.google.com/*`).
+- **Single-purpose declaration.** "Schedule sending emails in Gmail with
+  timezone-aware suggestions." Must match the actual extension behavior or
+  Chrome's automated review will flag.
+- **Support contact.** Public support email (`fenil.h.dedhia@gmail.com`),
+  matching the privacy policy contact.
+- **Realistic review timeline.** Plan **2–4 weeks** between submission and
+  live listing. Gmail-touching extensions face stricter review than average
+  (`mail.google.com` host permission triggers extra scrutiny). Re-submission
+  after fixes is faster but still days, not hours.
+
+### Listing assets
+
+- **128 × 128 icon** that matches the manifest icon.
+- **At least one screenshot** at **1280 × 800** (preferred) or 640 × 400 —
+  the actual extension working inside Gmail, not a marketing illustration.
+- *(Optional polish)* Small promo tile **440 × 280**; marquee tile
+  **1400 × 560**. Not required for submission; raise the listing's appeal.
+
+### Listing copy
+
+- **Title** ≤ 75 chars.
+- **Short description** ≤ 132 chars (the search-results blurb).
+- **Detailed description** 200–600 words covering what it does, key
+  features, and the privacy promise (no Google API calls, no telemetry,
+  no backend — see `docs/legal/privacy.md`).
+- **Category:** Productivity.
+- **Language:** English.
+
+### Permission justifications (Chrome reviewers scrutinize these)
+
+- **`storage`:** "Saves user preferences (timezone, working hours, pinned
+  timezones, recipient cache, feature toggles) locally on the user's
+  device. No data is transmitted off the device."
+- **`scripting`:** "Used only on install to inject the content script into
+  Gmail tabs that are already open at install time. Chrome MV3's static
+  `content_scripts` manifest declaration only fires on subsequent page
+  loads; without this, a user who installs while Gmail is open would have
+  to manually refresh."
+- **`https://mail.google.com/*` host permission:** "Injects the Schedule
+  Send enhancement UI into Gmail's compose window and reads recipient
+  email addresses from the compose form so the extension can suggest
+  scheduling times in their timezones. The extension does not read message
+  content, does not access the Gmail API, and does not transmit any data."
+
+### Pre-submission verification
+
+- Install on a **fresh Chrome profile** with a **different Gmail account**
+  (not the developer's) — confirms the dev environment isn't masking a
+  first-run-only bug.
+- **No console errors** on a clean run (open the service-worker DevTools
+  + a Gmail tab; observe through onboarding → Schedule Send → Settings).
+- Every requested permission is **actually used by code** (Chrome's
+  automated review flags unused permissions).
+- The single-purpose declaration **matches actual behavior** — anything
+  the extension does that isn't covered by the declaration is a review
+  risk.
 
 ---
 
-## Infrastructure — moved to Premium v1
+## Infrastructure — out of scope of this project
 
-> **Moved (2026-05-17, owner-directed — tier split, Entry 32).** All
-> backend infrastructure (Fly.io EU app, Supabase EU project, per-user
-> encryption-key strategy, backup/DR, backend custom domain) is **Premium
-> v1 scope** and is tracked in **`PREMIUM_LAUNCH_CHECKLIST.md`**. **Free
-> v1 has no backend**, so none of it gates Free v1's launch. This
-> **supersedes the 2026-05-17/Entry-31 "Status shift" note** that made a
-> working backend a "Session-8 prerequisite for OAuth": that was correct
-> under the pre-tier-split assumption (Option B / refresh tokens on the
-> backend in the only tier). Under the tier split, **Free v1's Session 8
-> is extension-side `access_type=online` OAuth with no backend**, so the
-> prerequisite framing now belongs to the Premium v1 build, not Free v1.
-> Entry 31 is **not rewritten** — it remains accurate for Premium v1; the
-> per-user-key item is still **central to CASA Tier 2** (the Premium
-> audited surface — PRD §13.2.4).
+> **Out of scope of this project (2026-05-27, owner-directed — Entry 52;
+> supersedes the 2026-05-17 "moved to Premium v1" framing).** Free v1 has
+> **no backend** and there is **no Premium v1 in this repo**. Any backend
+> infrastructure (Fly.io EU app, Supabase EU project, per-user encryption,
+> backup/DR, backend custom domain) is a concern of the future Premium fork
+> (a separate private repo — Pattern Y, Entry 54), not of this checklist.
+> No Free-v1 launch gate sits here.
 >
-> One distinction worth keeping straight: the **backend custom domain**
-> (Premium) is *separate* from the **owned domain Free v1 needs for the
-> consent-screen Privacy/ToS URLs** — the latter is a Free v1 concern
-> tracked under "Naming / rebrand readiness" below (no backend required
-> for it).
+> One related Free-v1 concern that does remain: the **owned domain
+> required for the OAuth consent-screen Privacy/ToS URLs** was historically
+> tracked under "Naming / rebrand readiness" below. With Entry 39 (Free v1
+> uses no OAuth and shows no consent screen), even *that* requirement is
+> moot for Free v1 — the live legal-doc URLs at `fashionablylate.app/legal/*`
+> are now hosted purely for the Chrome Web Store listing and the in-extension
+> Settings panel links, not for any Google consent screen.
 
 ---
 
@@ -235,6 +305,56 @@ Fashionably Late's scheduling path cannot currently tell which compose window th
 - **Trigger:** v2 / post-launch — revisit with real usage signal, as an explicit additive decision. **Not** a Chrome-Web-Store-submission gate.
 - **Reference:** the "v1 vs. v2 decisions" entry below; `notes/owner-decisions-log.md` Entry 27 (reframing) and Entry 18 (the original silent-vs-visible-bug decision); `notes/session-5-summary.md` (Scenario 4 result).
 
+### Duplicate-instance regression (Session 17 hands-on test plan)
+
+The Session-13 page-ownership fix (commits `d7c54f7` + `3c74e55`,
+owner-decisions-log Entry 51) is reasoned + unit-tested at the **logic
+level only** — the real orphan-state failure mode is single-world-impossible
+to reproduce in jsdom (the two isolated worlds the bug needs cannot coexist
+in one Node process). Per `notes/session-13-summary.md` §f, the blocking
+symptom was owner-confirmed resolved after a clean reload, but the precise
+"newest live copy takes over with no Gmail refresh; orphaned copy goes
+inert" was **not exhaustively re-driven across all three symptoms** in the
+orphan state. Session 17 (final comprehensive hands-on testing) must close
+this gap.
+
+Concrete test plan:
+
+1. Open Gmail in a tab; observe Fashionably Late installs cleanly (the
+   §5.2 chevron item is relabeled "Schedule Send (powered by Fashionably
+   Late)"; the §5.5.1 send guard is armed).
+2. Reload the extension from `chrome://extensions` ("Reload" button on the
+   extension card). This is the trigger: it leaves the previous content
+   script ORPHANED (listeners alive, but its `chrome.runtime.id` context
+   severed) while a fresh instance loads into the same tab.
+3. **In the same Gmail tab, with no manual refresh,** verify all three
+   symptoms from the bug saga are resolved:
+   - **Schedule Send → our modal.** Click the relabeled Schedule Send
+     item; Fashionably Late's enhanced modal opens (not Gmail's native
+     modal — the orphan-wins-fallback bug).
+   - **"Send now anyway" works.** Trigger the §5.5.1 outside-hours
+     warning (set working hours to a future-only window or send late at
+     night), choose "Send now anyway", confirm the email actually sends
+     (not the orphan-replay-cancel bug).
+   - **No duplicate modals.** The §5.2 modal opens exactly once; the
+     §5.5.1 warning fires exactly once. No relabel/chevron churn (no
+     flicker).
+4. Repeat across **at least 3 reload cycles** to confirm the
+   newest-live-owns-the-page model holds when ownership tokens change
+   hands multiple times.
+
+If any symptom recurs: read `extension/src/content/page-install-latch.ts`
++ Entry 51 + the gotcha in `CLAUDE.md` ("Duplicate content-script
+instances → use PAGE OWNERSHIP"). The fix's invariant is *last-writer
+wins, orphan goes inert* — verify the `<html>` ownership-token attribute
+and the `contextAlive()` (`chrome.runtime?.id`) check are both being
+consulted at the top of the §5.2 interceptor, the relabel observer, and
+the §5.5.1 send guard.
+
+- **Trigger:** Session 17 (final comprehensive hands-on testing pass).
+- **Reference:** `notes/owner-decisions-log.md` Entry 51;
+  `notes/session-13-summary.md` §f.
+
 ---
 
 ## v1 vs. v2 decisions
@@ -245,13 +365,12 @@ re-litigated mid-build and are revisited intentionally post-launch.
 > **"v2" ≠ "Premium v1" (2026-05-17 — tier split, Entry 32).** The
 > deferrals in this section are **post-launch *additive* directions — a
 > later generation** (network effects, the multi-compose full fix). That
-> is a **different concept** from **Premium v1**, which is a **paid tier
-> of the *same* generation** (extension + backend, PRD §13 /
-> `PREMIUM_LAUNCH_CHECKLIST.md`), built after Free v1 but *not* "v2".
-> Both items below remain **Free-v1-non-blocking and unaffected by the
-> tier split** — the multi-compose safety net is tier-orthogonal (it
-> guards the Schedule Send / regular-Send paths, which are Free v1). Do
-> not fold these into the Premium tier or vice versa.
+> is a **different concept** from **Premium v1**, which was a **paid tier
+> of the *same* generation** (extension + backend). With Premium v1 now
+> out of scope of this project (Entry 52, 2026-05-27), "Premium" is also
+> out of *this* repo's pre-launch concerns entirely; the items below remain
+> v2 / post-launch additive directions, neither Free-v1-blocking nor
+> Premium-fork concerns.
 
 ### Network-effect features — deferred to v2 (decided Session 5.5)
 
@@ -350,28 +469,33 @@ work (they don't block it) and *before* naming (they inform it).
 > the OutboxIQ-era values **and stay frozen** — see Entry 41 and
 > `CLAUDE.md` top-of-file brand-and-naming-history note.
 >
-> **GCP project + OAuth client name rename — DEFERRED to Premium v1
-> kickoff (owner-directed).** The GCP project (`outboxiq-dev`), OAuth
-> client display name, and consent-screen app name still say
-> "OutboxIQ". Free v1 makes no OAuth call (Entry 39), so the GCP-side
-> name is internal-only and does not gate Free v1's launch. **Premium
-> v1's first task when it begins is the GCP-side rename** (project
-> rename or new project + client/consent-screen rebranding). Tracked
-> here so it isn't forgotten when Premium v1 work starts. (The
-> Premium-v1-isolated code in `extension/src/premium-v1/` was renamed
-> with the rest of the codebase — only the GCP-side identifiers
-> remain.)
+> **GCP project + OAuth client name rename — out of scope of this
+> project (2026-05-27, Entry 52).** The GCP project (`outboxiq-dev`),
+> OAuth client display name, and consent-screen app name still say
+> "OutboxIQ". Free v1 makes no OAuth call and shows no consent screen
+> (Entry 39), so the GCP-side name is internal-only and does not gate
+> Free v1's launch in this repo. With Premium v1 now out of scope of this
+> project, the GCP-side rename is **whatever the future Premium fork
+> decides to do** (rename the existing project, stand up a new one, etc.)
+> — not tracked here anymore. The `outboxiq-dev` project ID itself
+> remains a frozen brand-independent identifier per Entry 30 either way.
 >
 > **GitHub repo name rename — DONE (Session 12, owner-directed).** The
 > repo was renamed `OutboxIQ` → **`fashionably-late`**
 > (`github.com/fenil-dedhia/fashionably-late`). GitHub auto-redirects the
-> old URL, so existing links/clones keep working. Cascade handled: the
-> local git remote was re-pointed, and `extension/src/lib/constants.ts`
-> `PRIVACY_POLICY_URL` now uses the new Pages path
-> (`https://fenil-dedhia.github.io/fashionably-late/privacy`). **This does
-> NOT settle the launch-blocker below** — the privacy/ToS URL is still
-> *repo-named* (just the new name); the rename-proof / brand-neutral host
-> decision still stands.
+> old URL, so existing links/clones keep working. The local git remote was
+> re-pointed.
+>
+> **Privacy/ToS hosting URL — RESOLVED (Session 13).** The
+> `PRIVACY_POLICY_URL` / `TERMS_OF_SERVICE_URL` constants now point at the
+> custom apex domain `https://fashionablylate.app/legal/privacy` +
+> `/legal/terms` (note: no hyphen — distinct from the repo name
+> `fashionably-late`), served by GitHub Pages from `docs/legal/`. This
+> settles the "rename-proof host" launch-blocker the next paragraph
+> originally raised; with Entry 39 (no OAuth consent screen) and the
+> custom apex domain in place, the historic concern is moot for Free v1.
+> The remaining paragraph below is preserved for the brand-independent-
+> identifier framework it documents (still binding).
 
 The product brand name ("Fashionably Late") may change before launch. The
 rename-impact analysis (Session 7, owner-prompted) established that the
@@ -397,19 +521,29 @@ locked-copy amendment** (the verbatim `"…powered by Fashionably Late"` label a
 the verbatim onboarding privacy copy are product-locked spec text — changed
 via PRD amendment, not a find/replace), and nothing more.
 
-**Launch-blocking item surfaced here:** the Privacy/ToS/Pages URLs are
+~~**Launch-blocking item surfaced here:** the Privacy/ToS/Pages URLs are
 currently repo-named (`github.com/fenil-dedhia/fashionably-late/…`), hard-coded
 in `constants.ts` **and** (for Premium v1) entered into the GCP OAuth consent
 screen. When the
 real legal docs are drafted (deferred, see "Legal" above), host them on a
 **rename-proof, brand-neutral or guaranteed-stable URL** so a later repo /
 product rename does not break the consent screen or the in-extension link.
-Pick this URL at the same time as the legal-doc hosting decision.
+Pick this URL at the same time as the legal-doc hosting decision.~~
+
+**RESOLVED Session 13 + Entry 52 (2026-05-27):** the legal docs are live at
+the custom apex domain `https://fashionablylate.app/legal/{privacy,terms}`,
+which is rename-proof (the *apex domain* survives any repo or product
+rename), with the constants in `extension/src/lib/constants.ts` pointing
+there. The "GCP OAuth consent screen" half of the original concern is also
+moot — Free v1 has no consent screen (Entry 39), and any future Premium
+fork that brings OAuth back will set its own URLs.
 
 **Lead-time + trademark dimension (surfaced 2026-05-17, owner question at
-Session-7 close — previously only mentioned in passing):** this is not a
-same-day task. It has procurement and naming lead time that must start
-well before the public-OAuth (Production) switch:
+Session-7 close — preserved as historical context).** With the apex domain
+already acquired and the live URLs in place, the lead-time argument below
+is **already executed** for Free v1. Preserved for the trademark / branded-
+vs-neutral discussion, which a future Premium fork (or post-launch
+marketing) might revisit:
 
 - **Domain acquisition is a lead-time item.** Google's consent screen
   requires an *owned, verified* authorized domain (this is exactly why the
