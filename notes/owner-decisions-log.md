@@ -2123,6 +2123,166 @@ that preceded the §5.3.5/§5.4 build. They qualify; Entries 26 and 27.
   **Entry 53**. The flag-don't-guess judgment recorded above was the right call:
   the removal happened on an explicit owner instruction, not an inference.
 
+## Entry 53 — License model decided: Apache 2.0 + COMMERCIAL.md posture
+
+- **Session:** Between Sessions 13 and 14 (pre-launch documentation pass,
+  2026-05-27).
+- **Moment:** Free v1 is feature-complete (Session 13 close). The public-launch
+  surface narrowed to docs + brand + Web Store + accessibility / security /
+  comprehensive testing — and the long-deferred "license model" item in
+  `PRE_LAUNCH_CHECKLIST.md` finally needed an actual answer rather than another
+  deferral. The owner considered a real commercial restriction (a source-
+  available license in the PolyForm / BUSL / Elastic v2 family) before
+  deciding the other way.
+- **My input (owner):** Chose **Apache License, Version 2.0** (`LICENSE` +
+  `NOTICE` at the repo root), with a short companion **`COMMERCIAL.md`** that
+  signals commercial-licensing inquiries are welcome. Two things to log
+  precisely:
+  - The `COMMERCIAL.md` is **signal, not legal restriction.** Apache 2.0
+    already permits commercial use, modification, and distribution — so the
+    `COMMERCIAL.md` is *outreach* for arrangements beyond Apache (custom
+    support, indemnification beyond Apache's terms, co-branded distribution),
+    never a constraint on what Apache 2.0 allows.
+  - The owner explicitly **accepted that anyone can use, modify, and
+    commercialize the Free v1 code freely.** Prioritized contributor-
+    friendliness and OSS norms over commercial protection — the explicit
+    framing was "the OSS-contributor benefit (clean inbound-= outbound, no
+    CLA friction, anyone can fork without negotiation) is worth more here
+    than the commercial-protection a source-available license would buy."
+- **What Claude Code would have done without it (Entry 17 honesty rule):**
+  Nothing material — the license model is a strategic owner decision, and the
+  prior PRE_LAUNCH "license-model deferred to pre-launch" lock means Claude
+  would have correctly continued deferring rather than picking one
+  unilaterally. The honest accounting: this was **100% owner judgment**, and
+  Claude's contribution was faithful execution — fetching the verbatim
+  Apache 2.0 text from the canonical source (sha256 verified against the
+  well-known canonical hash), drafting `NOTICE` and `COMMERCIAL.md` to the
+  prompt's spec, rewriting Terms §4, adding the regression-guard test, and
+  applying per-file SPDX-License-Identifier headers across ~100 source
+  files. The argued contribution — *why* Apache 2.0 over PolyForm-style —
+  is the owner's.
+- **Outcome:** Apache 2.0 adopted (commit `ba90c3c`). New files: `LICENSE`
+  (verbatim Apache-2.0 text from `apache.org/licenses/LICENSE-2.0.txt`,
+  followed by Fenil Dedhia's appendix-style copyright notice); `NOTICE`;
+  `COMMERCIAL.md`. Updates: `README.md` License section; `docs/legal/terms.md`
+  §4 (replaced the "source code is not open source / all rights reserved"
+  paragraph with the accurate Apache 2.0 statement); `docs/legal/privacy.md`
+  §2 + §11 (clarified Premium will be a separate Chrome Web Store extension,
+  not an in-product upgrade — companion to Entry 54); `CLAUDE.md` "Locked
+  tech decisions" License line; `PRE_LAUNCH_CHECKLIST.md` license-review
+  item marked RESOLVED with the original bullet retained struck-through;
+  `extension/package.json` `license: "UNLICENSED"` → `"Apache-2.0"`.
+  Per-file SPDX-License-Identifier headers added in a separate focused
+  commit (`1b0613e`) to keep the substantive license adoption diff readable.
+  New `extension/src/license-files.test.ts` (10 tests total — 4 for the
+  three root files' presence, 6 spot-checking SPDX headers on
+  representative source files).
+- **Artifact:** This entry; commits `ba90c3c` (Apache 2.0 adoption) +
+  `1b0613e` (SPDX headers); the four new / replaced root files (`LICENSE`,
+  `NOTICE`, `COMMERCIAL.md`, updated `README.md`); the updated legal docs;
+  the new test file. The Apache 2.0 license is also the load-bearing enabler
+  for Entry 54's Pattern-Y / Path-2 distribution (a future Premium fork is
+  only "clean" because the public repo is Apache 2.0).
+- **Lesson (for coaching):** A "license-model deferred to pre-launch" item
+  that's been deferred *for a year* has to be picked eventually, and the
+  right moment is "just before launch with feature work done" — not earlier
+  (you don't yet know what you're licensing) and not later (the launch is
+  blocked). When the decision is 100% owner strategic judgment, the honest
+  move is to log it that way rather than invent a Claude counterfactual that
+  doesn't exist (Entry 17 binding). And: "signal posture, not legal
+  restriction" (`COMMERCIAL.md`) is a pattern worth naming — a contact
+  channel that doesn't add legal surface but invites the conversations that
+  can lead to real commercial relationships, complementing an open license
+  rather than fighting it.
+
+## Entry 54 — Premium v1 distribution: Pattern Y (two listings), Path 2 (separate builds from a private fork)
+
+- **Session:** Between Sessions 13 and 14 (pre-launch documentation pass,
+  2026-05-27; companion to Entries 52 and 53).
+- **Moment:** Entry 52 had decided "Premium v1 is out of scope of this
+  project"; this 2026-05-27 batch was about *executing* that scope
+  decision (commit `652656b` deleted the preserved Premium code, backend,
+  checklist, and PRD §13). The deeper question that surfaced once the
+  removal was concrete: *how* will Premium actually ship when it
+  eventually does? Two crossed axes appeared, with four corners and very
+  different consequences:
+  - **Pattern X (one Chrome Web Store extension, in-product upgrade to
+    Premium)** vs. **Pattern Y (two separate Web Store extensions, two
+    separate listings)** — the *distribution* shape.
+  - **Path 1 (one codebase, Premium toggled by feature flags / build
+    flavors)** vs. **Path 2 (two codebases — Premium = fork of this repo
+    into a private one)** — the *build* shape.
+- **My input (owner):** Chose **Pattern Y + Path 2**. The reasoning, in
+  the owner's own framing:
+  - Free's permission story stays minimal — no `identity`, no Google API,
+    no consent screen, ever, on the Free `.crx`. The Entry-39 invariant
+    is enforced at *distribution* time, not just code time.
+  - The Free `.crx` is byte-for-byte built from this public Apache-2.0
+    repo (transparency: any reviewer can trace the installed extension
+    back to the source).
+  - Premium will require modifications to base code that **cannot be
+    cleanly feature-flagged** (OAuth bootstrap on install, backend
+    wire-up, different manifest scopes, an entirely different
+    `host_permissions` set). A single-build Pattern X1 approach would
+    either produce a Premium-flavored "Free" experience for free users
+    (wrong) or saddle the public Free repo with permanent inert Premium
+    scaffolding — exactly the situation just exited in Entry 52.
+  - Free and Premium have **independent release cycles, independent
+    semver, independent release notes.** Each evolves at its own cadence
+    without forcing churn on the other.
+- **What Claude Code would have done without it (Entry 17 honesty rule):**
+  As with Entry 53, this is 100% owner strategic judgment; Claude has no
+  counterfactual default to undo here. The actual risk Claude would have
+  left open given Entry 52 alone: ambiguity at fork time a year from
+  now — "do we fork this repo? Feature-flag in a private branch? One
+  extension or two? One semver or two?" — three or four unresolved
+  questions someone (Claude or another agent or the owner himself) would
+  have to re-decide under launch pressure. The owner closed all of them
+  in one decision and one entry.
+- **Honest counterfactual cost:** Pattern X1 + Path 1 (one listing, feature
+  flags, single codebase) would have been **operationally simpler**: one
+  Web Store listing to maintain, one codebase, smoother in-product upgrade
+  path, lower marketing complexity (one product, one funnel). The owner
+  explicitly chose to pay that operational tax in exchange for:
+  - **Transparency over operational simplicity** (Free `.crx` is provably
+    the public Apache-2.0 code).
+  - **Minimal Free permissions over upgrade UX** (Free never asks for
+    OAuth — not even optionally, behind a feature flag, with consent).
+  - **Clean separation over feature-flag tangles** (no `if (premium) {…}`
+    threading through the codebase forever).
+- **Outcome:** Recorded as the **"Premium v1 strategic posture"**
+  subsection under `CLAUDE.md` "Locked product decisions" (commit
+  `e8d6e40`), and as part of the §1 SUPERSEDING NOTE in the PRD, the
+  `README.md` repository-layout note, the `PRE_LAUNCH_CHECKLIST.md` top
+  SUPERSEDING NOTE, and the amendments to Entries 32 and 52. Five
+  consistent surfaces, one decision. The Apache 2.0 license adopted in
+  Entry 53 is the load-bearing enabler: without it the future Premium
+  fork couldn't be made cleanly. The previously-preserved verified
+  Sessions 7–9 OAuth/People work is **recoverable from this repo's git
+  history** if the Premium fork ever wants to use it — not deleted in any
+  permanent sense, just no longer present in `HEAD`.
+- **Artifact:** This entry; the CLAUDE.md "Premium v1 strategic posture"
+  subsection; the §1 SUPERSEDING NOTE in `Fashionably_Late_PRD.md`; the
+  README repository-layout out-of-scope note; the PRE_LAUNCH SUPERSEDING
+  NOTE; the amendments to Entries 32 and 52. Cross-refs: Entry 52 (the
+  scope call this entry sharpens distribution-wise), Entry 53 (the
+  license that makes the fork clean), Entry 39 (the no-OAuth invariant
+  Pattern Y enforces at distribution time), Entry 32 (the original tier
+  split this supersedes the "where Premium lives" axis of).
+- **Lesson (for coaching):** When you decide *not* to do X in a project,
+  you've answered "is X in scope here?" but **not** "how does X actually
+  happen, if it ever does?" The latter is a separate decision with its
+  own independent axes — distribution shape and build shape are different
+  questions, not all four corners are equally good, and naming the axes
+  explicitly is what stops future ambiguity at fork time. The other
+  lesson: when an honest counterfactual cost exists (Pattern X1 + Path 1
+  *would* be operationally simpler), log it — the decision isn't "we
+  picked the obviously best option," it's "we knowingly chose
+  transparency + minimal permissions + clean separation over operational
+  simplicity, with eyes open." A decision recorded with its
+  counterfactual is harder to second-guess later because the trade was
+  already made on the record.
+
 ---
 
 *New entries are appended at every session close-out, alongside the session
