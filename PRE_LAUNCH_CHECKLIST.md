@@ -277,15 +277,49 @@ hard-blocking to polish.
 
 ## Compatibility & Verification
 
-### Google Workspace compatibility — Schedule Send
+### Google Workspace compatibility — Schedule Send — VERIFIED (Session 15, 2026-05-28)
 
-Verify that Fashionably Late's UI-automated Schedule Send works on Google Workspace accounts, not only on consumer Gmail.
+> **VERIFIED 2026-05-28 (Session 15, owner hands-on).** Fashionably Late's
+> UI-automated Schedule Send works on Google Workspace accounts identically
+> to consumer Gmail. The owner drove a real Workspace account (not the
+> tenant admin) across six paths — §5.2 chevron relabel + modal injection,
+> §5.3.5 Optimize-for-X end-to-end with a cache-miss → real scheduled send
+> landing in the Scheduled folder, §5.5.1 outside-hours three-choice soft
+> warning, SCHEDULED label + native cancel pathway, admin-policy
+> availability (Schedule Send was present and functional on this tenant —
+> the owner is not the tenant admin so admin-disabled-policy could not be
+> exercised; honestly noted), and visual/DOM sanity (modal renders
+> correctly, TimezonePicker styled correctly inside the Shadow DOM, DOM
+> structure around the Send chevron is indistinguishable from consumer
+> Gmail). All six verdicts: **identical**. DevTools console showed zero
+> errors attributable to Fashionably Late — the captured output was
+> entirely Gmail's own service worker, Gmail's `m=base` bundle, Google
+> Workspace sub-product frames (Meet/Chat/Studio), or an unrelated
+> third-party extension (the CSP-violating `contentScript.bundle.js`
+> reported a different extension ID, `869c32d0-…`, not ours
+> `dicnmcmhapcfceodecocnkaacjdpplnm`). No selector divergence, so the
+> `gmail-recipe.ts` single-point-of-failure layer needs **no Workspace
+> fork or shared-selector rewrite** — the consumer Gmail recipe is the
+> Workspace recipe. No code changed in Session 15. Detail:
+> `notes/session-15-summary.md`. Items below preserved per Entry 4
+> discipline so the original verification framing remains on the record.
 
 - **Why this matters:** a large share of Fashionably Late's target users (knowledge workers, salespeople, recruiters, consultants) are on Workspace, often inside admin-controlled tenants. A failure mode where the extension silently breaks on Workspace would hit a meaningful slice of the user base.
 - **What to verify:** that Gmail's Schedule Send UI is present, functional, and DOM-driveable on Workspace accounts; that Workspace admins cannot disable scheduled sending in a way that breaks Fashionably Late without a clear error; that the `SCHEDULED` label and `messages.delete` cancellation pathway (per `research/scheduled-send-api-spike.md` Open Question 1) behave identically on Workspace.
 - **How to verify:** hands-on test on a Workspace account in a controlled domain. Re-test after any major Gmail UI update.
-- **Trigger:** before Chrome Web Store submission, and after any major Gmail UI change.
-- **Reference:** `research/scheduled-send-api-spike.md` Open Question 4.
+- **Trigger:** ~~before Chrome Web Store submission, and after any major Gmail UI change.~~ **Initial verification DONE 2026-05-28**; the post-Gmail-UI-change re-verification trigger remains (re-run if Gmail materially changes the Schedule Send UI).
+- **Honest gap (carry to Session 16/17 or post-launch):** the
+  admin-disabled-Schedule-Send graceful-degradation path (§6.7) was not
+  exercised — the owner isn't the tenant admin on the account used here,
+  so admin policy could not be toggled. Logged in
+  `notes/session-15-summary.md` rather than swept under "verified". If
+  Session 16 (security) or 17 (comprehensive hands-on) has access to a
+  tenant where Schedule Send is disabled by policy, drive it through there;
+  otherwise accept the gap for Free-v1 launch (Free v1 falls back to
+  Gmail's native Schedule Send path when our chain breaks, per the
+  multi-compose safety-net pattern — same shape of graceful degradation).
+- **Reference:** `research/scheduled-send-api-spike.md` Open Question 4;
+  `notes/session-15-summary.md`.
 
 ### Multi-compose targeting — full fix (v2 deferral — NOT launch-blocking)
 

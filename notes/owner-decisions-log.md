@@ -2302,6 +2302,35 @@ gap (Free v1 is local-only with no critical-safety surface).
 
 ---
 
+## Session 15 — no entries this session.
+
+Session 15 was the Google Workspace compatibility verification — a
+**Branch 1 / clean** outcome per the session prompt's branching structure.
+All six Part-A checks on a real Workspace account came back **identical**
+to consumer Gmail; the DevTools console showed zero Fashionably-Late-
+attributable errors; no code changed. A clean confirm-the-design-holds
+result is by construction **not** a trajectory-changing owner decision —
+no judgment was exercised against an option set, no counterfactual was
+chosen against, no spec was amended. The session prompt anticipated this
+exact case ("Append an owner-decisions-log entry only if the verification
+surfaced a trajectory decision (it likely didn't — if it's a clean 'works
+identically,' note 'no entry needed' in the close-out)."). The one honest
+gap — the admin-disabled Schedule-Send graceful-degradation path (§6.7)
+was not exercised because the owner is not the tenant admin on the
+account used — is documented in `PRE_LAUNCH_CHECKLIST.md` and
+`notes/session-15-summary.md`, carried forward to Session 16 (security
+audit, the natural lens for admin-policy interaction surfaces) or 17
+(comprehensive hands-on, if access to an admin-disabled tenant becomes
+available), with the explicit fallback of accepting it as a Free-v1
+launch gap given Free v1's existing fall-through-to-native-Gmail
+graceful-degradation pattern (multi-compose safety net, §5.5.1 30s
+watchdog, `gmail-recipe.ts` step-failure paths). If a future Workspace
+session surfaces a real DOM divergence requiring a `gmail-recipe.ts`
+shared-selector-vs-tenant-fork call, **that** would be an entry — not
+this one.
+
+---
+
 *New entries are appended at every session close-out, alongside the session
 summary. If a session produced no trajectory-changing owner input, record that
 explicitly (`Session N — no entries this session.`) rather than leaving a gap
