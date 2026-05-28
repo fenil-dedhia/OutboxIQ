@@ -71,7 +71,11 @@ describe("PrivacyDataSection (PRD §5.8.2)", () => {
     for (const link of [privacy, terms]) {
       expect(link.getAttribute("href") ?? "").toMatch(/^https:\/\//);
       expect(link).toHaveAttribute("target", "_blank");
-      expect(link.getAttribute("rel") ?? "").toContain("noopener");
+      const rel = link.getAttribute("rel") ?? "";
+      expect(rel).toContain("noopener");
+      expect(rel).toContain("noreferrer");
+      // No longer an inert placeholder (was aria-disabled before launch).
+      expect(link).not.toHaveAttribute("aria-disabled");
     }
   });
 
@@ -147,9 +151,7 @@ describe("PrivacyDataSection (PRD §5.8.2)", () => {
       seedStorage({ [STORAGE_KEY_STATE]: createDefaultState() });
       const onDataDeleted = vi.fn();
       const realRemove = chrome.storage.local.remove;
-      const errorSpy = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
       chrome.storage.local.remove = vi.fn(() =>
         Promise.reject(new Error("boom")),
       ) as typeof chrome.storage.local.remove;

@@ -1,21 +1,18 @@
 // Single source of truth for cross-cutting constants.
 
-// Public legal URLs. The Privacy Policy and Terms of Service are hosted on
-// GitHub Pages from this repo's `docs/legal/` folder (privacy-policy.md /
-// terms-of-service.md, Session 13), each pinned to a stable permalink in its
-// front matter (/legal/privacy/, /legal/terms/) so the URL is decoupled from
-// the filename. Surfaced by onboarding (Welcome consent) and Settings → Privacy
-// & data. Change repo/host-derived URLs HERE only.
+// Public legal URLs — LIVE on the custom domain `fashionablylate.app` (apex,
+// served by GitHub Pages from this repo's `docs/legal/`). Each page pins its
+// own permalink (/legal/privacy, /legal/terms) in front matter, so the URL is
+// decoupled from the source filename. Surfaced by onboarding (Welcome consent)
+// and Settings → Privacy & data. Change host-derived URLs HERE only.
 //
-// IMPORTANT: these 404 until GitHub Pages is enabled for the repo (Settings →
-// Pages → main → /docs) and the docs' "[DATE TBD]" placeholders are filled —
-// both deliberate pre-launch tasks (PRE_LAUNCH "Legal"). The URLs are the real
-// final ones, so nothing in code changes at launch.
-export const PRIVACY_POLICY_URL =
-  "https://fenil-dedhia.github.io/fashionably-late/legal/privacy/";
+// NOTE: the domain `fashionablylate.app` has NO hyphen — distinct from the
+// GitHub repo `fashionably-late`. The hosted documents still carry "[DATE TBD]"
+// placeholders to fill before public launch (PRE_LAUNCH "Legal"), but the URLs
+// are final.
+export const PRIVACY_POLICY_URL = "https://fashionablylate.app/legal/privacy";
 
-export const TERMS_OF_SERVICE_URL =
-  "https://fenil-dedhia.github.io/fashionably-late/legal/terms/";
+export const TERMS_OF_SERVICE_URL = "https://fashionablylate.app/legal/terms";
 
 // Public GitHub repository (PRD §5.8.2 About → "Link to GitHub repository").
 // Repo-name-derived (renamed OutboxIQ → fashionably-late, Session 12), so it

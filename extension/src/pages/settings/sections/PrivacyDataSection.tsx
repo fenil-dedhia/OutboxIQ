@@ -13,9 +13,10 @@ import {
 
 // PRD §5.8.2 "Privacy and Data". Export My Data (§6.1.1 right to access) and
 // Delete My Data (§6.1.1 right to erasure) are both wired (Session 13), and the
-// Privacy Policy / Terms of Service now link to the hosted docs
-// (docs/legal/*.md on GitHub Pages; see constants.ts). The URLs 404 until Pages
-// is enabled + the docs' dates are filled — accepted pre-launch (PRE_LAUNCH).
+// Privacy Policy / Terms of Service link to the live hosted docs at
+// fashionablylate.app/legal/* (GitHub Pages from docs/legal/; URLs in
+// constants.ts). The pages still carry "[DATE TBD]" placeholders to fill before
+// public launch (PRE_LAUNCH "Legal"), but the links/URLs are final.
 //
 // Free v1 is local-only (§6.1.2 tier amendment): export reads only
 // chrome.storage.local and downloads a file on-device; delete clears only
@@ -56,7 +57,11 @@ function DeleteDataModal({
   }, []);
 
   return (
-    <div className="fl-set-modal-backdrop" role="presentation" onClick={onCancel}>
+    <div
+      className="fl-set-modal-backdrop"
+      role="presentation"
+      onClick={onCancel}
+    >
       <div
         className="fl-set-modal"
         role="dialog"
