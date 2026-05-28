@@ -49,5 +49,10 @@ Thumbs.db
 .parcel-cache/
 .turbo/
 
+# Local demo / screen-recording artifacts (e.g. Snagit captures) — not part
+# of the codebase; share these out-of-band, never commit them to the repo.
+*.mp4
+*.mov
+
 # Claude Code local settings (personal; team-shared settings.json may be committed)
 .claude/settings.local.json
