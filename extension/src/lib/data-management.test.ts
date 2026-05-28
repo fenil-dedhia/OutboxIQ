@@ -46,9 +46,9 @@ describe("assembleDataExport (PRD §6.1.1 export payload)", () => {
     const state = stateOf();
     const file = assembleDataExport(state, null, NOW);
     expect(file.schemaVersion).toBe(state.schemaVersion);
-    expect(
-      (file.data[STORAGE_KEY_STATE] as OutboxIQState).schemaVersion,
-    ).toBe(state.schemaVersion);
+    expect((file.data[STORAGE_KEY_STATE] as OutboxIQState).schemaVersion).toBe(
+      state.schemaVersion,
+    );
   });
 
   it("is self-describing (application name + export timestamp)", () => {
@@ -166,7 +166,9 @@ describe("serializeDataExport", () => {
     const json = serializeDataExport(file);
     expect(json).toContain("\n"); // multi-line / human-readable
     expect(json).toContain('  "application"'); // 2-space indent
-    expect(JSON.parse(json)).toEqual(file as unknown as FashionablyLateDataExport);
+    expect(JSON.parse(json)).toEqual(
+      file as unknown as FashionablyLateDataExport,
+    );
   });
 });
 
@@ -174,7 +176,9 @@ describe("exportFilename", () => {
   it("is self-describing and date-stamped (local date)", () => {
     // Construct from local components so the assertion is timezone-independent.
     const d = new Date(2026, 4, 7, 23, 59); // 2026-05-07 local
-    expect(exportFilename(d)).toBe("fashionably-late-data-export-2026-05-07.json");
+    expect(exportFilename(d)).toBe(
+      "fashionably-late-data-export-2026-05-07.json",
+    );
   });
 });
 
@@ -207,7 +211,9 @@ describe("downloadJsonFile", () => {
     expect(passedBlob).toBeInstanceOf(Blob);
     expect(clickSpy).toHaveBeenCalledTimes(1);
     // The clicked anchor carried the filename + the object URL.
-    const anchor = appendSpy.mock.calls[0]?.[0] as HTMLAnchorElement | undefined;
+    const anchor = appendSpy.mock.calls[0]?.[0] as
+      | HTMLAnchorElement
+      | undefined;
     expect(anchor).toBeInstanceOf(HTMLAnchorElement);
     expect(anchor!.download).toBe(
       "fashionably-late-data-export-2026-05-27.json",
@@ -239,7 +245,11 @@ describe("downloadJsonFile", () => {
 describe("deleteAllData (PRD §6.1.1 right to erasure)", () => {
   it("owns exactly the three constants.ts storage keys", () => {
     expect([...OWNED_STORAGE_KEYS].sort()).toEqual(
-      [STORAGE_KEY_STATE, STORAGE_KEY_ONBOARDING_DRAFT, STORAGE_KEY_AUTH].sort(),
+      [
+        STORAGE_KEY_STATE,
+        STORAGE_KEY_ONBOARDING_DRAFT,
+        STORAGE_KEY_AUTH,
+      ].sort(),
     );
   });
 

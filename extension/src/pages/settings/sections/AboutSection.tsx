@@ -50,7 +50,9 @@ export function AboutSection() {
         <div className="fl-set-about-row">
           <dt>Feedback &amp; support</dt>
           <dd>
-            <a href={`mailto:${SUPPORT_EMAIL}?subject=Fashionably%20Late%20feedback`}>
+            <a
+              href={`mailto:${SUPPORT_EMAIL}?subject=Fashionably%20Late%20feedback`}
+            >
               {SUPPORT_EMAIL}
             </a>
           </dd>
