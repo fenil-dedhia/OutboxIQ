@@ -150,6 +150,74 @@ describe("PrivacyDataSection (PRD §5.8.2)", () => {
       );
     });
 
+    // Session 14 a11y (Gap B — PRD §6.3, §8.9):
+    describe("a11y: focus trap + restore-focus on close (Session 14)", () => {
+      it("focuses the typed-delete input when the modal opens", () => {
+        render(<PrivacyDataSection />);
+        const dialog = openDeleteModal();
+        const input = within(dialog).getByRole("textbox");
+        expect(document.activeElement).toBe(input);
+      });
+
+      it("restores focus to the triggering button when Cancel closes the modal", () => {
+        render(<PrivacyDataSection />);
+        const trigger = screen.getByRole("button", {
+          name: /delete my data/i,
+        });
+        trigger.focus();
+        expect(document.activeElement).toBe(trigger);
+        const dialog = openDeleteModal();
+        fireEvent.click(
+          within(dialog).getByRole("button", { name: /cancel/i }),
+        );
+        expect(document.activeElement).toBe(trigger);
+      });
+
+      it("restores focus to the triggering button when Escape closes the modal", () => {
+        render(<PrivacyDataSection />);
+        const trigger = screen.getByRole("button", {
+          name: /delete my data/i,
+        });
+        trigger.focus();
+        const dialog = openDeleteModal();
+        fireEvent.keyDown(dialog, { key: "Escape" });
+        expect(document.activeElement).toBe(trigger);
+      });
+
+      it("traps Tab — Tab from the last focusable wraps to the first", () => {
+        render(<PrivacyDataSection />);
+        const dialog = openDeleteModal();
+        const input = within(dialog).getByRole("textbox");
+        // Type "delete" so the confirm button is enabled and joins the
+        // focusables list as the last entry.
+        fireEvent.change(input, { target: { value: "delete" } });
+        const confirmBtn = within(dialog).getByRole("button", {
+          name: /delete my data/i,
+        });
+        expect(confirmBtn).toBeEnabled();
+        confirmBtn.focus();
+        expect(document.activeElement).toBe(confirmBtn);
+        fireEvent.keyDown(confirmBtn, { key: "Tab" });
+        // Tab from the last element wraps back to the first (the input).
+        expect(document.activeElement).toBe(input);
+      });
+
+      it("traps Shift+Tab — Shift+Tab from the first focusable wraps to the last", () => {
+        render(<PrivacyDataSection />);
+        const dialog = openDeleteModal();
+        const input = within(dialog).getByRole("textbox");
+        // The input is auto-focused on open (first focusable).
+        expect(document.activeElement).toBe(input);
+        fireEvent.keyDown(input, { key: "Tab", shiftKey: true });
+        // Wraps to the last focusable. In the disabled-confirm initial state,
+        // the only other focusable is Cancel — so it wraps there.
+        const cancelBtn = within(dialog).getByRole("button", {
+          name: /cancel/i,
+        });
+        expect(document.activeElement).toBe(cancelBtn);
+      });
+    });
+
     it("surfaces an error (and does NOT claim success) if the wipe fails", async () => {
       seedStorage({ [STORAGE_KEY_STATE]: createDefaultState() });
       const onDataDeleted = vi.fn();

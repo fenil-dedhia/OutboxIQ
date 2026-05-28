@@ -1,6 +1,7 @@
 // Copyright 2026 Fenil Dedhia
 // SPDX-License-Identifier: Apache-2.0
 
+import { useEffect, useRef } from "react";
 import {
   WEEKDAYS,
   validateWorkingHours,
@@ -37,9 +38,17 @@ export function WorkingHoursStep({ workingHours, onChange }: Props) {
 
   const errors = validateWorkingHours(workingHours);
 
+  // Session 14 a11y: focus the step heading on mount (advance/Back lands here).
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, []);
+
   return (
     <section className="oq-step" aria-labelledby="oq-wh-title">
-      <h1 id="oq-wh-title">Set your working hours</h1>
+      <h1 id="oq-wh-title" ref={headingRef} tabIndex={-1}>
+        Set your working hours
+      </h1>
       <fieldset className="oq-days">
         <legend>Working days and times</legend>
         <p className="oq-help">

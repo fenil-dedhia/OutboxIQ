@@ -42,6 +42,13 @@ interface PrivacyDataSectionProps {
 // "delete" before the destructive button enables. Copy is local-only — it must
 // NOT mention backend/servers/account/token revocation (§6.1.2 — Free v1 has
 // none). Backdrop click / Cancel / Escape close harmlessly.
+//
+// Session 14 a11y (Gap B — PRD §6.3, §8.9): the modal is a proper focus trap.
+// Tab/Shift-Tab cycle within the dialog so AT can't escape to the page behind
+// it; focus moves to the typed-delete input on open; focus restores to the
+// triggering button on close (cancel/Escape/confirm). role=dialog /
+// aria-modal / aria-labelledby / aria-describedby were already in place; the
+// labeled typed-delete input was too. The destructive behavior is unchanged.
 function DeleteDataModal({
   onCancel,
   onConfirm,
@@ -53,11 +60,53 @@ function DeleteDataModal({
 }) {
   const [text, setText] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  // Element that held focus when the modal opened (typically the "Delete my
+  // data" trigger button). Restored on unmount. If the page unmounts the
+  // section (e.g. post-erasure terminal state), the element will be detached
+  // and .focus() becomes a harmless no-op.
+  const previousFocusRef = useRef<Element | null>(null);
   const confirmed = text.trim().toLowerCase() === CONFIRM_WORD;
 
   useEffect(() => {
+    previousFocusRef.current = document.activeElement;
     inputRef.current?.focus();
+    return () => {
+      const prev = previousFocusRef.current;
+      if (prev instanceof HTMLElement) prev.focus();
+    };
   }, []);
+
+  function getFocusables(): HTMLElement[] {
+    const root = dialogRef.current;
+    if (!root) return [];
+    return Array.from(
+      root.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ),
+    );
+  }
+
+  function onDialogKeyDown(e: React.KeyboardEvent<HTMLDivElement>): void {
+    if (e.key === "Escape" && !busy) {
+      e.stopPropagation();
+      onCancel();
+      return;
+    }
+    if (e.key !== "Tab") return;
+    const focusables = getFocusables();
+    if (focusables.length === 0) return;
+    const first = focusables[0]!;
+    const last = focusables[focusables.length - 1]!;
+    const active = document.activeElement;
+    if (e.shiftKey && active === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && active === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
 
   return (
     <div
@@ -66,15 +115,14 @@ function DeleteDataModal({
       onClick={onCancel}
     >
       <div
+        ref={dialogRef}
         className="fl-set-modal"
         role="dialog"
         aria-modal="true"
         aria-labelledby="fl-set-del-h"
         aria-describedby="fl-set-del-body"
         onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => {
-          if (e.key === "Escape" && !busy) onCancel();
-        }}
+        onKeyDown={onDialogKeyDown}
       >
         <h2 id="fl-set-del-h">Delete all data?</h2>
         <p id="fl-set-del-body">

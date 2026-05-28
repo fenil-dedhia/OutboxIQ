@@ -1,6 +1,7 @@
 // Copyright 2026 Fenil Dedhia
 // SPDX-License-Identifier: Apache-2.0
 
+import { useEffect, useRef } from "react";
 import type { TimezoneSource } from "../../../lib/storage";
 import { TimezonePicker } from "../../../lib/components/TimezonePicker";
 import { PinnedTimezonesEditor } from "../../../lib/components/PinnedTimezonesEditor";
@@ -43,9 +44,17 @@ export function TimezoneStep({
   onChange,
   onPinnedChange,
 }: Props) {
+  // Session 14 a11y: focus the step heading on mount (advance/Back lands here).
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, []);
+
   return (
     <section className="oq-step" aria-labelledby="oq-tz-title">
-      <h1 id="oq-tz-title">Set up your timezones</h1>
+      <h1 id="oq-tz-title" ref={headingRef} tabIndex={-1}>
+        Set up your timezones
+      </h1>
 
       {/* Primary, required setting — visually emphasised so it reads first. */}
       <div className="oq-primary-tz">

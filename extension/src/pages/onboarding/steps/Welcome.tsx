@@ -1,6 +1,7 @@
 // Copyright 2026 Fenil Dedhia
 // SPDX-License-Identifier: Apache-2.0
 
+import { useEffect, useRef } from "react";
 import { PRIVACY_POLICY_URL } from "../../../lib/constants";
 
 interface Props {
@@ -18,9 +19,21 @@ export function Welcome({
   onConsentChange,
   onGetStarted,
 }: Props) {
+  // Session 14 a11y: on mount, move focus to this step's heading so a
+  // keyboard/screen-reader user advancing from a previous step (or arriving
+  // on initial load) lands here. Paired with the aria-live announcement in
+  // App.tsx — both signal the step change. tabIndex=-1 makes the h1
+  // programmatically focusable without exposing it in tab order.
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, []);
+
   return (
     <section className="oq-step" aria-labelledby="oq-welcome-title">
-      <h1 id="oq-welcome-title">Welcome to Fashionably Late</h1>
+      <h1 id="oq-welcome-title" ref={headingRef} tabIndex={-1}>
+        Welcome to Fashionably Late
+      </h1>
       <p className="oq-lede">
         Fashionably Late helps your emails land at the right moment, in your
         recipients&rsquo; time, not yours. To power our intelligent features,

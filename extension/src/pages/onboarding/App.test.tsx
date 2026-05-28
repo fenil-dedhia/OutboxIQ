@@ -1,7 +1,7 @@
 // Copyright 2026 Fenil Dedhia
 // SPDX-License-Identifier: Apache-2.0
 
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { App } from "./App";
 import { getState, isOnboardingComplete } from "../../lib/storage";
@@ -78,5 +78,76 @@ describe("Onboarding flow (PRD §5.1, restructured 3-step)", () => {
     // ...so re-entering the step shows the defaults restored.
     fireEvent.click(screen.getByRole("button", { name: /get started/i }));
     expect(screen.getAllByRole("button", { name: /^Remove/ })).toHaveLength(5);
+  });
+
+  // Session 14 a11y (Gap A — PRD §6.3 live regions, §8.9):
+  describe("a11y: step focus + aria-live announcement (Session 14)", () => {
+    it("focuses the welcome heading on initial mount", async () => {
+      render(<App />);
+      const h1 = await screen.findByRole("heading", {
+        name: /welcome to fashionably late/i,
+      });
+      // The h1 is programmatically focusable via tabIndex=-1, and the step
+      // mount effect focuses it so screen readers announce the new step.
+      expect(h1).toHaveAttribute("tabindex", "-1");
+      expect(document.activeElement).toBe(h1);
+    });
+
+    it("moves focus to the new step heading on advance", async () => {
+      render(<App />);
+      fireEvent.click(await screen.findByRole("checkbox"));
+      fireEvent.click(screen.getByRole("button", { name: /get started/i }));
+
+      const tzH1 = await screen.findByRole("heading", {
+        name: /set up your timezones/i,
+      });
+      expect(tzH1).toHaveAttribute("tabindex", "-1");
+      expect(document.activeElement).toBe(tzH1);
+    });
+
+    it("renders a polite aria-live region that is silent on initial mount", async () => {
+      render(<App />);
+      // The region is in the DOM (role=status / aria-live=polite) for AT,
+      // but its initial content is empty so it doesn't announce on load.
+      await screen.findByRole("heading", { name: /welcome/i });
+      const live = document.querySelector(
+        '[role="status"][aria-live="polite"]',
+      );
+      expect(live).not.toBeNull();
+      expect(live?.textContent?.trim()).toBe("");
+    });
+
+    it("announces the step on advance", async () => {
+      render(<App />);
+      fireEvent.click(await screen.findByRole("checkbox"));
+      fireEvent.click(screen.getByRole("button", { name: /get started/i }));
+      await screen.findByRole("heading", { name: /set up your timezones/i });
+
+      const live = document.querySelector(
+        '[role="status"][aria-live="polite"]',
+      );
+      expect(live?.textContent).toMatch(/Step 2 of 3:.*Set up your timezones/i);
+    });
+
+    it("announces the done state and focuses the done heading on completion", async () => {
+      render(<App />);
+      fireEvent.click(await screen.findByRole("checkbox"));
+      fireEvent.click(screen.getByRole("button", { name: /get started/i }));
+      fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+      fireEvent.click(screen.getByRole("button", { name: /finish setup/i }));
+
+      const doneH1 = await screen.findByRole("heading", { name: /all set/i });
+      expect(doneH1).toHaveAttribute("tabindex", "-1");
+      expect(document.activeElement).toBe(doneH1);
+
+      // The done-state announcement may settle a render after the heading
+      // mounts (status-change effect schedules setAnnouncement → new render).
+      await waitFor(() => {
+        const live = document.querySelector(
+          '[role="status"][aria-live="polite"]',
+        );
+        expect(live?.textContent).toMatch(/all set/i);
+      });
+    });
   });
 });
