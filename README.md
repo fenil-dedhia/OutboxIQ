@@ -52,4 +52,4 @@ Then load it in Chrome: go to `chrome://extensions`, enable **Developer mode**, 
 
 Fashionably Late is licensed under the **Apache License, Version 2.0** — see [`LICENSE`](./LICENSE) for the full text and [`NOTICE`](./NOTICE) for the copyright notice. You're free to use, modify, fork, and commercialize the code under the terms of that license.
 
-For commercial inquiries beyond what Apache 2.0 already permits (custom support, indemnification beyond Apache's terms, co-branded distribution, etc.), see [`COMMERCIAL.md`](./COMMERCIAL.md).
+For commercial inquiries beyond what Apache 2.0 already permits (custom support, indemnification beyond Apache's terms, co-branded distribution, etc.), see [`docs/COMMERCIAL.md`](./docs/COMMERCIAL.md).

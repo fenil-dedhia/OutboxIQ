@@ -43,8 +43,8 @@ describe("repo-root license files", () => {
     expect(text).toContain("Apache License, Version 2.0");
   });
 
-  it("COMMERCIAL.md exists (signals commercial-licensing channel)", () => {
-    const text = read("COMMERCIAL.md");
+  it("docs/COMMERCIAL.md exists (signals commercial-licensing channel)", () => {
+    const text = read("docs/COMMERCIAL.md");
     expect(text).toContain("Commercial Licensing");
     expect(text).toContain("Apache License, Version 2.0");
   });

@@ -1,7 +1,7 @@
 # Commercial Licensing
 
 Fashionably Late is licensed under the Apache License, Version 2.0
-(see [`LICENSE`](./LICENSE)). Apache 2.0 already permits commercial use,
+(see [`LICENSE`](../LICENSE)). Apache 2.0 already permits commercial use,
 modification, and distribution — no additional license is needed to build
 on this code, to fork it, or to use the extension in a commercial setting.
 
