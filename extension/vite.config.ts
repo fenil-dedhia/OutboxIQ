@@ -9,15 +9,6 @@ export default defineConfig({
   // static passthrough is redundant and would emit a duplicate copy.
   // Disabling it keeps a single, clean set of icons under dist/.
   publicDir: false,
-  // `npm run build:smoke` sets OQ_SMOKE=1 → the DEV-only __oqAuth OAuth
-  // console harness is ALSO included in that (otherwise production-quality)
-  // build, so the owner can hands-on verify OAuth from a CLEAN one-shot
-  // build instead of the fragile CRXJS dev server. Plain `npm run build`
-  // leaves this false, so the harness is dead-code-eliminated from any
-  // shippable artifact (the security stance is preserved).
-  define: {
-    __OQ_SMOKE__: JSON.stringify(process.env.OQ_SMOKE === "1"),
-  },
   build: {
     rollupOptions: {
       input: {

@@ -31,8 +31,8 @@ import {
 } from "../lib/messages";
 // Free v1 has NO OAuth (owner-decisions-log Entry 39): no `import "./oauth"`,
 // no chrome.identity, no Google API. The OAuth/People infrastructure is
-// preserved inert in `src/premium-v1/` (see that README) and is deliberately
-// NOT imported here — service-worker.ts is a Free v1 entry point.
+// Premium-only and OUT OF SCOPE of this project (Entry 52) — a future
+// Premium build lives in a separate private repo, not here.
 //
 // PRD §5.4 recipient-timezone resolution — Free v1 is cache → manual,
 // purely local (no token, no network). Kept reachable via the message

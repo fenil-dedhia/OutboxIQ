@@ -34,6 +34,23 @@ Fashionably Late is privacy-first, GDPR-compliant, and local-first by default. T
 > dated tier note. Rationale and counterfactual: `notes/owner-decisions-log.md`
 > Entry 32.
 
+> **SUPERSEDING NOTE (2026-05-27, owner-directed — Entry 52, with Entries
+> 53–54).** Premium v1 is now **out of scope of this project entirely.** This
+> sharpens the tier split above (Entry 32) from "a later track in this repo" to
+> "not part of *this* repo at all." If/when Premium is built, the owner forks
+> this **Apache-2.0-licensed** Free v1 repo into a **separate private repo** and
+> develops Premium there; the two ship as **two independent Chrome Web Store
+> listings** (Pattern Y), with independent version numbers and release notes.
+> Consequences for this document: **§13 (Premium v1 Scope) has been removed**
+> from this PRD, and the **`backend/` directory and `extension/src/premium-v1/`
+> have been deleted** from the repo. The inline `§13` / backend / refresh-token
+> / `src/premium-v1/` / Option-B pointers that remain elsewhere in the body
+> below are **historical** — they describe a design that now lives outside this
+> project, not present-tense product fact for this repo. Free v1 (the only
+> product this repo builds) is unchanged: recipient-aware Schedule Send with
+> Optimize-for-recipient, entirely on-device, no OAuth, no Google API, no
+> backend. See `notes/owner-decisions-log.md` Entries 52 / 53 / 54.
+
 ---
 
 ## 2. Goals and Non-Goals
@@ -49,10 +66,11 @@ Fashionably Late is privacy-first, GDPR-compliant, and local-first by default. T
 ### 2.2 Non-Goals (Explicitly Out of Scope)
 
 See Section 11 for the complete "Do Not Build" list — features forbidden
-**product-wide, in every tier**. These are distinct from **§13 (Premium
-v1 Scope)**, which lists features that *are* part of the product but are
-**tier-gated to Premium v1** (deferred from Free v1's launch, not
-deleted). §11 = never build; §13 = build, but in the Premium tier.
+**product-wide, in every tier**. (The former §13 "Premium v1 Scope" listed
+backend-dependent features that *were* part of the product but tier-gated to
+Premium; **Premium v1 is now out of scope of this project** and §13 has been
+removed — see the §1 superseding note and `notes/owner-decisions-log.md`
+Entry 52. §11 items remain forbidden in any tier, including a future Premium.)
 
 ---
 
@@ -1468,16 +1486,20 @@ The following features and behaviors must **not** be implemented in v1. This lis
 
 > **Tier-split note (2026-05-17, owner-directed — pre-Session-8, after
 > Entry 31).** **Items 1–20 below are out of scope for *all tiers* of
-> Fashionably Late** — Free v1 *and* Premium v1. They are forbidden
+> Fashionably Late** — Free v1 *and* any future Premium. They are forbidden
 > **product-wide and permanently**; "Premium" never reopens any of them.
 > This is categorically different from **Unschedule-on-Reply and the
-> backend service**, which are **in Premium v1 scope (§13), not out of
-> scope** — tier-gated and deferred from Free v1, with their full design
-> preserved for a future Premium build. The distinction is load-bearing:
-> a §11 item = never build, in any tier; a §13 item = build, but in the
-> Premium tier. Do not collapse the two (e.g. do not read
-> "Unschedule-on-Reply is deferred" as "Unschedule-on-Reply is out of
-> scope", and do not treat any §11 item as merely "Premium").
+> backend service**, which were *deferred* features (a build, not a ban) —
+> historically captured in the now-removed §13.
+>
+> **Update (2026-05-27, Entry 52):** Premium v1 (and therefore
+> Unschedule-on-Reply + the backend) is now **out of scope of this project**
+> and lives in a separate future private repo (§1 superseding note). That does
+> **not** move it onto this §11 list — a deferred-to-another-project feature is
+> still a build, not a ban. Items 1–20 here remain forbidden in **every** tier,
+> including a future Premium. Do not collapse the two (do not read
+> "Premium is out of this project" as "the §11 items are now Premium", and do
+> not treat any §11 item as merely "Premium").
 
 1. **Manual delivery approval** workflows where the user must approve each scheduled email before send.
 2. **Email tracking, read receipts, or pixel-based open detection.** Fashionably Late does not track whether recipients have opened emails.
@@ -1510,268 +1532,3 @@ The following features and behaviors must **not** be implemented in v1. This lis
 - **Push notification:** A real-time message from Google Cloud Pub/Sub to the backend, used to detect inbox changes.
 - **Service worker:** A background script that runs independently of any visible Gmail tab, used for long-lived tasks in a Manifest V3 extension.
 - **Scheduled label:** Gmail's native label that lists all emails scheduled to send in the future.
-
----
-
-## 13. Premium v1 Scope (Tier-Gated — Deferred from Free v1, Not Out of Scope)
-
-> **Entry-39 addendum (2026-05-19, owner-directed — Premium's
-> client-side OAuth/People stack is now BUILT and PRESERVED).** Beyond
-> the backend Premium scope described below, note that Sessions 7–9
-> built and **hands-on-verified against live Google** the entire
-> client-side OAuth + People recipient-lookup + multi-account
-> `login_hint` (OpenID `id_token`) stack. When Free v1 dropped all
-> Google-API dependency (Entry 39), that work was **not discarded** —
-> it is preserved **intact, compilable, unit-tested, and inert** in
-> `extension/src/premium-v1/` (oauth, oauth-config, auth-token,
-> google-api, the full API cascade + tests + a README with wire-up
-> steps). Premium v1 therefore starts from a *verified* client-OAuth
-> base; its remaining net-new work is the backend Option-B exchange
-> (§13.3) + Unschedule-on-Reply, not re-building OAuth. Nothing in
-> `src/premium-v1/` is imported by any Free v1 entry point.
-
-> **Added 2026-05-17 (owner-directed — pre-Session-8, after Entry 31).
-> Tier-split decision; `notes/owner-decisions-log.md` Entry 32.**
->
-> **What this section is.** Fashionably Late ships as **two tiers of the same
-> generation** (see the §1 amendment): **Free v1** (extension-only, no
-> backend, free — the public-launch target) and **Premium v1**
-> (extension + backend, paid — built *after* Free v1 launches and
-> validates demand). This section collects the features that are
-> **in Premium v1 scope and therefore deferred from Free v1's launch**.
->
-> **These are NOT deleted, and NOT §11 "Do Not Build" items.** The PRD
-> originally specified every item here as a v1 feature; the tier split
-> is a deliberate, owner-driven scope decision made because
-> implementation work across Sessions 5–7 surfaced that the
-> cost-to-ship of the full scope (CASA Tier 2 — several-thousand-USD,
-> 4–8 weeks; backend infra; per-user encryption; ongoing hosting; EU
-> compliance posture) is substantial, while the PRD's **core value
-> proposition — recipient-aware Schedule Send with
-> Optimize-for-recipient — is fully deliverable with no backend**
-> (People / Workspace Directory / Calendar APIs are all callable
-> directly from the extension). Unschedule-on-Reply is the *only*
-> PRD-specified feature requiring backend-initiated Gmail calls, so it
-> (and the backend it needs) tier-gates cleanly to Premium v1.
-> Contrast the Maps removal (Entry 26), which was a **permanent
-> deletion**: this is the opposite — a **preservation** for a later
-> tier. **The content below is the verbatim, intact prior design** so a
-> future Premium v1 build can implement it without reconstruction.
-> Prior locked decisions (Entry 26 single-purpose / Maps-removal;
-> Entry 31 Option-B token architecture) are **not rewritten or
-> reopened** — they remain accurate historical records and remain the
-> binding design **for the Premium v1 backend** (Entry-4 discipline: a
-> locked decision is locked against drift, not against the new fact
-> that Unschedule-on-Reply is now tier-gated).
-
-### 13.1 Unschedule on Reply (was §5.6)
-
-> Moved verbatim from §5.6 by the tier-split amendment. This is the
-> Premium v1 design; §5.6 now stubs to here.
-
-#### 13.1.1 Behavior
-
-When a user schedules an email via Fashionably Late and a recipient replies before the scheduled send time, the scheduled email is automatically canceled. The user receives a notification:
-
-> "Your scheduled email to [Recipient Name] was canceled because they replied. View the reply and decide what to send next."
-
-This applies to emails with multiple recipients as well. If any one recipient replies, the email is canceled for everyone (matching the behavior described in the reference PDF).
-
-#### 13.1.2 Technical Spec
-
-This is the only feature requiring a backend service.
-
-**Architecture:**
-1. When the user schedules an email via Fashionably Late, the extension registers the scheduled message ID and thread ID with the Fashionably Late backend.
-2. The backend subscribes to Gmail push notifications for the user's inbox via Google Cloud Pub/Sub.
-3. When a new message arrives in a watched thread, Google publishes a notification to the backend.
-4. The backend checks whether the new message is from a recipient of any pending scheduled email.
-5. If a match is found, the backend calls the Gmail API to cancel the scheduled email (delete the draft or revoke the scheduled send).
-6. The backend pushes a notification to the extension via WebSocket or short polling.
-7. The extension displays the cancellation toast to the user.
-
-**Required Gmail API endpoints:**
-- `users.watch` to subscribe to inbox push notifications.
-- `users.messages.list` and `users.messages.get` to fetch the new message metadata.
-- `users.drafts.delete` or `users.messages.delete` to cancel the scheduled message.
-
-**Backend data stored:**
-- User's OAuth refresh token (encrypted at rest).
-- User's email address.
-- Active scheduled message IDs and their thread IDs.
-- No email content is stored. Only metadata required for the matching logic.
-
-**Backend hosting:**
-- Must be hosted in an EU region (for example, Frankfurt, Dublin, or Amsterdam) for GDPR compliance.
-- Stateless except for the data above.
-- All stored data must be deletable on user request.
-
-### 13.2 Backend Service (was §7.3)
-
-> Moved verbatim from §7.3 by the tier-split amendment, **including the
-> Entry-26 (Maps-removal / single-purpose) and Entry-31 (OAuth token
-> management) amendments unchanged**. This is the Premium v1 backend
-> design; §7.3 now stubs to here. The one-purpose discipline and the
-> Maps-removal narrowing carry forward to the Premium v1 backend intact.
-
-#### 13.2.1 Purpose
-
-The backend serves **exactly one purpose**:
-
-1. **Unschedule-on-Reply relay.** Subscribes to Gmail push notifications via Google Cloud Pub/Sub, detects when a recipient replies to a thread that has a pending Fashionably Late-scheduled email, and cancels the scheduled send. See Section 13.1 (formerly §5.6).
-
-> **Amendment (2026-05-16 — owner-directed):** the former second purpose
-> ("Maps API proxy for recipient timezone resolution") is **removed from
-> product scope, not deferred** — the Google Maps Geocoding and Time Zone
-> APIs are gone entirely (see the §5.4.1 amendment for the hit-rate-versus-
-> cost-and-complexity reasoning). The backend is now single-purpose. No
-> Maps API key, billing, OAuth scope, or proxy endpoint exists or will.
-> Recorded in `notes/owner-decisions-log.md` (Entry 26).
-
-The backend is not used for any other feature. In particular: no analytics, no telemetry, no user profile or social features, no content storage of any kind. Any future proposal to expand the backend's role must be reviewed against this **one-purpose** scope boundary.
-
-> **Amendment (2026-05-17, owner-directed — pre-Session-8):** the
-> **one-purpose** discipline is **unchanged and still binding** — but the
-> honest framing is: the backend's purpose is **Unschedule-on-Reply *and*
-> the OAuth token management that enables it**. Per the §13.3 (Premium v1)
-> OAuth amendment, refresh tokens live only on the backend (server-side
-> code exchange, per-user encryption); the backend therefore owns the
-> OAuth `exchange`/`token`/`revoke` flow (§13.2.3). This is **not a second
-> purpose** and is **not** a reversal of the Entry-26 Maps-removal /
-> single-purpose narrowing: token management is the **infrastructure that
-> the one purpose structurally requires** (§13.1 needs backend-initiated
-> Gmail calls when the extension is not running ⇒ a backend refresh token
-> ⇒ the backend must run the OAuth exchange). Because there is exactly one
-> Google OAuth grant per user, that same backend-managed access-token path
-> is **necessarily reused** by the extension's other Google API calls
-> (Calendar/People in §5.4; the §13.1 cancel path) — reuse of the one
-> purpose's infrastructure, not scope creep. The scope test is unchanged:
-> anything that is **not** Unschedule-on-Reply or the OAuth/token plumbing
-> that enables it does **not** belong on the backend (still no analytics,
-> telemetry, profiles, or content storage). Recorded in
-> `notes/owner-decisions-log.md` (Entry 31).
-
-#### 13.2.2 Hosting
-
-- Region: EU (Frankfurt, Dublin, Amsterdam, or equivalent).
-- Database: Encrypted at rest. Suggested: a managed Postgres or equivalent.
-- Encryption: All sensitive fields (OAuth refresh tokens) encrypted with per-user keys.
-
-#### 13.2.3 Endpoints
-
-- `POST /subscribe` — Register a scheduled email for monitoring. Body includes user email, message ID, thread ID, recipient emails.
-- `POST /unsubscribe` — Deregister a scheduled email (called when the user cancels or sends manually).
-- `POST /push/gmail` — Webhook endpoint that receives Gmail push notifications from Google Cloud Pub/Sub.
-- `WS /events` — WebSocket endpoint for the extension to receive real-time cancellation events.
-- `GET /export` — Returns all user data as JSON (right of access).
-- `DELETE /user` — Deletes all user data (right of erasure).
-
-> **Amendment (2026-05-17, owner-directed — pre-Session-8):** the
-> Option-B OAuth flow (§13.3 amendment) adds three authentication
-> endpoints:
-> - `POST /auth/exchange` — the extension POSTs the one-time
->   authorization code; the backend exchanges it with Google (Client
->   Secret in backend env only), stores the per-user-encrypted refresh
->   token (§13.2.4), and returns a short-lived access token.
-> - `POST /auth/token` — the extension requests a fresh access token; the
->   backend mints one from the stored refresh token.
-> - `POST /auth/revoke` — user-initiated revocation; the backend revokes
->   the grant with Google and deletes the stored refresh token.
->
-> These are the OAuth plumbing for the single purpose (§13.2.1 amendment),
-> not new product surface. Endpoint names are the working spec; the
-> Premium v1 implementation may refine exact paths but not this contract.
-
-#### 13.2.4 Data Stored
-
-- User email address (hashed where possible).
-- Encrypted OAuth refresh token.
-- Active scheduled message records: `{ user_email, message_id, thread_id, recipient_emails[], scheduled_send_time, created_at }`.
-
-No email content, no recipient profiles, no usage analytics.
-
-> **Amendment (2026-05-17, owner-directed — pre-Session-8): confirmation,
-> not a change.** This section's "Encrypted OAuth refresh token" is the
-> **single, authoritative** location for a user's refresh token (the
-> §13.3 amendment supersedes the old client/backend split). Concretely:
-> the stored refresh token is encrypted at rest with the user's **per-user
-> key**; the extension persists **no refresh token at all** and holds only
-> short-lived access tokens (in service-worker memory / transient storage),
-> fetched on demand via `POST /auth/token`. The existing wording already
-> covers this — recorded explicitly so the Premium v1 build implements it
-> without re-deciding.
-
-### 13.3 Premium v1 OAuth — Option B (backend-held refresh tokens)
-
-> Moved verbatim from the §7.5 Entry-31 amendment by the tier-split
-> amendment. **This is the locked, binding OAuth design for Premium v1.**
-> §7.5 (now Free-v1-authoritative) points here for the Premium model.
-> Per Entry-4 discipline this design is **not reopened** by the tier
-> split — it was correct given the then-true assumption that
-> Unschedule-on-Reply was in v1's only tier; it remains correct *for
-> Premium v1*.
-
-> **Amendment (2026-05-17, owner-directed — pre-Session-8, Entry 19
-> "lock the design in calm"):** the original §7.5 third bullet's
-> "**locally** for client-only features, on the backend for
-> Unschedule-on-Reply" split is **superseded**. **Refresh tokens live
-> ONLY on the backend, encrypted with per-user keys (Option B —
-> server-side authorization-code exchange).** The extension **never**
-> stores a refresh token and never performs the code→token exchange
-> itself (PKCE-in-extension, "Option A", is explicitly rejected).
->
-> **Flow:** the extension runs the user-facing OAuth dance
-> (`chrome.identity.launchWebAuthFlow`, the Session-7 Web-application
-> client), receives a **one-time authorization code**, and POSTs it to the
-> backend (`POST /auth/exchange`, §13.2.3). The backend exchanges the code
-> with Google (the **Client Secret lives only in backend env vars** — never
-> in the extension; satisfies §6.5), encrypts the **refresh** token with
-> the user's per-user key (§13.2.4), stores it, and returns a **short-lived
-> access token**. When the extension needs a fresh access token it requests
-> one from the backend (`POST /auth/token`), which mints it from the stored
-> refresh token. Revocation (`POST /auth/revoke`) revokes with Google and
-> deletes the stored refresh token.
->
-> **Why (recorded for future architectural reference — CASA prep,
-> enterprise security reviews):** (1) Unschedule-on-Reply (§13.1) requires
-> backend-initiated Gmail calls when the extension is not running — that
-> *structurally* requires a backend refresh token; the Session-7
-> Web-application client (Entry 29) was chosen precisely to enable this.
-> (2) §13.2.4 already specifies backend per-user-encrypted refresh tokens —
-> Option B *is* the spec; Option A would have needed an Entry-6 PRD
-> amendment. (3) Privacy story stays clean ("on-device, except the minimal
-> EU relay, encrypted per-user"). (4) Keeps the CASA Tier-2 audited surface
-> in one place. (5) Enterprise/GDPR posture (per-user-encrypted, EU
-> region) is what security reviews expect; tokens in `chrome.storage.local`
-> would not survive that scrutiny.
->
-> **Graceful-degradation consequence (an implication this decision
-> surfaces, not previously named):** because every access token is now
-> minted via the backend, a backend outage degrades **not only**
-> Unschedule-on-Reply (§6.7) **but also** the client-only Calendar/People
-> features. This does **not** weaken §6.7's "never block the user" rule —
-> it degrades to the **already-specified §6.7 fallbacks** (Calendar
-> unavailable → browser timezone; People unavailable → manual recipient
-> timezone selection) and Schedule Send itself is unaffected (it drives
-> Gmail's own UI, no token). The newly broadened trigger of those existing
-> fallbacks is the only change; §6.7's fallback *behaviour* already covers
-> it. **This consequence is Premium-v1-only** (Free v1 fetches tokens
-> directly from Google with no backend — see the §7.5 Free v1 model).
-> Recorded in `notes/owner-decisions-log.md` (Entry 31).
-
-### 13.4 Premium v1 launch gates
-
-Premium v1 has its own launch checklist — see **`PREMIUM_LAUNCH_CHECKLIST.md`**
-— covering: CASA **Tier 2** assessment (backend + restricted scopes);
-backend infrastructure (Fly.io EU app, Supabase EU project, the per-user
-encryption-key strategy, custom backend domain, backup/DR); the OAuth
-switch from `access_type=online` to `access_type=offline` (this §13.3
-Option-B flow); the backend-processing addendum to the Privacy Policy and
-Terms of Service; the Free→Premium upgrade/migration story
-(re-authorization for the offline grant + backend refresh-token storage);
-and subscription/billing infrastructure. Free v1's launch gates remain in
-`PRE_LAUNCH_CHECKLIST.md`.
-
----
-
-**End of Document**

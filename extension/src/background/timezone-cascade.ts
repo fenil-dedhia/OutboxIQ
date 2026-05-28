@@ -15,12 +15,11 @@
 // the chosen zone is cached (recipient-cache `setManualRecipientTimezone`)
 // so it returns "cache" forever after. Never throws, never blocks (§6.7).
 //
-// PREMIUM v1: the API-backed cascade (cache → People → Workspace Directory
-// → manual), the OAuth flow, and login_hint are **built and preserved,
-// inert**, in `src/premium-v1/` (see that directory's README). Premium
-// re-introduces an automated step *before* "manual_needed"; this Free v1
-// contract is the exact shape it slots back into. Nothing here imports
-// `src/premium-v1/` and nothing there is wired into a Free v1 entry point.
+// PREMIUM v1 is OUT OF SCOPE of this project (Entry 52): the API-backed
+// cascade (cache → People → Workspace Directory → manual), the OAuth flow,
+// and login_hint belong to a future Premium build that forks this repo into
+// a separate private one. Premium re-introduces an automated step *before*
+// "manual_needed"; this Free v1 contract is the exact shape it slots into.
 
 import { getCachedRecipient } from "../lib/recipient-cache";
 

@@ -5,9 +5,10 @@ import { defineManifest } from "@crxjs/vite-plugin";
 // host permission were removed — the recipient cascade is now cache→manual,
 // purely on-device. Minimal footprint: `storage` + the Gmail content-script
 // origin, nothing else. The OAuth/People infrastructure (which DID need
-// `identity` + that host) is preserved inert in `src/premium-v1/`; Premium
-// v1 re-adds these manifest entries when it wires that up. This is a
-// material install-prompt reduction vs. the Session-8 OAuth baseline.
+// `identity` + that host) is Premium-only and OUT OF SCOPE of this project
+// (Entry 52); a future Premium build forks this repo into a private one and
+// re-adds these manifest entries there. This is a material install-prompt
+// reduction vs. the Session-8 OAuth baseline.
 export default defineManifest({
   manifest_version: 3,
   name: "Fashionably Late",
@@ -53,14 +54,14 @@ export default defineManifest({
   // injects on subsequent page loads, not retroactively into existing
   // tabs (MV3 model). Without this, a user who has Gmail open and then
   // installs the extension would have to manually refresh Gmail before
-  // the extension does anything. Premium v1 re-adds `identity` for its
-  // OAuth (preserved in src/premium-v1/); not requested here.
+  // the extension does anything. Premium v1 (out of scope of this
+  // project — Entry 52) re-adds `identity` for its OAuth; not here.
   permissions: ["storage", "scripting"],
   // mail.google.com ONLY: the content-script origin; also lets the
   // onboarding page focus the user's Gmail tab on finish (PRD §5.1.4).
   // `people.googleapis.com` was REMOVED — Free v1 makes no Google API
-  // call (Entry 39; cascade is cache→manual). Premium v1 re-adds the
-  // People host when it wires up src/premium-v1/. Minimal by design
-  // (PRD §6.1.1) — this is now the smallest the extension can be.
+  // call (Entry 39; cascade is cache→manual). Premium v1 (out of scope
+  // of this project — Entry 52) re-adds the People host. Minimal by
+  // design (PRD §6.1.1) — this is now the smallest the extension can be.
   host_permissions: ["https://mail.google.com/*"],
 });

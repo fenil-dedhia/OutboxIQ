@@ -1106,6 +1106,20 @@ that preceded the §5.3.5/§5.4 build. They qualify; Entries 26 and 27.
   the implementation that surfaced the cost, the question that forced the
   examination, and the analysis that answered it are three different
   contributions; a log that merges them teaches the wrong lesson.
+- **Amendment (2026-05-27, Session-13 follow-up — Entry 52 executed; this
+  Premium-removal commit).** The "two tiers of the same generation, Premium
+  built *later in this repo*" framing above is **superseded** on the
+  "where Premium lives" axis only. Premium v1 is now **out of scope of this
+  project entirely**: the preserved `extension/src/premium-v1/` + `backend/`
+  + `PREMIUM_LAUNCH_CHECKLIST.md` + PRD §13 were **removed** from this public
+  repo, and a future Premium build will be a **fork of this (now Apache-2.0)
+  Free v1 repo into a separate private repo** — two independent Web Store
+  listings (Pattern Y), independent versions. The *historical record* of the
+  tier-split decision stays accurate exactly as written above (Entry-4
+  discipline — this is an appended note, not a rewrite); only the
+  forward-looking distribution/location changes. See **Entry 52** (the scope
+  call), **Entry 53** (the Apache-2.0 license that makes the fork clean), and
+  **Entry 54** (the Pattern-Y / Path-2 distribution choice).
 
 ## Entry 33 — Implicit-grant pivot, caught at the Entry-19 architecture review
 
@@ -2093,6 +2107,21 @@ that preceded the §5.3.5/§5.4 build. They qualify; Entries 26 and 27.
   of the project" almost certainly means the roadmap; it *might* mean the files —
   and the cost of guessing wrong (discarding Sessions 7–9 verified work) is high
   and one-directional, so confirm.
+- **Amendment (2026-05-27 — the explicit go-ahead arrived; removal executed).**
+  The owner confirmed the directive this entry flagged: physically remove the
+  preserved Premium v1 code/docs. Done in **this commit** (`chore: remove
+  Premium v1 from public repo (Entry 52 executed)`): deleted
+  `extension/src/premium-v1/` (the verified-but-inert OAuth/People stack +
+  tests), `backend/`, `PREMIUM_LAUNCH_CHECKLIST.md`, and PRD §13; removed the
+  Premium-only OAuth-smoke build tooling (`build:smoke` / `smoke:check` /
+  `scripts/check-smoke-build.mjs` / the `OQ_SMOKE` define) that only existed
+  to exercise the deleted harness; rewrote the surviving `§13` / `src/premium-v1/`
+  pointers in the PRD, README, CLAUDE.md, and the kept source comments to
+  "out of scope of this project." The strategic shape of "where Premium goes
+  instead" (fork into a private repo; two-listing distribution) is recorded in
+  **Entry 54**, and the Apache-2.0 license that makes that fork clean in
+  **Entry 53**. The flag-don't-guess judgment recorded above was the right call:
+  the removal happened on an explicit owner instruction, not an inference.
 
 ---
 

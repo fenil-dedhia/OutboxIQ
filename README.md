@@ -27,10 +27,11 @@ Fashionably Late is **privacy-first, local-first, and GDPR-aligned by design.**
 ## Repository layout
 
 - [`extension/`](./extension) — the Chrome extension (Manifest V3). The whole product, running entirely in your browser.
-- [`backend/`](./backend) — placeholder for a future, separately-deployed server component. Not part of the current extension, and not started yet.
 - [`Fashionably_Late_PRD.md`](./Fashionably_Late_PRD.md) — the full product requirements document and source of truth.
 - [`PRE_LAUNCH_CHECKLIST.md`](./PRE_LAUNCH_CHECKLIST.md) — launch obligations and open pre-release items.
 - [`notes/`](./notes) — design history and decision log.
+
+This repository is the **Free version** of Fashionably Late — the canonical, open-source, public codebase. A paid Premium tier (with a server-side component) is **out of scope of this project**; if it is ever built, it will be a separate, private project with its own Chrome Web Store listing, not part of this repo.
 
 ## Tech stack
 
