@@ -145,6 +145,116 @@ describe("ScheduleModal §5.5 trigger split (Entry 40)", () => {
   });
 });
 
+// Session 14 a11y (Gap E — PRD §6.3, §8.9):
+describe("ScheduleModal a11y — focus trap (Session 14)", () => {
+  it("dialog role + aria-modal + accessible name are in place", () => {
+    render(
+      <ScheduleModal
+        timezone="America/New_York"
+        workingHours={createDefaultState().workingHours}
+        lastScheduled={null}
+        recipients={[sarah]}
+        pinnedTimezones={[]}
+        optimizeEnabled={false}
+        onScheduled={vi.fn()}
+        onOpenSettings={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+    const dialog = screen.getByRole("dialog", {
+      name: /schedule send with fashionably late/i,
+    });
+    expect(dialog).toHaveAttribute("aria-modal", "true");
+  });
+
+  it("Tab from the last focusable element in the dialog wraps to the first", () => {
+    render(
+      <ScheduleModal
+        timezone="America/New_York"
+        workingHours={createDefaultState().workingHours}
+        lastScheduled={null}
+        recipients={[sarah]}
+        pinnedTimezones={[]}
+        optimizeEnabled={false}
+        onScheduled={vi.fn()}
+        onOpenSettings={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+    const dialog = screen.getByRole("dialog");
+    const focusables = dialog.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    );
+    expect(focusables.length).toBeGreaterThan(2);
+    const first = focusables[0]!;
+    const last = focusables[focusables.length - 1]!;
+
+    last.focus();
+    expect(document.activeElement).toBe(last);
+    fireEvent.keyDown(last, { key: "Tab" });
+    expect(document.activeElement).toBe(first);
+  });
+
+  it("Shift+Tab from the first focusable wraps to the last", () => {
+    render(
+      <ScheduleModal
+        timezone="America/New_York"
+        workingHours={createDefaultState().workingHours}
+        lastScheduled={null}
+        recipients={[sarah]}
+        pinnedTimezones={[]}
+        optimizeEnabled={false}
+        onScheduled={vi.fn()}
+        onOpenSettings={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+    const dialog = screen.getByRole("dialog");
+    const focusables = dialog.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    );
+    const first = focusables[0]!;
+    const last = focusables[focusables.length - 1]!;
+
+    first.focus();
+    fireEvent.keyDown(first, { key: "Tab", shiftKey: true });
+    expect(document.activeElement).toBe(last);
+  });
+
+  it("ordinary Tab in the middle of the dialog is NOT intercepted", () => {
+    // The trap only fires at the boundaries — interior Tab presses must
+    // fall through to the browser's default focus navigation so we don't
+    // fight Gmail's focus handling on every keystroke.
+    render(
+      <ScheduleModal
+        timezone="America/New_York"
+        workingHours={createDefaultState().workingHours}
+        lastScheduled={null}
+        recipients={[sarah]}
+        pinnedTimezones={[]}
+        optimizeEnabled={false}
+        onScheduled={vi.fn()}
+        onOpenSettings={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+    const dialog = screen.getByRole("dialog");
+    const focusables = dialog.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    );
+    const middle = focusables[Math.floor(focusables.length / 2)]!;
+    middle.focus();
+    const event = new KeyboardEvent("keydown", {
+      key: "Tab",
+      bubbles: true,
+      cancelable: true,
+    });
+    middle.dispatchEvent(event);
+    // The trap's preventDefault is only called at boundaries.
+    expect(event.defaultPrevented).toBe(false);
+  });
+});
+
 describe("ScheduleModal — §5.8.2 recipientOptimization toggle", () => {
   it("renders the Optimize section when enabled", () => {
     render(

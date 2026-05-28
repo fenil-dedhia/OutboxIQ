@@ -186,6 +186,41 @@ export function ScheduleModal({
     return () => document.removeEventListener("keydown", onKey, true);
   }, [onClose]);
 
+  // Session 14 a11y (Gap E — PRD §6.3, §8.9): focus trap. Tab/Shift-Tab
+  // cycle within the dialog card so AT can't escape into Gmail's compose
+  // behind it. Implemented as a React-level keydown on the card (not a
+  // document-level listener) so it doesn't intercept anything outside our
+  // shadow root — Gmail's own focus handling stays untouched. Conservative
+  // by design: we only re-route Tab when the focus would actually leave
+  // the trapped set; ordinary intra-modal Tab navigation is undisturbed.
+  function getModalFocusables(): HTMLElement[] {
+    const root = cardRef.current;
+    if (!root) return [];
+    return Array.from(
+      root.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ),
+    );
+  }
+  function onCardKeyDown(e: React.KeyboardEvent<HTMLDivElement>): void {
+    if (e.key !== "Tab") return;
+    const focusables = getModalFocusables();
+    if (focusables.length === 0) return;
+    const first = focusables[0]!;
+    const last = focusables[focusables.length - 1]!;
+    const active = document.activeElement;
+    // The card itself (tabIndex=-1) holds focus on mount; first Tab should
+    // jump to the first real focusable — that's what default Tab already
+    // does, so we don't need to intercept. We only redirect at the edges.
+    if (e.shiftKey && active === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && active === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
+
   // Touching a preset / custom / last-row → disengage Optimize so the two
   // can't be simultaneously "ready". One-decision-at-a-time (§8.7).
   function pickSelection(s: Selection): void {
@@ -432,6 +467,7 @@ export function ScheduleModal({
         role="dialog"
         aria-modal="true"
         aria-label="Schedule send with Fashionably Late"
+        onKeyDown={onCardKeyDown}
       >
         <div className="modal-header">
           <div className="modal-header-text">

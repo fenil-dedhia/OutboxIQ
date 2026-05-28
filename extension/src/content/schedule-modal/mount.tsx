@@ -48,6 +48,22 @@ export interface OpenScheduleModalArgs {
 export function openScheduleModal(args: OpenScheduleModalArgs): void {
   document.getElementById(HOST_ID)?.remove();
 
+  // Session 14 a11y (Gap E — PRD §8.9): capture whatever has focus right
+  // before we mount, so close() can restore it (typically Gmail's Send-menu
+  // chevron / Send button after Gmail's menu closes). Conservative — if the
+  // element is gone or unfocusable by the time we close, the restore is a
+  // no-op rather than throwing or fighting Gmail's own focus handling. Read
+  // from any open shadow root too so a restore-after-modal-in-modal still
+  // works (the picker mounts inside our own shadow root).
+  function deepActiveElement(): Element | null {
+    let el: Element | null = document.activeElement;
+    while (el && (el as HTMLElement).shadowRoot?.activeElement) {
+      el = (el as HTMLElement).shadowRoot!.activeElement;
+    }
+    return el;
+  }
+  const previouslyFocused = deepActiveElement();
+
   const host = document.createElement("div");
   host.id = HOST_ID;
   const shadow = host.attachShadow({ mode: "open" });
@@ -65,6 +81,16 @@ export function openScheduleModal(args: OpenScheduleModalArgs): void {
     root?.unmount();
     root = null;
     host.remove();
+    // Best-effort focus restore. Wrapped in try/catch so a detached or
+    // non-focusable trigger never escapes — never wedge compose for a
+    // best-effort a11y polish.
+    try {
+      if (previouslyFocused instanceof HTMLElement) {
+        previouslyFocused.focus({ preventScroll: true });
+      }
+    } catch {
+      /* silently ignore — focus restore is a nice-to-have, not a guarantee */
+    }
   };
 
   // §5.2.3: a render-time throw tears down the broken modal and hands off to

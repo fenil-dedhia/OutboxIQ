@@ -140,6 +140,28 @@ describe("TimezonePicker (PRD §5.3.5 (k) shared component)", () => {
     expect(screen.getByText("No timezones found")).toBeInTheDocument();
   });
 
+  // Session 14 a11y (Gap C): the empty state is OUTSIDE the listbox and has
+  // role=status so a screen reader announces it when the user types something
+  // that filters all results away.
+  it("a11y: empty state has role=status and is NOT inside the listbox (Session 14)", () => {
+    render(
+      <TimezonePicker value={null} onChange={vi.fn()} ariaLabel="picker" />,
+    );
+    openMenu();
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Search timezones" }),
+      {
+        target: { value: "zzzzz" },
+      },
+    );
+    const status = screen.getByRole("status");
+    expect(status).toHaveTextContent("No timezones found");
+    // Must be a sibling of the listbox, not a child — otherwise it would
+    // show up as a phantom "option" in the AT option count.
+    const listbox = screen.getByRole("listbox");
+    expect(listbox.contains(status)).toBe(false);
+  });
+
   it("clicking an option fires onChange with the canonical IANA id", () => {
     const onChange = vi.fn();
     render(

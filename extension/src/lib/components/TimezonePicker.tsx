@@ -399,11 +399,6 @@ export function TimezonePicker({
             onKeyDown={onInputKeyDown}
           />
           <ul ref={listRef} id={listId} role="listbox" className="fl-tzp-list">
-            {optionEntries.length === 0 && (
-              <li className="fl-tzp-empty" role="presentation">
-                No timezones found
-              </li>
-            )}
             {pinnedIdSet && pinnedMatches.length > 0 && (
               <li className="fl-tzp-section-label" role="presentation">
                 Pinned
@@ -421,6 +416,15 @@ export function TimezonePicker({
               renderOption(entry, pinnedMatches.length + k),
             )}
           </ul>
+          {/* Session 14 a11y: the no-results message lives OUTSIDE the listbox
+              (so it doesn't show as a phantom "option" in the option count)
+              and carries role=status so a screen reader announces it when
+              the user's search filters everything out. */}
+          {optionEntries.length === 0 && (
+            <p className="fl-tzp-empty" role="status" aria-live="polite">
+              No timezones found
+            </p>
+          )}
         </div>
       )}
     </div>
