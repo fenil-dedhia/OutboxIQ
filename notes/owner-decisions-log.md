@@ -2285,6 +2285,23 @@ that preceded the §5.3.5/§5.4 build. They qualify; Entries 26 and 27.
 
 ---
 
+## Session 14 — no entries this session.
+
+Session 14 was the WCAG 2.1 AA remediation pass against PRD §6.3 + §8.9 — a
+remediation session against an explicitly-itemized backlog (Gaps A/B/C/D/E
+plus a broad audit), not a session where owner judgment moved the build's
+trajectory off-script. The flagged "brand-touching" calls (focus-ring
+visibility on `.fl-set-btn` / nav items; section grouping inside the
+TimezonePicker listbox if a real screen-reader pass surfaces it) remain
+*pending* owner judgment, not yet decided — when/if either becomes a real
+call, an entry will be appended then. The owner's keyboard hands-on across
+Tests 1/2/3 confirmed the implementation works as designed; the deferred
+screen-reader walkthrough is documented in `PRE_LAUNCH_CHECKLIST.md` and
+`notes/session-14-summary.md` §f as an explicit, acceptable Free-v1-launch
+gap (Free v1 is local-only with no critical-safety surface).
+
+---
+
 *New entries are appended at every session close-out, alongside the session
 summary. If a session produced no trajectory-changing owner input, record that
 explicitly (`Session N — no entries this session.`) rather than leaving a gap
