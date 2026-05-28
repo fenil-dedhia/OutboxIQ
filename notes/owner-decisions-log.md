@@ -2331,6 +2331,183 @@ this one.
 
 ---
 
+## Entry 55 — Conscious owner acceptance of three pre-launch security items as documented Free-v1 launch gaps
+
+- **Session:** 16 (2026-05-28 — the pre-launch security gate, third of the
+  four hardening sessions: a11y → Workspace → **security** → comprehensive
+  hands-on).
+- **Moment:** Session 16 produced its verdict — **zero exploitable
+  vulnerabilities in production source**, +2 defensive XSS regression tests
+  (commit `2e23394`), and **four findings flagged for owner judgment**
+  (`notes/session-16-summary.md` §c): (1) page-ownership token forging via
+  the Session-13 `<html>[data-fashionably-late-owner]` mechanism, low
+  severity; (2) admin-policy interaction surface (Workspace DLP /
+  send-event hooks), unknown severity — carried from S15 §"Honest gap" /
+  §"What was NOT verified"; (3) `npm audit` advisories in `rollup` reached
+  transitively through `@crxjs/vite-plugin`, build-tooling-only (runtime
+  audit is clean); (4) `console.info` "multi-compose detected" line — no
+  security impact, intentional, flagged for audit-trail completeness only.
+  Each flag arrived with an explicit recommended disposition and a
+  hardening-options analysis. **This is the moment immediately before
+  Chrome Web Store submission** — the owner had to make the call:
+  hardening-now, or accept-and-document.
+- **My input (owner):** **Accepted all three actionable flags (1/2/3) as
+  documented Free-v1 launch gaps**, with the framing that *in each case
+  the fix is worse than the risk*. The per-flag reasoning, in the owner's
+  own framing:
+  - **Flag 1 (page-ownership forging, Low) — accepted + documented, not
+    hardened.** The DOM-attribute coordination is structurally forced by
+    MV3's isolated-worlds model — closure / WeakMap / cryptographic-signature
+    "fixes" don't work cross-world. The blast radius is bounded to UX-prompt
+    suppression: a forged token disables the §5.5.1 outside-hours soft
+    warning, with **no data exfiltration, no privilege escalation, no
+    impersonation** (the user's email still sends normally via Gmail's
+    native Send). Every viable hardening option (a defensive
+    `MutationObserver` re-claim being the only mechanical candidate) lands
+    on the gated hot path that Session 13's `claimPageOwnership` +
+    `isCurrentOwner` finally got right after the bug-3 saga (Entry 51) —
+    risking a regression of that fix to defend against a low-severity attack
+    that already requires another foothold (a malicious co-installed
+    extension, or Gmail-side compromise) is the wrong trade. *Documented in
+    CLAUDE.md gotcha + flagged for revisit only if a real attack
+    materialises post-launch.*
+  - **Flag 2 (admin-policy surface, Unknown) — accepted as a launch gap,
+    explicitly NOT worth acquiring a test environment to close.** Cannot be
+    definitively closed without a real Workspace tenant running DLP /
+    content-compliance / send-event hooks, which neither the owner nor
+    Claude has. The structural reasoning (no Google API call axis per
+    Entry 39 so the data-perimeter collision risk is zero; the §5.5.1
+    gesture replay matches Gmail's own shape so a tenant Send hook sees the
+    same event Gmail's UI produces) gives a low *structural* collision risk
+    but is reasoning, not testing. The owner explicitly chose **not** to
+    treat this as launch-blocking and explicitly **not** to seek out a
+    tenant environment to close it. Opportunistic re-test in Session 17 *if*
+    tenant access becomes available, otherwise Free v1 launches with this
+    documented unknown — supported by Free v1's existing fail-toward-native-
+    Gmail pattern on every ambiguous path (the multi-compose safety net,
+    the §5.5.1 30-second watchdog, the `gmail-recipe.ts` step-failure
+    paths). The "honest gap" carried from Session 15 is therefore
+    upgraded to "accepted Free-v1-launch gap with conscious owner sign-off"
+    by this entry — no longer a pending decision.
+  - **Flag 3 (`npm audit`, Build-only) — accepted + monitor.** The two
+    high-sev advisories (`GHSA-mw96-cpmx-2vgc`, Rollup < 2.80.0 path
+    traversal) are reachable only when rollup is run against
+    attacker-controlled inputs (which our build never does — we build only
+    from `extension/src/` + our `node_modules/`). `npm audit --omit=dev` is
+    **0 vulnerabilities**; the shipped runtime dep tree is `react@19.2.6` +
+    `react-dom@19.2.6` only. The single `fixAvailable` is a SemVer-major
+    DOWNgrade of `@crxjs/vite-plugin` from 2.x to 1.x, which **breaks the
+    build** (already locked in the CLAUDE.md gotcha: "Do **not** run
+    `npm audit fix --force` (it breaks the build)"). The accept-the-tax
+    stance was already on record from CLAUDE.md "Locked tech decisions"
+    (the CRXJS community-plugin trade-off); this entry confirms it survives
+    the security-pass scrutiny without change, and adds a concrete monitor
+    trigger: take the bump when `@crxjs/vite-plugin` ships a 2.x release
+    that pulls in patched rollup.
+  - **Flag 4 (no action needed)** — confirmed intentional per the
+    pre-Session-16 owner decision; flagged for audit completeness only.
+- **What Claude Code would have done without it (Entry 17 honesty rule):**
+  Claude *had already* arrived at the accept-and-document recommendation
+  for each of the three actionable flags during the audit pass — so on
+  the *direction* this is owner-confirmed, not owner-corrected. The
+  load-bearing owner contribution is what Entry 17's lesson named:
+  **converting a "Claude recommends accept" into a "the owner consciously
+  accepted at the pre-launch security gate, on the record, with reasoning"**.
+  Without this entry, the flagged items would live as "Claude flagged + no
+  trajectory change recorded" in a `Session 16 — no entries this session.`
+  block (which is in fact what Claude initially drafted and the owner
+  explicitly overruled). That draft would have been *technically accurate*
+  by the strict "did owner judgment fork the build's trajectory off
+  Claude's default" test, but **wrong by the spirit of Entry 17**: a future
+  reviewer or auditor asking "did the team know about these items at
+  launch?" needs to be able to see the answer, in the owner's voice, on
+  the record. A `no entries` block doesn't pass that test for a security
+  gate, even if it would for an a11y or compatibility one.
+- **Honest counterfactual cost:** None of the three accept-stances chose
+  the obviously-cheaper path:
+  - For Flag 1, the *theoretically* safer path is "harden the token (e.g.
+    `MutationObserver` re-claim) anyway, on the principle that any
+    structural attack surface should be closed by default." The owner
+    rejected that for the regression-risk-on-the-hot-path reason above —
+    paid in *residual low-severity attack surface* to avoid risking the
+    bug-3 fix. Future cost if a real attack ever materialises: re-litigate
+    in a focused session with full hot-path test coverage, slower than
+    fixing it now would have been.
+  - For Flag 2, the *theoretically* safer path is "delay launch until a
+    tenant probe is possible." The owner rejected that explicitly — paid
+    in *a documented unknown carrying into launch* to avoid an open-ended
+    pre-launch delay for a structurally-low-risk axis. Future cost if a
+    real Workspace tenant reports a collision: scoped reactive fix
+    post-launch, slower-and-louder than fixing it before launch would have
+    been; this is the calculated bet.
+  - For Flag 3, the *theoretically* safer path is "take the patched
+    `@crxjs/vite-plugin` 2.x upgrade as soon as it ships, before launch,
+    regardless of timing." The owner rejected the wait-for-upstream gating
+    of launch — paid in *carrying a known dev-tooling advisory through
+    submission* to avoid a SemVer-major rebuild dance on a non-shipped
+    dependency. Future cost: a Web Store reviewer or third-party security
+    scanner could in principle flag the advisory; the answer is the audit
+    trail (this entry + the CLAUDE.md gotchas) showing it was identified
+    and consciously accepted with a reachability analysis.
+
+  All three counterfactuals are *known* and *recorded* — that is the entire
+  point of this entry. A future reviewer asking "did you know about these
+  at launch?" should be able to read this and see: **yes, all three were
+  identified during the pre-launch security pass, each had explicit
+  hardening options reviewed, and the owner consciously chose
+  accept-and-document with the reasoning above. They were not missed.**
+- **Outcome:** The three flags are recorded as **accepted Free-v1 launch
+  gaps** in `notes/session-16-summary.md` §c (per-flag full reasoning), in
+  `PRE_LAUNCH_CHECKLIST.md` "Security audit — DONE (Session 16, 2026-05-28)"
+  (the pre-launch-visible record), in `CLAUDE.md` Current-state + 2 gotcha
+  breadcrumbs (the working-state record), and in this entry (the
+  decision-provenance record). No spec amendment; no production code
+  change; no SCHEMA_VERSION bump. The §"§g owner-decisions-log entries"
+  section of the session summary is updated to point at this entry instead
+  of `Session 16 — no entries this session.` Flag 4 is unchanged (no
+  action).
+- **Artifact:** This entry; `notes/session-16-summary.md` §c (the
+  per-flag reasoning, severity assessment, and hardening-options analysis
+  for each); `PRE_LAUNCH_CHECKLIST.md` "Security audit — DONE (Session 16,
+  2026-05-28)"; the Session-16 paragraph in `CLAUDE.md` "Current state";
+  the two gotcha breadcrumbs in CLAUDE.md (page-ownership latch +
+  `npm audit`); the in-session XSS regression-guard commit `2e23394`
+  (orthogonal — pinning React's escape-by-default for the one
+  attacker-influenceable data path, not related to Flags 1/2/3). Cross-refs:
+  Entry 17 (the honesty rule this entry is bound by), Entry 39 (the
+  no-OAuth invariant that bounds Flag 2's data-perimeter axis), Entry 51
+  (the Session-13 page-ownership fix Flag 1's mechanism comes from),
+  Entry 52 (the Premium-out-of-scope decision that keeps the audit surface
+  this narrow). The CLAUDE.md gotcha for `npm audit` (already locked) and
+  the gotcha for the page-ownership latch (Session 13, this entry adds a
+  security-flag breadcrumb to it) are the daily-reference surfaces; this
+  entry is the *why*.
+- **Lesson (for coaching):** Two lessons, both Entry-17-flavored:
+  1. **A "no entries this session" block is the wrong answer for a
+     security pre-launch gate, even when Claude's recommendation is
+     accepted without modification.** The default test "did owner judgment
+     move the build's trajectory off Claude's default" is the right test
+     for sessions where the *direction* is the question; for security
+     gates the *acceptance itself* is the artifact that has to exist, in
+     the owner's voice, because a future auditor asks "did you know" not
+     "did you reverse Claude". The honest answer to "did you know" is
+     only on the record if the owner consciously signed off — the absence
+     of a counter-decision is not the same evidence as a logged
+     acceptance.
+  2. **Accept-and-document at a pre-launch gate is a real decision with
+     real counterfactuals, not a passive default.** For each of the three
+     flags, the cheaper-in-isolation path was the "harden it anyway" /
+     "delay until tenant access" / "wait for upstream patch" path; the
+     owner's accept-stance traded short-term latent risk for *not*
+     regressing a hot-path fix / *not* gating launch on an unavailable
+     environment / *not* breaking the build on a non-shipped dep.
+     Recording the trade with the counterfactual — including the
+     "and this is what we'll pay if the risk materialises" line — is what
+     makes the decision robust against later second-guessing: the call
+     was made on the record, with eyes open, with the cost named.
+
+---
+
 *New entries are appended at every session close-out, alongside the session
 summary. If a session produced no trajectory-changing owner input, record that
 explicitly (`Session N — no entries this session.`) rather than leaving a gap

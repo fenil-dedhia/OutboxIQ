@@ -610,6 +610,24 @@ Low-value-now / low-cost-later; tracked so it is not forgotten.
 
 ---
 
+## Security audit — DONE (Session 16, 2026-05-28)
+
+End-to-end security review against the seven-area audit surface (DOM-injection / XSS, message-passing, storage hygiene, manifest/permissions/CSP/WAR, page-ownership mechanism, admin-policy interaction, dependency / supply-chain). **Outcome: zero exploitable vulnerabilities found in production source.** Two affirmative XSS regression-guard tests added to pin React escape-by-default for the one attacker-influenceable data path (recipient name/email from Gmail's compose DOM); four findings flagged for owner judgment, none individually launch-blocking.
+
+- **What was definitively closed.** DOM-injection / XSS surface (zero `innerHTML` / `dangerouslySetInnerHTML` / `DOMParser` / `eval` / `new Function` / etc. in `src/`; every render of attacker-influenceable data goes through React `{value}` text rendering); message-passing surfaces (`chrome.runtime.onMessage` is same-extension by MV3 contract, no `externally_connectable`, no `window.postMessage` listeners); storage hygiene (only the three documented keys, no tokens / secrets); manifest / permissions / CSP / WAR (exactly `storage` + `scripting` + `host_permissions: https://mail.google.com/*`, no `unsafe-eval`, no remote script source, React bundled); **§11 invariants affirmatively verified** (zero `fetch` / `XMLHttpRequest` / `sendBeacon` / `WebSocket` / `EventSource` / `importScripts` / dynamic `import()` / `<script>`-element-creation in production source).
+- **Defensive regression tests added** (commit `2e23394`):
+  - `ScheduleModal` Optimize-for-X recipient dropdown — attacker-flavored display name renders as escaped text, no `<img>`/`<script>` parsed, `onerror` payload never fires.
+  - `CacheSection` Recipient Timezone Cache list — same guarantees for name + email.
+- **Flagged for owner (full reasoning in `notes/session-16-summary.md` §c):**
+  - **Page-ownership forging (low severity).** Session 13's `<html>[data-fashionably-late-owner]` token can be forged by a co-installed malicious extension or Gmail-side compromise; blast radius = §5.5.1 outside-hours safety prompt suppressed, no data harm. The DOM-attribute coordination is structurally forced by MV3 isolated worlds; recommended **accept + document**.
+  - **Admin-policy interaction surface (unknown, cannot close).** Workspace tenants with DLP / content-compliance / send-event hooks were not driven (Session 15 carry-forward — owner not a tenant admin). Free v1's no-API-call posture (Entry 39) means no data-perimeter axis to collide with; gesture-replay matches Gmail's own shape so the structural collision risk is low; but this remains a known unknown until a real-tenant probe is possible. Recommended **carry forward to Session 17 if a tenant becomes available, else accept as Free-v1-launch gap** (Free v1 fails toward native Gmail on every ambiguous path).
+  - **`npm audit` advisory (runtime: none).** Two high-sev advisories in `rollup` < 2.80.0 reached transitively through `@crxjs/vite-plugin` — **build/dev-only, not in shipped runtime**; `npm audit --omit=dev` is `0 vulnerabilities`. Only `fixAvailable` is a SemVer-major downgrade of `@crxjs/vite-plugin` (would break the build). Status unchanged from CLAUDE.md's existing locked-decision note; recommended **accept + monitor for an upstream patched-rollup release**.
+  - **`console.info` "multi-compose detected" line** is intentionally not DEV-gated (owner decision pre-S16) — confirmed no security impact (local console only, fixed string, no PII / no outbound), flagged for audit-trail completeness.
+- **Trigger:** before Chrome Web Store submission; re-run after any change that touches network, storage, message-passing, the page-ownership mechanism, or adds a dependency that ships at runtime.
+- **Reference:** `notes/session-16-summary.md` §a (findings table), §c (flagged-for-owner full reasoning), §f (honest gaps — what is and isn't definitively closed).
+
+---
+
 ## Accessibility
 
 PRD §6.3 mandates WCAG AA: keyboard-navigable controls, labelled fields, AA contrast, ARIA roles/labels/live regions, and visible focus indicators. **The Session-14 dedicated accessibility pass landed (commits `5295e00` / `60c6343` / `15fab3b`, 2026-05-28); the remaining items are owner-parallel screen-reader verification and a brand-touching contrast call.**
