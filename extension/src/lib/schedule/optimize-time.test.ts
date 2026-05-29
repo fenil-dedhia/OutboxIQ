@@ -117,3 +117,92 @@ describe("computeOptimizeSendTime (PRD §5.3.5)", () => {
     expect(r.userWall.hour).toBe(0);
   });
 });
+
+// Session 19 — DST-transition correctness lock-in. The conversion pipeline
+// (momentAtTzWall's two-pass offset correction) was unit-proven for summer
+// offsets above; these pin behavior with a target landing ON a US DST
+// transition day, and across a sender/recipient pair that flip on DIFFERENT
+// dates. All expected UTC instants were independently confirmed with Node's
+// Intl against the real 2026 transition dates (US spring-forward Sun Mar 8,
+// US fall-back Sun Nov 1, EU spring-forward Sun Mar 29). These 2026 dates are
+// DELIBERATE pinned fixtures (real transition days for that year), not magic
+// numbers and not auto-updating — a different year needs its own dates.
+describe("computeOptimizeSendTime — DST transitions (Session 19)", () => {
+  it("spring-forward day: 9 AM LA on 2026-03-08 resolves to 16:00 UTC (PDT, UTC-7)", () => {
+    // now = 00:00 PST that morning (before the 02:00→03:00 jump at 10:00 UTC),
+    // so 9 AM today is still future and is NOT rolled.
+    const now = new Date("2026-03-08T08:00:00.000Z");
+    const r = computeOptimizeSendTime(
+      now,
+      "America/Los_Angeles",
+      "America/Los_Angeles",
+      "morning",
+    );
+    expect(r.recipientWall).toMatchObject({
+      year: 2026,
+      month: 3,
+      day: 8,
+      hour: 9,
+      minute: 0,
+    });
+    // 9 AM is well clear of the 02:00–03:00 nonexistent-hour gap; the offset is
+    // already PDT by 9 AM, so the instant is 16:00 UTC (not 17:00).
+    expect(r.moment.toISOString()).toBe("2026-03-08T16:00:00.000Z");
+    expect(r.userWall.hour).toBe(9); // same zone → 9 AM wall
+  });
+
+  it("fall-back day: 9 AM LA on 2026-11-01 resolves to 17:00 UTC (PST, UTC-8)", () => {
+    // now = 01:00 PDT (before the 02:00→01:00 fall-back at 09:00 UTC).
+    const now = new Date("2026-11-01T08:00:00.000Z");
+    const r = computeOptimizeSendTime(
+      now,
+      "America/Los_Angeles",
+      "America/Los_Angeles",
+      "morning",
+    );
+    expect(r.recipientWall).toMatchObject({
+      year: 2026,
+      month: 11,
+      day: 1,
+      hour: 9,
+      minute: 0,
+    });
+    // 9 AM is well clear of the 01:00–02:00 repeated-hour; by 9 AM the offset
+    // is PST, so the instant is 17:00 UTC. The 1-hour difference vs the
+    // spring-forward case above (16:00 UTC) for the *same* "9 AM LA" wall is
+    // exactly the DST correction being applied.
+    expect(r.moment.toISOString()).toBe("2026-11-01T17:00:00.000Z");
+    expect(r.userWall.hour).toBe(9);
+  });
+
+  it("the two fixed timings never land in either DST edge hour (gap / repeat)", () => {
+    // The nonexistent-hour (02:00–02:59 spring) and repeated-hour (01:00–01:59
+    // fall) edges are structurally UNREACHABLE through Optimize-for-X: the only
+    // targets the feature can produce are 9 AM and 1 PM (spec (f)). This pins
+    // that invariant so a future "add a timing" change re-confronts DST edges.
+    expect(OPTIMIZE_TIMING_HOURS.morning).toBe(9);
+    expect(OPTIMIZE_TIMING_HOURS.midday).toBe(13);
+    for (const h of Object.values(OPTIMIZE_TIMING_HOURS)) {
+      expect(h === 1 || h === 2).toBe(false); // outside both edge hours
+    }
+  });
+
+  it("cross-zone, different flip dates: NY (flipped Mar 8) vs London (flips Mar 29) on Mar 15", () => {
+    // On 2026-03-15 the US is already on DST (NY = EDT, UTC-4) but the EU is
+    // NOT yet (London = GMT, UTC+0) — they flip on different dates. A naive
+    // fixed-offset implementation would mis-state the cross-zone display here;
+    // the Intl-per-instant path must get it right.
+    const now = new Date("2026-03-15T06:00:00.000Z"); // 06:00 GMT London — 9 AM still future
+    const r = computeOptimizeSendTime(
+      now,
+      "America/New_York",
+      "Europe/London",
+      "morning",
+    );
+    // Recipient sees 9:00 AM (London); the same instant is 5:00 AM for the NY
+    // sender (09:00 UTC − 4h EDT). This is the "their time = your time" display.
+    expect(r.recipientWall).toMatchObject({ day: 15, hour: 9, minute: 0 });
+    expect(r.userWall).toMatchObject({ day: 15, hour: 5, minute: 0 });
+    expect(r.moment.toISOString()).toBe("2026-03-15T09:00:00.000Z");
+  });
+});

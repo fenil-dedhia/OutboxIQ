@@ -143,3 +143,77 @@ describe("past-time guard helpers (A2)", () => {
     expect(wallToTimeInput(w)).toBe("07:05");
   });
 });
+
+// Session 19 — "fails safe near a DST transition" for the past-time guard.
+// gmail-format.ts:68 documents that the guard does pure wall-clock arithmetic
+// (DST ignored), so a comparison straddling a flip is approximate by ≤1h. These
+// tests demonstrate WHAT that approximation can and cannot do, so the
+// "fails safe" claim is shown rather than asserted.
+//
+// The 2026 transition dates below are DELIBERATE pinned fixtures (real US
+// fall-back / spring-forward days for that year), not magic numbers — chosen so
+// the constructed wall ambiguity is reproducible; a different year needs its own.
+//
+// Operative semantics (matches how Gmail itself resolves a picked time): a
+// scheduled send means "the NEXT FUTURE instant whose wall clock is the picked
+// value." Under that rule, wall-clock ordering IS the correct comparison, and
+// the guard's only job is a conservative UX pre-check; Gmail is the final
+// authority and never schedules into the past.
+describe("past-time guard — DST fails-safe (Session 19)", () => {
+  it("buffer biases toward REJECT: everything in [now, now+5min) is rejected", () => {
+    const now = { year: 2026, month: 3, day: 8, hour: 1, minute: 30 };
+    // The whole 5-minute safety margin is treated as "past" (reject), so a
+    // borderline time can only ever be over-rejected, never let through early.
+    for (let m = 0; m < 5; m++) {
+      expect(isPastWallTime({ ...now, minute: 30 + m }, now)).toBe(true);
+    }
+    expect(isPastWallTime({ ...now, minute: 35 }, now)).toBe(false); // exactly +5
+  });
+
+  it("spring-forward gap: ordering across the 02:00–03:00 jump is monotonic", () => {
+    // Wall times in the nonexistent 02:00–02:59 window don't occur, but the
+    // guard's pure-wall arithmetic still orders them continuously, so a target
+    // after the gap reads as future and one before reads as past — no flip in
+    // the verdict direction.
+    const now = { year: 2026, month: 3, day: 8, hour: 1, minute: 30 };
+    expect(isPastWallTime({ ...now, hour: 3, minute: 30 }, now)).toBe(false); // after gap → future
+    expect(isPastWallTime({ ...now, hour: 1, minute: 0 }, now)).toBe(true); // before now → past
+  });
+
+  it("fall-back repeated hour: the ambiguity is real (one wall, two instants)", () => {
+    // The crux of the ≤1h caveat. 01:30 occurs twice on 2026-11-01: the first
+    // (PDT, 08:30 UTC) and the second (PST, 09:30 UTC). nowWallInTimeZone maps
+    // BOTH distinct instants to the SAME wall components — so wall arithmetic
+    // alone cannot tell them apart.
+    const firstOcc = nowWallInTimeZone(
+      "America/Los_Angeles",
+      new Date("2026-11-01T08:30:00.000Z"),
+    );
+    const secondOcc = nowWallInTimeZone(
+      "America/Los_Angeles",
+      new Date("2026-11-01T09:30:00.000Z"),
+    );
+    expect(firstOcc).toEqual(secondOcc); // identical wall: 01:30 — the ambiguity
+    expect(secondOcc).toMatchObject({ day: 1, hour: 1, minute: 30 });
+  });
+
+  it("under next-future-occurrence semantics the guard never under-rejects", () => {
+    // Given the ambiguity above, the guard compares the picked wall to now's
+    // wall. A target whose wall is at/just-after now is the NEXT future
+    // occurrence (what Gmail schedules), and is correctly accepted; a target
+    // whose wall is before now is rejected. So the verdict tracks the future
+    // occurrence — the direction that cannot cause a past send.
+    const now = nowWallInTimeZone(
+      "America/Los_Angeles",
+      new Date("2026-11-01T09:30:00.000Z"), // 01:30, second (PST) occurrence
+    );
+    expect(isPastWallTime({ ...now, hour: 1, minute: 45 }, now)).toBe(false); // 01:45 → next future occ
+    expect(isPastWallTime({ ...now, hour: 1, minute: 0 }, now)).toBe(true); // 01:00 → before now
+    // FINDING (reported, not a defect): if one INSTEAD insists a picked 01:45
+    // means its earlier PDT occurrence (08:45 UTC, already past), the wall guard
+    // would "accept a past instant". That interpretation is never taken — neither
+    // the user nor Gmail schedules a past occurrence — and Gmail is the backstop
+    // that refuses past sends. The guard matches gmail-format.ts:68 exactly: a
+    // best-effort, ≤1h-approximate, conservative wall pre-check.
+  });
+});
