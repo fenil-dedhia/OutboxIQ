@@ -256,3 +256,44 @@ padding. All customer-facing; **zero extension-code / manifest / `SCHEMA_VERSION
 (4) / test-count (376) / permissions / §11 impact.** Remaining pre-launch work
 unchanged from §h: confirm CTA swap at listing-go-live; listing copy +
 submission.
+
+## §n — Landing-page copy + screenshot refinement (sixth round)
+
+Text/asset polish on `docs/index.html`; no extension code, no layout change.
+
+**Hero subhead rewrite.** Owner supplied a new subhead leading with the
+**brand wordplay** — "Being fashionably late is a good thing for email, too." —
+then the schedule-to-land-at-the-right-local-time benefit, then the
+working-hours check, then "No account, no tracking." H1 + eyebrow unchanged; no
+em dashes (constraint honored).
+
+**"The right local time" accuracy fix.** Header changed from *"The right local
+time, for every recipient"* → **"The right local time for your recipient"** —
+the feature optimizes for **one chosen** recipient, not all of them; the old
+"every recipient" phrasing overstated it. Body rewritten to say Fashionably Late
+"lets you pick the one you're writing to," keeps the brand wordplay
+**"fashionably late (😉)"** (emoji intentional), and **bolds** the value-prop
+closer: *"Pick someone's time zone once and it's remembered, so you never re-pick
+it for the same person."* Do not reintroduce "every"/"all" phrasing here.
+
+**Two screenshot swaps** — both processed through the existing
+`media/web-store/screenshots/make-store-ready.py` (folder-scan; contain-fit +
+solid `#616065` pad, 1280×800 RGB no alpha — the §k method, unchanged), output
+to `store-ready/`, then copied into `docs/assets/screenshots/`:
+- **Hero / top:** `Product - Optimize for X.jpg` → `store-ready/Product - Optimize
+  for X-1280x800.png` → `docs/assets/screenshots/optimize-for-x.png`.
+- **"Built into Gmail's own Schedule send" section:** `Product - Native Schedule
+  Send powered by Fashionably Late.jpg` → `store-ready/Product - Native Schedule
+  Send powered by Fashionably Late-1280x800.png` →
+  `docs/assets/screenshots/native-schedule-send.png` (img `width/height` updated
+  1863×1080 → 1280×800). Section header keeps Gmail's lowercase "Schedule send".
+
+**Immutable-originals rule reaffirmed:** the two source `.jpg` originals in
+`media/web-store/screenshots/` are never edited or overwritten — every padded
+variant goes only into `store-ready/`. Verified: both source originals'
+SHA-256 unchanged across the run (script's originals-unchanged guard also
+passed); both new store-ready PNGs confirmed exactly 1280×800, RGB, no alpha.
+The old `schedule-modal.jpg` (now unreferenced) and `schedule-optimize.png`
+(still used by the "right local time" feature block, deliberately unchanged)
+remain in place. Live GitHub Pages rebuild is the real proof (owner to confirm
+the page + that `/legal/{privacy,terms}` still render unchanged).
