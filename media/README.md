@@ -17,7 +17,8 @@ match. Full palette + role assignments: see Phase 1 of `session-18`.
 | `logo-on-white.svg` | Same lockup with a baked white background, recolored. | Contexts that need an opaque white plate behind the mark. |
 | `logo-on-white.png` | Raster fallback of the white-bg lockup (from `Original Logo.png`). | Fallback where SVG isn't accepted. |
 | `logo-transparent.png` | Raster fallback of the transparent lockup (from `Transparent Logo.png`). Note: original `#40bfc1` teal, not recolored. | Fallback only; prefer the recolored SVG. |
-| `symbol-only.png` | The clock/arrow symbol alone (from `Original Logo Symbol.png`). | Small-size marks where the wordmark would be illegible (toolbar icon, inline header marks). |
+| `symbol-only.svg` | The clock/arrow symbol alone, extracted from `logo.svg`, recolored, centered in a **square** viewBox with light padding. **Source for all square icons + the favicon.** | Toolbar/app icons, favicon, inline header marks. |
+| `symbol-only.png` | Raster of the symbol alone (from `Original Logo Symbol.png`, original teal). | Fallback; prefer `symbol-only.svg`. |
 
 **Missing input:** the session brief referenced a `Wordpress.png` dark-mode
 variant for `logo-dark.png`; that file was not in `_branding-inputs/`, so the

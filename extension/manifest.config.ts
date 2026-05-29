@@ -36,6 +36,13 @@ export default defineManifest({
   },
   action: {
     default_title: "Fashionably Late",
+    // Explicit toolbar icon (Chrome otherwise falls back to `icons`). Small
+    // sizes only — the toolbar renders at 16/32; Chrome picks the best fit.
+    default_icon: {
+      16: "public/icons/icon-16.png",
+      32: "public/icons/icon-32.png",
+      48: "public/icons/icon-48.png",
+    },
   },
   options_page: "src/pages/settings/index.html",
   background: {
