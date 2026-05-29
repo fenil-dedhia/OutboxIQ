@@ -56,3 +56,8 @@ Thumbs.db
 
 # Claude Code local settings (personal; team-shared settings.json may be committed)
 .claude/settings.local.json
+
+# CLAUDE.md is kept LOCAL as the owner working/portfolio context (untracked
+# at the Session-17 close-out). Future local sessions keep reading + evolving
+# it; the last tracked version is frozen at Session-17 close.
+CLAUDE.md
