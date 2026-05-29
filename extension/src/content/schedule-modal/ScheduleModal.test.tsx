@@ -310,3 +310,28 @@ describe("ScheduleModal — §5.8.2 recipientOptimization toggle", () => {
     ).toBeGreaterThan(0);
   });
 });
+
+// Session 18: the modal header carries the small brand mark (identity-at-a-
+// glance). Shadow-DOM-safe because it is inline SVG, not <img src>. Smoke test
+// only — the mark is decorative, so we assert presence via its class.
+describe("ScheduleModal — brand mark in header", () => {
+  it("renders the inline brand symbol next to the title", () => {
+    const { container } = render(
+      <ScheduleModal
+        timezone="America/New_York"
+        lastScheduled={null}
+        recipients={[sarah]}
+        pinnedTimezones={[]}
+        optimizeEnabled={false}
+        onScheduled={vi.fn()}
+        onOpenSettings={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+    const mark = container.querySelector("svg.modal-logo");
+    expect(mark).not.toBeNull();
+    // It is inline SVG (no external src) and decorative.
+    expect(mark?.getAttribute("aria-hidden")).toBe("true");
+    expect(mark?.querySelector('[fill="#5EB1BF"]')).not.toBeNull();
+  });
+});

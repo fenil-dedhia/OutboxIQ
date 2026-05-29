@@ -8,6 +8,7 @@ import { TimezoneStep } from "./steps/TimezoneStep";
 import { WorkingHoursStep } from "./steps/WorkingHoursStep";
 import { isWorkingHoursValid } from "../../lib/storage";
 import { MSG_OPEN_SETTINGS } from "../../lib/messages";
+import { FullLogo } from "../../lib/components/BrandLogo";
 
 // Session 14 a11y: announced step titles for the aria-live region. Match the
 // h1 text of each step so the announcement and the visible heading agree.
@@ -124,6 +125,12 @@ export function App() {
       <main className="oq-shell">
         {liveRegion}
         <section className="oq-step" aria-labelledby="oq-done-title">
+          {/* Celebratory full lockup; decorative (heading names the product).
+              Sized so the wordmark is legible — the lockup height includes the
+              tall symbol, so the wordmark is a small fraction of it. */}
+          <div className="oq-done-logo">
+            <FullLogo size={120} />
+          </div>
           <h1 id="oq-done-title" ref={doneHeadingRef} tabIndex={-1}>
             You&rsquo;re all set
           </h1>

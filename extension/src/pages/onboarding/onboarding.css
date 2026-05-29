@@ -58,6 +58,20 @@ body {
   color: var(--oq-muted);
 }
 
+/* Brand symbol above the Welcome headline (centered, its own row with
+   breathing room above/below). The completion screen uses the full lockup. */
+.oq-welcome-logo {
+  display: flex;
+  justify-content: center;
+  margin: 8px 0 28px;
+}
+
+.oq-done-logo {
+  display: flex;
+  justify-content: center;
+  margin: 8px 0 24px;
+}
+
 .oq-step h1 {
   font-size: 22px;
   margin: 0 0 12px;

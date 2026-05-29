@@ -6,6 +6,7 @@ import {
   PRIVACY_POLICY_URL,
   TERMS_OF_SERVICE_URL,
 } from "../../../lib/constants";
+import { SymbolMark } from "../../../lib/components/BrandLogo";
 
 interface Props {
   consentChecked: boolean;
@@ -34,6 +35,10 @@ export function Welcome({
 
   return (
     <section className="oq-step" aria-labelledby="oq-welcome-title">
+      {/* Decorative: the headline below already names the product. */}
+      <div className="oq-welcome-logo">
+        <SymbolMark size={60} />
+      </div>
       <h1 id="oq-welcome-title" ref={headingRef} tabIndex={-1}>
         Welcome to Fashionably Late
       </h1>

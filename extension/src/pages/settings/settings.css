@@ -42,8 +42,16 @@ body {
 }
 
 .fl-set-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   padding: 20px 32px;
   border-bottom: 1px solid var(--fl-border);
+}
+
+/* Wayfinding mark before the title — identity, not emphasis. */
+.fl-set-brand-mark {
+  flex: 0 0 auto;
 }
 
 .fl-set-header h1 {

@@ -10,6 +10,7 @@ import { FeatureTogglesSection } from "./sections/FeatureTogglesSection";
 import { CacheSection } from "./sections/CacheSection";
 import { PrivacyDataSection } from "./sections/PrivacyDataSection";
 import { AboutSection } from "./sections/AboutSection";
+import { SymbolMark } from "../../lib/components/BrandLogo";
 import { ONBOARDING_PAGE_PATH } from "../../lib/constants";
 
 // PRD §5.8 Settings panel. Sidebar nav + content pane: each §5.8.2 section is a
@@ -77,6 +78,7 @@ export function App() {
     return (
       <div className="fl-set-shell">
         <header className="fl-set-header">
+          <SymbolMark size={26} className="fl-set-brand-mark" />
           <h1>Fashionably Late — Settings</h1>
         </header>
         <main className="fl-set-main">
@@ -120,6 +122,7 @@ export function App() {
   return (
     <div className="fl-set-shell">
       <header className="fl-set-header">
+        <SymbolMark size={26} className="fl-set-brand-mark" />
         <h1>Fashionably Late — Settings</h1>
       </header>
       <div className="fl-set-body">

@@ -24,6 +24,9 @@ export const MODAL_CSS = `
 /* Header row: title/subtitle on the left, the §5.8.1 settings gear top-right.
    align-items:flex-start keeps the gear level with the title's first line. */
 .modal-header { display: flex; align-items: flex-start; gap: 8px; }
+/* Small brand mark before the title — supporting, identity-at-a-glance.
+   margin-top nudges it to sit with the title's first line (h1 line-box). */
+.modal-logo { flex: 0 0 auto; margin-top: 2px; }
 .modal-header-text { flex: 1 1 auto; min-width: 0; }
 h1 { font-size: 16px; font-weight: 500; margin: 0 0 4px; }
 .subtitle { font-size: 12px; color: #5f6368; margin: 0 0 16px; }

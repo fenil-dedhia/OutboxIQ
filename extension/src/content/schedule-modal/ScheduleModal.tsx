@@ -50,6 +50,7 @@ import { computeOptimizeSendTime } from "../../lib/schedule/optimize-time";
 import { setManualRecipientTimezone } from "../../lib/recipient-cache";
 import type { ComposeRecipient } from "../compose/compose-recipients";
 import type { LastScheduled } from "../../lib/storage";
+import { SymbolMark } from "../../lib/components/BrandLogo";
 
 type Status =
   | { kind: "idle" }
@@ -373,6 +374,8 @@ export function ScheduleModal({
         onKeyDown={onCardKeyDown}
       >
         <div className="modal-header">
+          {/* Identity-at-a-glance; decorative (the dialog is aria-labelled). */}
+          <SymbolMark size={18} className="modal-logo" />
           <div className="modal-header-text">
             <h1>When do you want to send this email?</h1>
             <p className="subtitle">{tzLabel.text}</p>
