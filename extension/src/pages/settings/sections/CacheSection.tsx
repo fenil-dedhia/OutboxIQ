@@ -75,16 +75,16 @@ export function CacheSection({
     <section className="fl-set-section" aria-labelledby="fl-set-cache-h">
       <h2 id="fl-set-cache-h">Recipient timezone cache</h2>
       <p className="fl-set-help">
-        Timezones you&rsquo;ve picked for recipients when scheduling with
-        Optimize-for-X. They&rsquo;re saved on this device and kept until you
-        remove them.
+        Timezones you&rsquo;ve picked for recipients when scheduling with the
+        Optimize-for-X feature. They&rsquo;re saved on this device and kept
+        until you remove them.
       </p>
 
       {entries.length === 0 ? (
         <p className="fl-set-empty">
-          No cached recipient timezones yet. When you use Optimize-for-X to
-          schedule an email to someone new, the timezone you pick for them is
-          saved here so we don&rsquo;t ask again.
+          No cached recipient timezones yet. When you use the Optimize-for-X
+          feature to schedule an email to someone new, the timezone you pick for
+          them is saved here so we don&rsquo;t ask again.
         </p>
       ) : (
         <>

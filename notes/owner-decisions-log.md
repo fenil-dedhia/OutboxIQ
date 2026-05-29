@@ -2732,6 +2732,75 @@ this one.
 
 ---
 
+## Entry 59 — No-recipient Schedule guard: hard-disable (b) + reveal-on-failure (c), over force-native-error or soft-hint
+
+- **Session:** 19 (2026-05-29 — §5.3 no-recipient bug fix).
+- **Moment:** Owner reported a real-Gmail bug: with our §5.3 Schedule modal open
+  and **no recipient** in To, clicking our "Schedule" handed off to Gmail, and
+  Gmail's native "specify at least one recipient" error rendered **behind** our
+  modal (our backdrop is `z-index` max). The user saw nothing schedule and no
+  reason why. A read-only investigation produced four options; the owner chose
+  which to build.
+- **The options weighed (investigation):**
+  - **(a) Force Gmail's native error above our modal.** Rejected: we can't set
+    Gmail's z-index; we'd have to detect its error DOM (fragile, locale-coupled)
+    or lower our own — and it leaves the confusing "our modal still open over an
+    error" state.
+  - **(b) Pre-validate recipients in our modal.** As a *soft hint* it still lets
+    a recipient-less send reach Gmail; as a *hard block* the risk is a
+    false-block of a valid send. The decisive fact (from `compose-recipients.ts`,
+    a chip-only reader): a To address **typed but not yet tokenized into a chip**
+    reads as zero recipients, indistinguishable from truly-empty. A hard block is
+    only safe if that case can't occur before Schedule Send is reachable.
+  - **(c) Dismiss our modal when delegating / on failure** so native surfaces are
+    never occluded.
+- **My input (owner):** chose **(b) HARD-disable as primary + (c) reveal-on-FAILURE
+  as backstop.** Hard-disable (greyed Schedule + keyboard-inert + a red hint),
+  checked **once at open**, no live re-check — user does close-fix-reopen. (c)
+  fires only on hand-off failure/stall, never on the happy path (no native-menu
+  flash). Crucially, I **tested and confirmed the tokenization assumption that
+  makes the hard block safe**: writing the subject/body tokenizes a typed To
+  address into a chip, and the modal is never opened before a body exists — so
+  the "typed-but-untokenized" ambiguous case does not occur in the real flow.
+- **Two divergences from the implementation prompt, owner-approved as improvements
+  (NOT drift):**
+  - The no-recipient state's exit button reads **"Go back"** (the prompt drafted
+    "Cancel"); normal state keeps **"Cancel"**. "Go back" reads as the next step
+    (back out → add recipient → reopen), not abandoning a choice.
+  - The shipped hint copy is **"Please add at least one recipient to continue."**
+    (the prompt drafted "This email has no recipients. Please add one to
+    continue."). Shorter, single-line, action-first. Owner-directed over two
+    iterations (placement into the button row + red danger token + single line).
+- **What Claude Code would have done without it (Entry 17 honesty rule):** Claude
+  produced the investigation and **recommended exactly (c)-primary, reject hard-(b)**
+  on the grounds that the typed-but-untokenized case made a hard block unsafe. The
+  owner **overrode that** by supplying the missing evidence — the hands-on
+  tokenization test — which converted hard-(b) from "unsafe" to "safe and better
+  UX" (a definite dead-end with a clear reason beats a silently-occluded native
+  error). That override is the load-bearing owner contribution; Claude would have
+  shipped (c)-only and left the recipient-less Schedule click to fail-toward-native
+  more opaquely.
+- **Residual Gmail-coupling risk (named):** the hard block's safety rests on Gmail
+  continuing to tokenize the To field into a chip before Schedule Send is reached.
+  If Gmail ever changes tokenization timing (e.g. allows Schedule Send with a raw,
+  untokenized address), this guard could **false-block a valid send**. The
+  mitigation is documented at the validation site in `ScheduleModal.tsx` and as a
+  CLAUDE.md gotcha: **this check is the thing to revisit** if Gmail's tokenization
+  changes. (c) remains the always-safe net regardless.
+- **Honest counterfactual cost:** near-zero and net-positive. Hard-(b) costs the
+  one coupling risk above (bounded, documented, revisitable); it buys a clear,
+  honest dead-end over an invisible failure. (c) costs nothing on the happy path
+  (timing tuned so a normal ~1s success closes before the stall-reveal fires).
+- **Outcome:** §5.3 guard + backstop shipped (`ScheduleModal.tsx` + `styles.ts`),
+  +6 modal tests; a separate same-session DST-correctness audit added +8 logic
+  tests (transition-day instants confirmed against real 2026 dates, no defect) —
+  **362→376 total.** No `SCHEMA_VERSION` change, no new permissions, no manifest
+  change. Recorded in `notes/session-19-summary.md`, PRD §5.3 (Entry-59
+  amendment), and CLAUDE.md. The DST tests are verification of existing behavior,
+  not a trajectory change, so they get **no separate decision-log entry**.
+
+---
+
 *New entries are appended at every session close-out, alongside the session
 summary. If a session produced no trajectory-changing owner input, record that
 explicitly (`Session N — no entries this session.`) rather than leaving a gap
