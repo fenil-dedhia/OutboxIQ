@@ -136,3 +136,36 @@ Owner-parallel, unchanged from S19 except the site is now built:
 
 No code/doc-hardening session is planned; the extension remains
 feature-complete at 376 tests, `SCHEMA_VERSION` 4, v1.0.0.
+
+## §i — Post-build owner refinements (same session, after first push)
+
+Owner reviewed the live page and requested seven tweaks; all applied to
+`docs/index.html`:
+
+1. Footer "Built by Fenil Dedhia" LinkedIn link now opens in a new tab
+   (`target="_blank" rel="noopener noreferrer"`).
+2. Highlights copy: "Time-zone-aware suggestions" → "Time zone aware
+   suggestions"; "Native Gmail feel" description → "Enhances Gmail's own
+   'Schedule Send' feature rather than replacing it."
+3. **New 4th "What it does" block** — Pinned Timezones value prop ("The time
+   zones you work across, one tap away"), inserted before "Built into Gmail's
+   own Schedule Send", using the `pinned-timezones` screenshot. Re-flowed the
+   alternating image side so the pattern stays right/left/right/left ("Built
+   into Gmail" gained `fl-feature--reverse`).
+4. **Screenshots are now clickable** → open in a full-res **lightbox** with a
+   graceful fade-backdrop + scale-in/out (self-contained first-party inline JS
+   + CSS, no third-party scripts; keyboard-openable, Esc/✕/backdrop/image to
+   close, focus restored, honours `prefers-reduced-motion`). Applies to all 8
+   screenshots (hero, the four feature shots, the three "closer look" shots).
+5. The "gentle nudge before after-hours sends" block now uses the **real**
+   after-hours-warning screenshot instead of the placeholder clock illustration
+   (the shot now exists in the captured set) — the `.fl-illus` styles were
+   removed.
+6. Hero + feature-block-1 image swapped from the raw 1863px JPEG to the
+   store-ready **1280×800 PNG** (`schedule-optimize.png`); the orphaned
+   `schedule-optimize.jpg` was deleted.
+
+New assets: `docs/assets/screenshots/after-hours-warning.jpg`,
+`docs/assets/screenshots/schedule-optimize.png`. No new product claims; still no
+extension-code/§11/schema impact. Re-verified (headless render + a forced-open
+lightbox state). Same live-Pages confirmation applies to the redeploy.

@@ -299,21 +299,9 @@ title: "Fashionably Late — Schedule Gmail emails in your recipient's time zone
         box-shadow: 0 10px 28px rgba(16, 42, 46, 0.12);
         display: block;
       }
-      /* Illustration tile used where no real screenshot exists (the
-         after-hours warning shot isn't captured) — honest, not a fake. */
-      .fl-illus {
-        background: #eff7f8;
-        border: 1px solid #d6e4e6;
-        border-radius: 12px;
-        aspect-ratio: 16 / 11;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .fl-illus svg {
-        width: 132px;
-        height: 132px;
-        color: #367b87;
+      /* Zoomable screenshots — affordance cue */
+      .fl-zoomable {
+        cursor: zoom-in;
       }
 
       /* ---- Highlights grid ---- */
@@ -502,6 +490,89 @@ title: "Fashionably Late — Schedule Gmail emails in your recipient's time zone
           width: 100%;
         }
       }
+
+      /* ---- Lightbox (full-res screenshot viewer) ----
+         Self-contained, first-party. The backdrop fades and the image scales
+         in/out for a soft, graceful open/close. */
+      .fl-lightbox {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 28px;
+        background: rgba(12, 32, 36, 0);
+        backdrop-filter: blur(0px);
+        -webkit-backdrop-filter: blur(0px);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.28s ease, background 0.28s ease,
+          backdrop-filter 0.28s ease, visibility 0s linear 0.28s;
+      }
+      .fl-lightbox.is-open {
+        opacity: 1;
+        visibility: visible;
+        background: rgba(12, 32, 36, 0.82);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        transition: opacity 0.28s ease, background 0.28s ease,
+          backdrop-filter 0.28s ease;
+      }
+      .fl-lightbox-img {
+        max-width: 94vw;
+        max-height: 88vh;
+        width: auto;
+        height: auto;
+        border-radius: 12px;
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
+        transform: scale(0.92);
+        opacity: 0;
+        transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+          opacity 0.3s ease;
+        cursor: zoom-out;
+      }
+      .fl-lightbox.is-open .fl-lightbox-img {
+        transform: scale(1);
+        opacity: 1;
+      }
+      .fl-lightbox-close {
+        position: absolute;
+        top: 18px;
+        right: 20px;
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.14);
+        color: #ffffff;
+        cursor: pointer;
+        transition: background 0.18s ease;
+      }
+      .fl-lightbox-close:hover {
+        background: rgba(255, 255, 255, 0.28);
+      }
+      .fl-lightbox-close svg {
+        width: 22px;
+        height: 22px;
+      }
+      .fl-lightbox-close:focus-visible {
+        outline: 3px solid #ffffff;
+        outline-offset: 2px;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .fl-lightbox,
+        .fl-lightbox.is-open,
+        .fl-lightbox-img {
+          transition: opacity 0.15s ease, visibility 0s;
+        }
+        .fl-lightbox-img {
+          transform: none;
+        }
+      }
     </style>
   </head>
 
@@ -580,10 +651,11 @@ title: "Fashionably Late — Schedule Gmail emails in your recipient's time zone
             </div>
             <figure class="fl-hero-shot">
               <img
-                src="/assets/screenshots/schedule-optimize.jpg"
-                alt="Fashionably Late's enhanced Schedule Send modal open in Gmail, showing time-zone-aware send-time suggestions for a selected recipient."
-                width="1863"
-                height="1082"
+                class="fl-zoomable"
+                src="/assets/screenshots/schedule-optimize.png"
+                alt="Fashionably Late's enhanced Schedule Send modal open in Gmail, showing time zone aware send-time suggestions for a selected recipient."
+                width="1280"
+                height="800"
               />
             </figure>
           </div>
@@ -595,7 +667,7 @@ title: "Fashionably Late — Schedule Gmail emails in your recipient's time zone
             <div class="fl-section-head">
               <h2>What it does</h2>
               <p>
-                Three quiet improvements to scheduling you already do — without
+                A few quiet improvements to scheduling you already do — without
                 changing how Gmail works.
               </p>
             </div>
@@ -614,10 +686,11 @@ title: "Fashionably Late — Schedule Gmail emails in your recipient's time zone
               </div>
               <div class="fl-feature-media">
                 <img
-                  src="/assets/screenshots/schedule-optimize.jpg"
+                  class="fl-zoomable"
+                  src="/assets/screenshots/schedule-optimize.png"
                   alt="The Schedule Send modal with the Optimize-for-recipient section open, a recipient selected, and morning and midday send times shown in the recipient's time zone."
-                  width="1863"
-                  height="1082"
+                  width="1280"
+                  height="800"
                 />
               </div>
             </div>
@@ -635,19 +708,39 @@ title: "Fashionably Late — Schedule Gmail emails in your recipient's time zone
                 </p>
               </div>
               <div class="fl-feature-media">
-                <!-- Illustration, not a screenshot: the after-hours warning shot
-                     isn't in the captured set, so we don't pass off an unrelated
-                     image as it. -->
-                <div class="fl-illus" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="9" />
-                    <path d="M12 7v5l3 2" />
-                  </svg>
-                </div>
+                <img
+                  class="fl-zoomable"
+                  src="/assets/screenshots/after-hours-warning.jpg"
+                  alt="The working-hours soft-warning modal that appears on a regular send going out after hours, offering three choices: send anyway, reschedule to working hours, or cancel."
+                  width="1863"
+                  height="1078"
+                />
               </div>
             </div>
 
             <div class="fl-feature">
+              <div class="fl-feature-copy">
+                <h3>The time zones you work across, one tap away</h3>
+                <p>
+                  Fashionably Late comes with a searchable, plain-language time
+                  zone picker — find a zone by city, country, abbreviation, or UTC
+                  offset. Pin the handful of zones you work across most often and
+                  they sit right at the top, so choosing the right one when you
+                  schedule takes a single tap instead of a hunt.
+                </p>
+              </div>
+              <div class="fl-feature-media">
+                <img
+                  class="fl-zoomable"
+                  src="/assets/screenshots/pinned-timezones.jpg"
+                  alt="The Settings page open on Pinned Timezones, showing pinned time zones at the top of a searchable, plain-language time zone list."
+                  width="1863"
+                  height="1091"
+                />
+              </div>
+            </div>
+
+            <div class="fl-feature fl-feature--reverse">
               <div class="fl-feature-copy">
                 <h3>Built into Gmail's own Schedule Send</h3>
                 <p>
@@ -660,6 +753,7 @@ title: "Fashionably Late — Schedule Gmail emails in your recipient's time zone
               </div>
               <div class="fl-feature-media">
                 <img
+                  class="fl-zoomable"
                   src="/assets/screenshots/schedule-modal.jpg"
                   alt="Gmail's Schedule Send modal, enhanced by Fashionably Late, sitting inside the standard Gmail compose window."
                   width="1863"
@@ -685,7 +779,7 @@ title: "Fashionably Late — Schedule Gmail emails in your recipient's time zone
                     <path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" />
                   </svg>
                 </span>
-                <h3>Time-zone-aware suggestions</h3>
+                <h3>Time zone aware suggestions</h3>
                 <p>Morning or midday delivery in each recipient's local time.</p>
               </div>
               <div class="fl-card">
@@ -706,7 +800,7 @@ title: "Fashionably Late — Schedule Gmail emails in your recipient's time zone
                   </svg>
                 </span>
                 <h3>Native Gmail feel</h3>
-                <p>Enhances Schedule Send — it doesn't replace or rebuild it.</p>
+                <p>Enhances Gmail's own "Schedule Send" feature rather than replacing it.</p>
               </div>
               <div class="fl-card">
                 <span class="fl-card-icon">
@@ -788,6 +882,7 @@ title: "Fashionably Late — Schedule Gmail emails in your recipient's time zone
               <div class="fl-shot">
                 <figure>
                   <img
+                    class="fl-zoomable"
                     src="/assets/screenshots/onboarding.jpg"
                     alt="Fashionably Late's onboarding Welcome screen, with the brand symbol, a plain-language privacy summary, and the consent checkbox."
                     width="1863"
@@ -799,6 +894,7 @@ title: "Fashionably Late — Schedule Gmail emails in your recipient's time zone
               <div class="fl-shot">
                 <figure>
                   <img
+                    class="fl-zoomable"
                     src="/assets/screenshots/pinned-timezones.jpg"
                     alt="The Settings page open on Pinned Timezones, showing a searchable, plain-language time-zone list with pinned zones."
                     width="1863"
@@ -810,6 +906,7 @@ title: "Fashionably Late — Schedule Gmail emails in your recipient's time zone
               <div class="fl-shot">
                 <figure>
                   <img
+                    class="fl-zoomable"
                     src="/assets/screenshots/privacy-data.jpg"
                     alt="The Privacy & Data section of Settings, showing on-device Export and Delete controls."
                     width="1863"
@@ -854,11 +951,102 @@ title: "Fashionably Late — Schedule Gmail emails in your recipient's time zone
             <a href="https://github.com/fenil-dedhia/fashionably-late">GitHub</a>
             <span class="fl-footer-built">
               Built by
-              <a href="https://www.linkedin.com/in/fenildedhia/">Fenil Dedhia</a>
+              <a
+                href="https://www.linkedin.com/in/fenildedhia/"
+                target="_blank"
+                rel="noopener noreferrer"
+                >Fenil Dedhia</a
+              >
             </span>
           </div>
         </div>
       </footer>
+
+      <!-- Full-res screenshot viewer. Hidden until a screenshot is clicked. -->
+      <div
+        class="fl-lightbox"
+        id="fl-lightbox"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Screenshot, enlarged"
+        aria-hidden="true"
+      >
+        <button
+          type="button"
+          class="fl-lightbox-close"
+          aria-label="Close enlarged screenshot"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+        <img class="fl-lightbox-img" alt="" />
+      </div>
     </div>
+
+    <!-- First-party, no external dependencies — consistent with the page's
+         no-tracking, no-third-party-scripts promise. Makes every .fl-zoomable
+         screenshot open in the lightbox above (click or Enter/Space), with a
+         graceful fade + scale; closes on the ✕, backdrop click, the image
+         itself, or Escape, and restores keyboard focus. -->
+    <script>
+      (function () {
+        var thumbs = document.querySelectorAll(".fl-zoomable");
+        var box = document.getElementById("fl-lightbox");
+        if (!thumbs.length || !box) return;
+        var boxImg = box.querySelector(".fl-lightbox-img");
+        var closeBtn = box.querySelector(".fl-lightbox-close");
+        var lastFocused = null;
+        var clearTimer = null;
+
+        function open(src, alt) {
+          if (clearTimer) {
+            clearTimeout(clearTimer);
+            clearTimer = null;
+          }
+          lastFocused = document.activeElement;
+          boxImg.src = src;
+          boxImg.alt = alt || "";
+          box.setAttribute("aria-hidden", "false");
+          box.classList.add("is-open");
+          document.body.style.overflow = "hidden";
+          closeBtn.focus();
+          document.addEventListener("keydown", onKey);
+        }
+        function close() {
+          box.classList.remove("is-open");
+          box.setAttribute("aria-hidden", "true");
+          document.body.style.overflow = "";
+          document.removeEventListener("keydown", onKey);
+          // Drop the src after the fade so the next open doesn't flash the old shot.
+          clearTimer = setTimeout(function () {
+            boxImg.removeAttribute("src");
+          }, 340);
+          if (lastFocused && lastFocused.focus) lastFocused.focus();
+        }
+        function onKey(e) {
+          if (e.key === "Escape") close();
+        }
+
+        thumbs.forEach(function (img) {
+          img.setAttribute("role", "button");
+          img.setAttribute("tabindex", "0");
+          img.setAttribute("aria-label", "Enlarge screenshot");
+          img.addEventListener("click", function () {
+            open(img.currentSrc || img.src, img.alt);
+          });
+          img.addEventListener("keydown", function (e) {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              open(img.currentSrc || img.src, img.alt);
+            }
+          });
+        });
+        closeBtn.addEventListener("click", close);
+        box.addEventListener("click", function (e) {
+          if (e.target === box || e.target === boxImg) close();
+        });
+      })();
+    </script>
   </body>
 </html>
