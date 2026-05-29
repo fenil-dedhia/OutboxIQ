@@ -289,6 +289,22 @@ to `store-ready/`, then copied into `docs/assets/screenshots/`:
   `docs/assets/screenshots/native-schedule-send.png` (img `width/height` updated
   1863×1080 → 1280×800). Section header keeps Gmail's lowercase "Schedule send".
 
+**Copy sharpening (seventh round, text-only).** Three placements, no new section:
+(1) **hero subhead** expanded to name the *who/why* — "If you work across time
+zones and keep doing the mental math on when to hit send, this free Chrome
+extension does it for you…" — and to state the **smarter-not-replacement** point
+("It makes Gmail's own Schedule send smarter rather than replacing it"); H1 +
+eyebrow unchanged, no em dashes, lowercase "Schedule send". (2) **"The right
+local time" section** gained one concrete pain line at the top of the body — "No
+more working out what 2 p.m. your time means for someone three zones away." —
+header/bold/"research-backed"/"fashionably late (😉)" otherwise unchanged. (3)
+**"Built into Gmail's own Schedule send" section** rewritten to give the
+works-WITH-Gmail idea real estate: "Fashionably Late works with Gmail, it
+doesn't replace it… your scheduled emails stay right where Gmail puts them, in
+the Scheduled folder… Nothing new to learn." The time-zone-pain and
+not-a-replacement ideas were deliberately kept OUT of the highlights grid and
+privacy section (those keep their own focus).
+
 **Immutable-originals rule reaffirmed:** the two source `.jpg` originals in
 `media/web-store/screenshots/` are never edited or overwritten — every padded
 variant goes only into `store-ready/`. Verified: both source originals'
