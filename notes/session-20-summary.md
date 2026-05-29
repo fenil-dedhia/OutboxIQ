@@ -118,10 +118,14 @@ off an unrelated screenshot. No extension code touched.
 
 ## §g — Owner-decisions-log entries this session
 
-**None.** The CTA approach (honest "coming soon" pending button + GitHub
-secondary + marked swap site) was specified in the owner's session prompt, not a
-mid-build trajectory fork — no counterfactual to record. Logged as
-`Session 20 — no entries this session.` per the close-out obligation.
+**Entry 60.** Initially logged as "no entries" (a new artifact, not a trajectory
+fork), but the session's iterative owner input grew into three forward-binding
+decisions worth recording: (1) the honest pre-launch CTA posture + marked swap
+site; (2) the public **"Schedule send"** naming convention (unquoted,
+Gmail-label-matching, distinct from the in-product relabel string); and (3) the
+screenshot-framing fix, where owner judgment corrected two wrong turns of mine
+(median-pad band → over-corrected cover crop) and landed on solid `#616065` +
+bottom-bias + rounded-corner trim. Entry 60 carries the honest counterfactual.
 
 ## §h — Post-session: what's left before public launch
 
@@ -189,7 +193,7 @@ Dedhia"**, with "Fenil Dedhia" linking to LinkedIn in a new tab
 (`target="_blank" rel="noopener noreferrer"`). GitHub stays reachable via the
 hero + footer buttons. Re-verified in headless render (hero + footer crops).
 
-## §k — Store-ready screenshot fix: contain+pad → cover (fourth round)
+## §k — Store-ready screenshot fix: landed on solid #616065 padding (fourth round, several iterations)
 
 Owner flagged the hero/feature image (`schedule-optimize.png`, the store-ready
 1280×800) had **white spots and a mismatched light band at the bottom** — an
@@ -224,3 +228,31 @@ fix. Previewed each step in macOS Preview for owner sign-off. Regenerated all
 six store-ready PNGs and refreshed `docs/assets/screenshots/schedule-optimize.png`;
 raw originals untouched (originals-unchanged guard re-verified); confirmed the
 hero's bottom corners are clean grey (no white triangle).
+
+## §l — Final hero copy + "Schedule send" naming sweep (fifth round)
+
+Owner supplied final hero strings (exact): title **"Your emails arrive when your
+recipients are actually reading."** and a subhead leading with the recipient
+benefit, then the working-hours check, then "Enhances Gmail's own Schedule send
+feature rather than replacing it. No account, no tracking." Constraints honored:
+eyebrow/layout/styling unchanged, **no em dashes in the hero**, text-only.
+
+Per the same instruction, applied Gmail's-label treatment — **"Schedule send"**,
+capitalized and **unquoted** — to *every* feature mention on the page: the
+What-it-does heading + body (including the relabel sentence, de-quoted), the
+Native-Gmail-feel highlight, all three screenshot `alt` texts, and the
+meta/OG/Twitter descriptions. Verified live: zero capital-S "Schedule Send"
+remains; the in-product relabel string ("Schedule Send (powered by Fashionably
+Late)") is unchanged in the extension — this was a marketing-copy convention
+only. (Decision recorded as Entry 60 (2).)
+
+## §m — Net session outcome
+
+`docs/index.html` is live at `fashionablylate.app` — header, hero (final copy +
+honest pending CTA), four-block What-it-does, highlights, privacy, clickable
+full-res screenshot lightbox, footer. Legal pages verified unchanged (Primer,
+no CSS leak). Store-ready screenshots regenerated with the solid `#616065`
+padding. All customer-facing; **zero extension-code / manifest / `SCHEMA_VERSION`
+(4) / test-count (376) / permissions / §11 impact.** Remaining pre-launch work
+unchanged from §h: confirm CTA swap at listing-go-live; listing copy +
+submission.

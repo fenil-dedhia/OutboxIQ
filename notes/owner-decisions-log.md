@@ -2801,11 +2801,56 @@ this one.
 
 ---
 
-Session 20 — no entries this session. (Built the `fashionablylate.app` apex
-marketing landing page, `docs/index.html`. The honest "coming soon" CTA
-approach — non-clickable pending button + GitHub secondary + a comment-marked
-launch swap site — was specified in the owner's session prompt, not a
-mid-build trajectory fork, so there is no counterfactual to record.)
+## Entry 60 — Landing page (fashionablylate.app): honest pre-launch CTA, public "Schedule send" naming, and owner-corrected screenshot framing
+
+- **Session:** 20 (2026-05-29 — built the apex marketing landing page
+  `docs/index.html`; site/web work, no extension-code/§11/schema impact).
+- **Moment:** A new customer-facing artifact rather than a product-architecture
+  fork, so most of the build was execution, not decision. Three owner inputs
+  were nonetheless trajectory-shaping enough — and forward-binding on future
+  copy/listing/asset work — to record, plus one honest process counterfactual.
+- **(1) Honest pre-launch CTA (launch-integrity).** The extension is NOT yet on
+  the Chrome Web Store, so the owner specified the primary CTA must be a
+  **visibly non-clickable "Coming soon to the Chrome Web Store"** pending button
+  (styled as awaiting-launch, not a dead link), with the real action being the
+  secondary "View source on GitHub". The exact swap site (hero + footer) is
+  marked with a code comment so the live Web Store badge/URL is a trivial
+  one-spot swap at launch. **Binding:** do not make the primary CTA appear live
+  until the listing actually is.
+- **(2) Public "Schedule send" naming convention.** Owner directed that the
+  feature be written **"Schedule send"** — capitalized, **unquoted** — to match
+  Gmail's own menu label, *everywhere on the page* (headings, body, highlights,
+  alt text, meta/OG). This is distinct from the in-product relabel string, which
+  remains the literal **"Schedule Send (powered by Fashionably Late)"** in
+  `compose-integration.ts` — the marketing-page convention does not change the
+  product label. **Binding** for future listing copy and any page edits.
+- **(3) Screenshot framing — owner judgment corrected mine (honest process
+  counterfactual, Entry-17 rule).** The store-ready 1280×800 screenshots need
+  the raw ~1.72-aspect captures fit to a 1.60 frame. My first script used
+  *contain + median-edge-color letterbox bars*; on the busy hero shot (white
+  timezone dropdown over dark Gmail chrome) that produced a mismatched light
+  band with white specks. I then over-corrected to *cover* (full-bleed crop),
+  which the **owner caught** removed the breathing room and jammed the open
+  dropdown against the edge. Owner then made the calls that landed it: keep
+  letterbox padding, fill it with a **solid `#616065`** (Gmail's own chrome
+  grey, owner-chosen), bias the vertical slack **bottom-heavy** so low content
+  gets room, and — the diagnosis I had initially mis-attributed — widen the
+  **left/right trim to clear the browser window's rounded bottom corners**,
+  whose captured white background was the real source of the "white spots on the
+  padding." Owner reviewed each candidate in macOS Preview before sign-off.
+- **What Claude Code would have shipped without it:** the median-pad (sloppy
+  band) or the cover crop (no breathing room) — both worse. The owner's
+  aesthetic eye + the exact `#616065` choice + correctly localising the white
+  spots to the rounded window corners are the load-bearing contributions here;
+  the encoded lesson now lives in `make-store-ready.py`'s header so it isn't
+  rediscovered.
+- **Honest counterfactual cost:** ~zero and net-positive. The page is a clean,
+  honest, on-brand launch surface; the only deferred item is the one-spot CTA
+  swap at listing-go-live. No product behavior, permissions, or scope changed.
+- **Outcome:** `docs/index.html` live at `fashionablylate.app` (legal pages
+  unchanged, verified); all six store-ready PNGs regenerated; hero copy
+  finalized. Full build + iteration detail in `notes/session-20-summary.md`
+  (§a–§k). License/permissions/`SCHEMA_VERSION`/test-count all unchanged.
 
 ---
 
