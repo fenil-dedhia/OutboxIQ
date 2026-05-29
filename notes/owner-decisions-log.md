@@ -2671,6 +2671,67 @@ this one.
 
 ---
 
+## Entry 58 — Brand color (Moonstone #5EB1BF) + the AA trade-off, the teal-plate icon, and the owner-authored promo composition
+
+- **Session:** 18 (2026-05-29 — branding & media assets).
+- **Moment:** Session 18 replaced the placeholder brand ("OQ" icons, Google-blue
+  UI) with the real one. Three points needed owner input: (1) the brand primary
+  color — and what to do when it failed WCAG AA as a button; (2) whether the
+  extension icon should be a transparent mark or a filled plate; (3) the Chrome
+  Web Store promo-tile composition.
+- **My input (owner):**
+  1. Chose **Moonstone `#5EB1BF`** as the brand primary (a muted variant of the
+     provided logo's `#40bfc1`). When the Phase-1 contrast math showed **white
+     text on `#5EB1BF` is only 2.47:1 — fails AA** (needs 4.5:1), I chose the
+     **AA-safe path**: the brand color stays the logo/accent, and the accessible
+     **700 shade `#367B87` (4.84:1)** becomes the primary-button + link-text
+     color. The brand color is deliberately *not* the literal button color.
+  2. After seeing the first (transparent) icons **fade on a dark toolbar and
+     blur at 16px**, I directed a **background plate**, and picked the **teal
+     plate with a white symbol** over a white plate.
+  3. **Authored the promo-tile composition** precisely — symbol, a letter-spaced
+     *typeset* "FASHIONABLY LATE" wordmark, a thin 50%-white divider, then the
+     tagline, as a centered stack — and the tagline copy **"Schedule emails at
+     their perfect time."** (and the new manifest description copy).
+- **What Claude Code would have done without it (Entry 17 honesty rule):**
+  - *AA trade-off:* Claude had already computed the failure and recommended
+    700-as-button / 500-as-accent, so on **direction** this is owner-confirmed,
+    not corrected. The load-bearing owner act was the explicit sign-off that the
+    brand color would *not* be the button — a real, recorded visual concession.
+  - *Icon:* Claude generated transparent icons per the brief and **flagged** the
+    dark-mode fade, but — bound by the "no new logo treatment" hard rule —
+    defaulted to "accept it, owner's call." The owner pushed past that to the
+    plate fix. **That improvement Claude would not have made unprompted.**
+  - *Promo:* Claude's algorithmic composition was honestly "acceptable, not
+    designer-grade" (centered lockup + tagline). The owner's spec (typeset
+    letter-spaced wordmark + divider) materially improved it — design judgment
+    Claude shouldn't fake.
+- **Honest counterfactual cost:** small, and net-positive. The AA-safe path costs
+  "the brand color isn't the literal button color" (a purist might dislike it),
+  bought to keep the Session-14 AA commitment intact — the right trade. The plate
+  costs a slightly less-minimal icon, bought for legibility on every toolbar and
+  at 16px. No code risk, no scope change, no `SCHEMA_VERSION` bump.
+- **Outcome:** Moonstone palette applied across the UI with a drift-guard test
+  (`extension/src/brand-palette.test.ts`, 349→356 tests); teal-plate icons
+  (16/32/48/128) + multi-res favicon; inline-SVG in-product logo placements (4
+  surfaces, +6 tests → 362); Primer-theme logo header + favicon on the legal
+  site; Web Store promo assets. Recorded in `notes/session-18-summary.md`, in
+  `PRE_LAUNCH_CHECKLIST.md` (brand items → DONE), and here. Cross-refs: **S14**
+  (the AA commitment this honored — the *old* accent scraped 4.55:1, the new 700
+  is 4.84:1, an improvement), **Entry 41** (brand/naming history).
+- **Numbering note:** the Session-18 prompt guessed "Entry 57" for this; the
+  actual sequential next number after Entry 57 (the S17 Workspace gap) is
+  **58** — the same off-by-one the prompts made for Entries 56/57.
+- **Lesson (for coaching):** a brand color chosen for how it *looks* can fail the
+  accessibility bar it has to *clear* — resolve that at the design gate, not after
+  shipping, and record the trade-off so "why isn't the button the brand color?"
+  has a documented answer. And: when a hard rule ("don't invent treatments")
+  would otherwise freeze a real UX problem (the dark-mode icon), it is the
+  *owner's* call to lift it deliberately — which is exactly what the plate
+  decision was.
+
+---
+
 *New entries are appended at every session close-out, alongside the session
 summary. If a session produced no trajectory-changing owner input, record that
 explicitly (`Session N — no entries this session.`) rather than leaving a gap
