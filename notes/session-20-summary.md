@@ -206,19 +206,21 @@ center-crop) — full-bleed, no bars. Owner then pointed out it removed the
 breathing room: the open dropdown sat jammed against the bottom edge. They
 wanted the padding *back*, just executed naturally.
 
-**Final approach (contain + blurred edge-extension):** the screenshot is
-*contained* (scaled to fit, nothing cropped), and each letterbox bar is filled
-by sampling a thin strip of the screenshot's **own adjacent edge**, stretching
-it across the bar, and heavily Gaussian-blurring it (radius 18). So the padding
-is built from the image's own colors, softened into an out-of-focus
-continuation — which solves the two failure modes of a flat fill: a busy edge
-(white dropdown over dark chrome) has no single matching color, and the blur
-blends them rather than picking one wrong hue; and any hard white-spots at the
-seam dissolve in the blur. The vertical slack is split **bottom-heavy**
-(`TOP_FRAC=0.40` → ~40% above / ~60% below) so low-sitting content like an open
-dropdown gets comfortable room beneath it (~35px on the hero shot). A 2px
-`EDGE_TRIM` first drops the window-border/scrollbar ring. Regenerated all six
-store-ready PNGs and refreshed `docs/assets/screenshots/schedule-optimize.png`;
-raw originals untouched (originals-unchanged guard re-verified). Visually
-confirmed against three candidates (old flat-median, uniform-grey, blurred) —
-the blurred bottom-biased fill read as the most natural.
+**Iterations toward the final fill:** tried a contain + blurred edge-extension
+pad (build the bar from a blurred strip of the screenshot's own edge). Owner
+preferred a **solid fill** and specified the exact color **`#616065`** (which is
+Gmail's chrome grey, so it reads as a clean extension of the app background).
+
+**Final approach (contain + solid `#616065`):** the screenshot is *contained*
+(scaled to fit, nothing cropped) on a flat `#616065` canvas, pasted **bottom-heavy**
+(`TOP_FRAC=0.40`) so low-sitting content like the open dropdown gets comfortable
+room beneath it (~29px on the hero). Per-edge trim: 2px top/bottom, **14px
+left/right** — the wider side-trim cuts past the **browser window's rounded
+bottom corners**, whose white page-background (captured outside the corner
+curve) otherwise survived as little white triangles sitting against the grey pad
+(the "rounding / white spots on the padding" the owner flagged). White-page
+screenshots (onboarding/settings) have legitimately white corners and need no
+fix. Previewed each step in macOS Preview for owner sign-off. Regenerated all
+six store-ready PNGs and refreshed `docs/assets/screenshots/schedule-optimize.png`;
+raw originals untouched (originals-unchanged guard re-verified); confirmed the
+hero's bottom corners are clean grey (no white triangle).

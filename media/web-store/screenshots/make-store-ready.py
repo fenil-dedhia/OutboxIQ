@@ -6,63 +6,55 @@
 # Makes the raw Web Store screenshots store-ready: exactly 1280x800, 24-bit RGB
 # PNG (no alpha), output to store-ready/.
 #
-# Strategy: CONTAIN (scale-to-fit, no crop) + BLURRED EDGE-EXTENSION padding.
-# The screenshot is scaled to fit fully inside 1280x800 (nothing cropped), then
-# the leftover letterbox is filled by taking a thin strip of the screenshot's
-# own adjacent edge, stretching it across the bar, and heavily Gaussian-blurring
-# it. So the padding is built from the screenshot's *own* colors, softened — it
-# reads as a natural, out-of-focus continuation rather than a flat bar. This
-# fixes the two ways the earlier flat-median-fill looked sloppy: (1) no single
-# wrong-hue band (a busy edge — e.g. white timezone dropdown over dark Gmail
-# chrome — has no one matching color; the blur blends them), and (2) no hard
-# white-spots at the seam (the blur dissolves them).
+# Strategy: CONTAIN (scale-to-fit, no crop) + SOLID #616065 padding.
+# The screenshot is scaled to fit fully inside 1280x800 (nothing cropped), and
+# the leftover letterbox is filled with a single flat color, #616065 — which is
+# Gmail's own chrome grey, so the pad reads as a clean extension of the app
+# background rather than an obvious bar (owner-chosen color).
 #
-# The vertical slack is split bottom-heavy (TOP_FRAC below) so content that
-# tends to sit low — like an open dropdown — gets comfortable breathing room
-# beneath it instead of being jammed against the edge. A small EDGE_TRIM first
-# drops the 1px window-border / scrollbar artifacts that ring a raw capture.
+# Two things make it look clean rather than sloppy:
+#  - The vertical slack is split bottom-heavy (TOP_FRAC) so low-sitting content
+#    like an open dropdown gets comfortable breathing room beneath it.
+#  - EDGE_TRIM shaves a margin off each raw edge. The LEFT/RIGHT trim is wider
+#    (EDGE_TRIM_X) specifically to cut past the browser window's ROUNDED BOTTOM
+#    CORNERS — without it, the white page-background captured outside the corner
+#    curve survives as little white triangles sitting against the grey pad
+#    (the "rounding / white spots on the padding" we were chasing). White-page
+#    screenshots (onboarding/settings) have legitimately white corners and are
+#    unaffected — there's no artifact to remove there.
 #
-# (Supersedes both the original flat-median-pad and the interim full-bleed cover
-# crop: cover removed the padding entirely and pushed content to the edge.)
+# (Supersedes the flat-median pad, the full-bleed cover crop, and the blurred
+# edge-extension — owner settled on this solid #616065 fill.)
 #
 # Originals are never modified — outputs go to a NEW subfolder.
 
 import sys
 from pathlib import Path
-from statistics import median
 
-from PIL import Image, ImageFilter
+from PIL import Image
 
 TARGET_W, TARGET_H = 1280, 800
-EDGE_TRIM = 2          # px shaved off each raw edge (window-border/scrollbar junk)
-TOP_FRAC = 0.40        # share of vertical slack put ABOVE the image (rest below)
-EDGE_SRC = 28          # px-deep source strip sampled to build each blurred bar
-BLUR_RADIUS = 18       # Gaussian blur applied to the stretched bar
+FILL = (0x61, 0x60, 0x65)   # #616065 — Gmail chrome grey (owner-chosen pad color)
+EDGE_TRIM_Y = 2             # px shaved off top & bottom raw edges (border/AA)
+EDGE_TRIM_X = 14            # px shaved off left & right — clears the rounded
+                            # browser-window corners (white spots) at the bottom
+TOP_FRAC = 0.40             # share of vertical slack put ABOVE the image (rest below)
 SRC_DIR = Path(__file__).resolve().parent
 OUT_DIR = SRC_DIR / "store-ready"
 IMAGE_EXTS = {".jpg", ".jpeg", ".png"}
-
-
-def _top_median(img: Image.Image) -> tuple[int, int, int]:
-    """Median RGB of the top edge row — the corner/base fallback color."""
-    w, _ = img.size
-    px = [img.getpixel((x, 0)) for x in range(w)]
-    return tuple(int(median(p[i] for p in px)) for i in range(3))
-
-
-def _blurred(strip: Image.Image, size: tuple[int, int]) -> Image.Image:
-    """Stretch an edge strip to fill a bar, then blur it into a soft continuation."""
-    return strip.resize(size, Image.LANCZOS).filter(ImageFilter.GaussianBlur(BLUR_RADIUS))
 
 
 def process(src_path: Path) -> dict:
     with Image.open(src_path) as im:
         img = im.convert("RGB")  # drops any alpha
 
-        # Trim the noisy outermost ring (window border / scrollbar / AA edge).
+        # Trim the noisy outermost ring; wider on the sides to clear the
+        # window's rounded bottom corners (see header note).
         w, h = img.size
-        if EDGE_TRIM and w > 2 * EDGE_TRIM and h > 2 * EDGE_TRIM:
-            img = img.crop((EDGE_TRIM, EDGE_TRIM, w - EDGE_TRIM, h - EDGE_TRIM))
+        if w > 2 * EDGE_TRIM_X and h > 2 * EDGE_TRIM_Y:
+            img = img.crop(
+                (EDGE_TRIM_X, EDGE_TRIM_Y, w - EDGE_TRIM_X, h - EDGE_TRIM_Y)
+            )
         w, h = img.size
 
         # CONTAIN: fit fully inside the target, nothing cropped.
@@ -70,33 +62,19 @@ def process(src_path: Path) -> dict:
         new_w, new_h = max(1, round(w * factor)), max(1, round(h * factor))
         scaled = img.resize((new_w, new_h), Image.LANCZOS)
 
-        canvas = Image.new("RGB", (TARGET_W, TARGET_H), _top_median(img))
+        # Solid #616065 canvas; paste the screenshot bottom-heavy.
+        canvas = Image.new("RGB", (TARGET_W, TARGET_H), FILL)
         off_x = round((TARGET_W - new_w) * 0.5)
-        off_y = round((TARGET_H - new_h) * TOP_FRAC)  # bottom-heavy split
+        off_y = round((TARGET_H - new_h) * TOP_FRAC)
         canvas.paste(scaled, (off_x, off_y))
-
-        # Blurred edge-extension into each letterbox bar (built from the
-        # screenshot's own adjacent pixels).
-        top_bar = off_y
-        bottom_bar = TARGET_H - (off_y + new_h)
-        left_bar = off_x
-        right_bar = TARGET_W - (off_x + new_w)
-        if top_bar > 0:
-            src = scaled.crop((0, 0, new_w, min(EDGE_SRC, new_h)))
-            canvas.paste(_blurred(src, (new_w, top_bar)), (off_x, 0))
-        if bottom_bar > 0:
-            src = scaled.crop((0, new_h - min(EDGE_SRC, new_h), new_w, new_h))
-            canvas.paste(_blurred(src, (new_w, bottom_bar)), (off_x, off_y + new_h))
-        if left_bar > 0:
-            src = scaled.crop((0, 0, min(EDGE_SRC, new_w), new_h))
-            canvas.paste(_blurred(src, (left_bar, new_h)), (0, off_y))
-        if right_bar > 0:
-            src = scaled.crop((new_w - min(EDGE_SRC, new_w), 0, new_w, new_h))
-            canvas.paste(_blurred(src, (right_bar, new_h)), (off_x + new_w, off_y))
 
         out_path = OUT_DIR / f"{src_path.stem}-1280x800.png"
         canvas.save(out_path, format="PNG")
 
+    top_bar = off_y
+    bottom_bar = TARGET_H - (off_y + new_h)
+    left_bar = off_x
+    right_bar = TARGET_W - (off_x + new_w)
     return {
         "src": src_path.name,
         "out": out_path,
