@@ -188,3 +188,26 @@ Also per owner: the top-right nav **"Open source" GitHub link → "Built by Feni
 Dedhia"**, with "Fenil Dedhia" linking to LinkedIn in a new tab
 (`target="_blank" rel="noopener noreferrer"`). GitHub stays reachable via the
 hero + footer buttons. Re-verified in headless render (hero + footer crops).
+
+## §k — Store-ready screenshot fix: contain+pad → cover (fourth round)
+
+Owner flagged the hero/feature image (`schedule-optimize.png`, the store-ready
+1280×800) had **white spots and a mismatched light band at the bottom** — an
+obvious sloppy letterbox. **Root cause** (`media/web-store/screenshots/make-store-ready.py`):
+it used *contain* (scale-to-fit + pad to 1280×800) and filled the letterbox
+bars with the **median color of the screenshot's extreme edge row**. The raw's
+bottom edge is intrinsically busy (dark Gmail chrome + the white timezone
+dropdown + a scrollbar/inbox peek), and its very last row was an anomalous light
+`(114,113,118)` — so the bottom bar came out lighter than its surroundings (the
+band) and the near-white dropdown pixels sat right at the seam (the spots).
+
+**Fixed at the source:** rewrote the script to use **cover** (scale-to-fill +
+center-crop) instead of contain+pad. The output now fully fills 1280×800 with
+**no letterbox bars at all** — so no seam, no fill-color guess, no edge spots
+are even possible. The trade-off is a small center-crop of the overflow axis;
+for these wide (~1.72) Gmail captures that's ~86–103px of **width** only
+(peripheral nav-rail / app-panel chrome), never the top/bottom where the modal
+header + buttons live. Regenerated all six store-ready PNGs and refreshed
+`docs/assets/screenshots/schedule-optimize.png`. Raw originals untouched
+(script re-verified the originals-unchanged guard). Verified the result fills
+edge-to-edge with no flat bar (top/bottom rows now carry real, varied content).

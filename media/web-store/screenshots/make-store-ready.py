@@ -3,16 +3,25 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 # Standalone asset utility (NOT a build step, NOT a project dependency).
-# Makes the raw Web Store screenshots store-ready: scale-to-fit (contain,
-# no distortion, no crop) into exactly 1280x800, then pad with a per-image
-# edge-sampled background so the letterbox blends instead of showing a hard
-# white seam. Outputs 24-bit RGB PNG (no alpha) to store-ready/.
+# Makes the raw Web Store screenshots store-ready: exactly 1280x800, 24-bit RGB
+# PNG (no alpha), output to store-ready/.
+#
+# Strategy: COVER (scale-to-fill + center-crop), NOT contain+letterbox.
+# We scale the screenshot up until it fully covers 1280x800, then center-crop
+# the overflow. The output therefore has NO letterbox bars — and so none of the
+# problems bars cause: no padding seam, no mismatched fill color, no edge
+# white-spots bleeding in. The trade-off is a small center-crop of whichever
+# axis overflows. For these wide Gmail captures (~1863x1082, aspect ~1.72 vs the
+# 1.60 target) that overflow is on the WIDTH — so we trim a few percent of
+# peripheral chrome off the left/right (the nav rail / app-panel icons) and
+# never touch the top/bottom, where the modal header and action buttons live.
+# (Superseded the earlier contain+median-edge-pad approach, whose bottom bar
+# picked up the busy inbox/dropdown edge and read as a sloppy light band.)
 #
 # Originals are never modified — outputs go to a NEW subfolder.
 
 import sys
 from pathlib import Path
-from statistics import median
 
 from PIL import Image
 
@@ -20,22 +29,6 @@ TARGET_W, TARGET_H = 1280, 800
 SRC_DIR = Path(__file__).resolve().parent
 OUT_DIR = SRC_DIR / "store-ready"
 IMAGE_EXTS = {".jpg", ".jpeg", ".png"}
-WHITE = (255, 255, 255)
-
-
-def median_edge_color(img: Image.Image, row: str) -> tuple[int, int, int]:
-    """Median RGB of the top or bottom edge row. White fallback on failure."""
-    try:
-        w, h = img.size
-        y = 0 if row == "top" else h - 1
-        px = [img.getpixel((x, y)) for x in range(w)]
-        return (
-            int(median(p[0] for p in px)),
-            int(median(p[1] for p in px)),
-            int(median(p[2] for p in px)),
-        )
-    except Exception:
-        return WHITE
 
 
 def process(src_path: Path) -> dict:
@@ -43,37 +36,25 @@ def process(src_path: Path) -> dict:
         img = im.convert("RGB")  # drops any alpha
 
         w, h = img.size
-        factor = min(TARGET_W / w, TARGET_H / h)  # contain
-        new_w, new_h = max(1, round(w * factor)), max(1, round(h * factor))
+        # COVER: the larger factor guarantees both dimensions are >= target.
+        factor = max(TARGET_W / w, TARGET_H / h)
+        new_w = max(TARGET_W, round(w * factor))
+        new_h = max(TARGET_H, round(h * factor))
         scaled = img.resize((new_w, new_h), Image.LANCZOS)
 
-        top_color = median_edge_color(img, "top")
-        bottom_color = median_edge_color(img, "bottom")
-
-        # Canvas: top bar = top edge color, bottom bar = bottom edge color.
-        canvas = Image.new("RGB", (TARGET_W, TARGET_H), top_color)
-        off_x = (TARGET_W - new_w) // 2
-        off_y = (TARGET_H - new_h) // 2
-        # Fill the area below the pasted image with the bottom color so each
-        # letterbox bar matches its own side of the screenshot.
-        if off_y + new_h < TARGET_H:
-            bottom_bar = Image.new(
-                "RGB", (TARGET_W, TARGET_H - (off_y + new_h)), bottom_color
-            )
-            canvas.paste(bottom_bar, (0, off_y + new_h))
-        canvas.paste(scaled, (off_x, off_y))
+        # Center-crop the overflow down to exactly the target.
+        left = (new_w - TARGET_W) // 2
+        top = (new_h - TARGET_H) // 2
+        canvas = scaled.crop((left, top, left + TARGET_W, top + TARGET_H))
 
         out_path = OUT_DIR / f"{src_path.stem}-1280x800.png"
-        # 24-bit RGB PNG, no alpha. (Mode is already RGB; PNG from RGB has no
-        # alpha channel.)
         canvas.save(out_path, format="PNG")
 
     return {
         "src": src_path.name,
         "out": out_path,
         "scaled_to": (new_w, new_h),
-        "top_color": top_color,
-        "bottom_color": bottom_color,
+        "cropped": (new_w - TARGET_W, new_h - TARGET_H),  # (x_trim, y_trim) total
     }
 
 
@@ -117,13 +98,12 @@ def main() -> int:
     # ── Summary table ──────────────────────────────────────────────────────
     print("── Output summary ───────────────────────────────────────────────")
     name_w = max(len(r["out"].name) for r in results)
-    print(f"{'file'.ljust(name_w)}  {'size':>11}  {'mode':>4}  {'alpha':>5}  pad(top→bottom)")
+    print(f"{'file'.ljust(name_w)}  {'size':>11}  {'mode':>4}  {'alpha':>5}  crop(x,y px)")
     for r in results:
-        pad = f"{r['top_color']}→{r['bottom_color']}"
         flag = "✓" if r["ok"] else "✗"
         print(
             f"{r['out'].name.ljust(name_w)}  {str(r['size']):>11}  "
-            f"{r['mode']:>4}  {str(r['has_alpha']):>5}  {pad}  {flag}"
+            f"{r['mode']:>4}  {str(r['has_alpha']):>5}  {str(r['cropped'])}  {flag}"
         )
     print("─────────────────────────────────────────────────────────────────")
 
