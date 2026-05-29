@@ -17,7 +17,8 @@ match. Full palette + role assignments: see Phase 1 of `session-18`.
 | `logo-on-white.svg` | Same lockup with a baked white background, recolored. | Contexts that need an opaque white plate behind the mark. |
 | `logo-on-white.png` | Raster fallback of the white-bg lockup (from `Original Logo.png`). | Fallback where SVG isn't accepted. |
 | `logo-transparent.png` | Raster fallback of the transparent lockup (from `Transparent Logo.png`). Note: original `#40bfc1` teal, not recolored. | Fallback only; prefer the recolored SVG. |
-| `symbol-only.svg` | The clock/arrow symbol alone, extracted from `logo.svg`, recolored, centered in a **square** viewBox with light padding. **Source for all square icons + the favicon.** | Toolbar/app icons, favicon, inline header marks. |
+| `icon-source.svg` | **App/extension icon source.** Moonstone `#5EB1BF` rounded-square plate + the symbol in WHITE. **Source for icon-16/32/48/128 + favicon.ico.** | The shipped Chrome icon (toolbar, extensions page, Web Store) + the site favicon. |
+| `symbol-only.svg` | The clock/arrow symbol alone (teal hands + black art), transparent, square viewBox. | In-product inline marks (onboarding, Settings header, modal) where a transparent symbol sits on the page. |
 | `symbol-only.png` | Raster of the symbol alone (from `Original Logo Symbol.png`, original teal). | Fallback; prefer `symbol-only.svg`. |
 
 **Missing input:** the session brief referenced a `Wordpress.png` dark-mode
