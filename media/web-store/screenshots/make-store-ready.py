@@ -6,46 +6,93 @@
 # Makes the raw Web Store screenshots store-ready: exactly 1280x800, 24-bit RGB
 # PNG (no alpha), output to store-ready/.
 #
-# Strategy: COVER (scale-to-fill + center-crop), NOT contain+letterbox.
-# We scale the screenshot up until it fully covers 1280x800, then center-crop
-# the overflow. The output therefore has NO letterbox bars — and so none of the
-# problems bars cause: no padding seam, no mismatched fill color, no edge
-# white-spots bleeding in. The trade-off is a small center-crop of whichever
-# axis overflows. For these wide Gmail captures (~1863x1082, aspect ~1.72 vs the
-# 1.60 target) that overflow is on the WIDTH — so we trim a few percent of
-# peripheral chrome off the left/right (the nav rail / app-panel icons) and
-# never touch the top/bottom, where the modal header and action buttons live.
-# (Superseded the earlier contain+median-edge-pad approach, whose bottom bar
-# picked up the busy inbox/dropdown edge and read as a sloppy light band.)
+# Strategy: CONTAIN (scale-to-fit, no crop) + BLURRED EDGE-EXTENSION padding.
+# The screenshot is scaled to fit fully inside 1280x800 (nothing cropped), then
+# the leftover letterbox is filled by taking a thin strip of the screenshot's
+# own adjacent edge, stretching it across the bar, and heavily Gaussian-blurring
+# it. So the padding is built from the screenshot's *own* colors, softened — it
+# reads as a natural, out-of-focus continuation rather than a flat bar. This
+# fixes the two ways the earlier flat-median-fill looked sloppy: (1) no single
+# wrong-hue band (a busy edge — e.g. white timezone dropdown over dark Gmail
+# chrome — has no one matching color; the blur blends them), and (2) no hard
+# white-spots at the seam (the blur dissolves them).
+#
+# The vertical slack is split bottom-heavy (TOP_FRAC below) so content that
+# tends to sit low — like an open dropdown — gets comfortable breathing room
+# beneath it instead of being jammed against the edge. A small EDGE_TRIM first
+# drops the 1px window-border / scrollbar artifacts that ring a raw capture.
+#
+# (Supersedes both the original flat-median-pad and the interim full-bleed cover
+# crop: cover removed the padding entirely and pushed content to the edge.)
 #
 # Originals are never modified — outputs go to a NEW subfolder.
 
 import sys
 from pathlib import Path
+from statistics import median
 
-from PIL import Image
+from PIL import Image, ImageFilter
 
 TARGET_W, TARGET_H = 1280, 800
+EDGE_TRIM = 2          # px shaved off each raw edge (window-border/scrollbar junk)
+TOP_FRAC = 0.40        # share of vertical slack put ABOVE the image (rest below)
+EDGE_SRC = 28          # px-deep source strip sampled to build each blurred bar
+BLUR_RADIUS = 18       # Gaussian blur applied to the stretched bar
 SRC_DIR = Path(__file__).resolve().parent
 OUT_DIR = SRC_DIR / "store-ready"
 IMAGE_EXTS = {".jpg", ".jpeg", ".png"}
+
+
+def _top_median(img: Image.Image) -> tuple[int, int, int]:
+    """Median RGB of the top edge row — the corner/base fallback color."""
+    w, _ = img.size
+    px = [img.getpixel((x, 0)) for x in range(w)]
+    return tuple(int(median(p[i] for p in px)) for i in range(3))
+
+
+def _blurred(strip: Image.Image, size: tuple[int, int]) -> Image.Image:
+    """Stretch an edge strip to fill a bar, then blur it into a soft continuation."""
+    return strip.resize(size, Image.LANCZOS).filter(ImageFilter.GaussianBlur(BLUR_RADIUS))
 
 
 def process(src_path: Path) -> dict:
     with Image.open(src_path) as im:
         img = im.convert("RGB")  # drops any alpha
 
+        # Trim the noisy outermost ring (window border / scrollbar / AA edge).
         w, h = img.size
-        # COVER: the larger factor guarantees both dimensions are >= target.
-        factor = max(TARGET_W / w, TARGET_H / h)
-        new_w = max(TARGET_W, round(w * factor))
-        new_h = max(TARGET_H, round(h * factor))
+        if EDGE_TRIM and w > 2 * EDGE_TRIM and h > 2 * EDGE_TRIM:
+            img = img.crop((EDGE_TRIM, EDGE_TRIM, w - EDGE_TRIM, h - EDGE_TRIM))
+        w, h = img.size
+
+        # CONTAIN: fit fully inside the target, nothing cropped.
+        factor = min(TARGET_W / w, TARGET_H / h)
+        new_w, new_h = max(1, round(w * factor)), max(1, round(h * factor))
         scaled = img.resize((new_w, new_h), Image.LANCZOS)
 
-        # Center-crop the overflow down to exactly the target.
-        left = (new_w - TARGET_W) // 2
-        top = (new_h - TARGET_H) // 2
-        canvas = scaled.crop((left, top, left + TARGET_W, top + TARGET_H))
+        canvas = Image.new("RGB", (TARGET_W, TARGET_H), _top_median(img))
+        off_x = round((TARGET_W - new_w) * 0.5)
+        off_y = round((TARGET_H - new_h) * TOP_FRAC)  # bottom-heavy split
+        canvas.paste(scaled, (off_x, off_y))
+
+        # Blurred edge-extension into each letterbox bar (built from the
+        # screenshot's own adjacent pixels).
+        top_bar = off_y
+        bottom_bar = TARGET_H - (off_y + new_h)
+        left_bar = off_x
+        right_bar = TARGET_W - (off_x + new_w)
+        if top_bar > 0:
+            src = scaled.crop((0, 0, new_w, min(EDGE_SRC, new_h)))
+            canvas.paste(_blurred(src, (new_w, top_bar)), (off_x, 0))
+        if bottom_bar > 0:
+            src = scaled.crop((0, new_h - min(EDGE_SRC, new_h), new_w, new_h))
+            canvas.paste(_blurred(src, (new_w, bottom_bar)), (off_x, off_y + new_h))
+        if left_bar > 0:
+            src = scaled.crop((0, 0, min(EDGE_SRC, new_w), new_h))
+            canvas.paste(_blurred(src, (left_bar, new_h)), (0, off_y))
+        if right_bar > 0:
+            src = scaled.crop((new_w - min(EDGE_SRC, new_w), 0, new_w, new_h))
+            canvas.paste(_blurred(src, (right_bar, new_h)), (off_x + new_w, off_y))
 
         out_path = OUT_DIR / f"{src_path.stem}-1280x800.png"
         canvas.save(out_path, format="PNG")
@@ -54,7 +101,7 @@ def process(src_path: Path) -> dict:
         "src": src_path.name,
         "out": out_path,
         "scaled_to": (new_w, new_h),
-        "cropped": (new_w - TARGET_W, new_h - TARGET_H),  # (x_trim, y_trim) total
+        "pad": (top_bar, bottom_bar, left_bar, right_bar),  # t,b,l,r px
     }
 
 
@@ -98,12 +145,12 @@ def main() -> int:
     # ── Summary table ──────────────────────────────────────────────────────
     print("── Output summary ───────────────────────────────────────────────")
     name_w = max(len(r["out"].name) for r in results)
-    print(f"{'file'.ljust(name_w)}  {'size':>11}  {'mode':>4}  {'alpha':>5}  crop(x,y px)")
+    print(f"{'file'.ljust(name_w)}  {'size':>11}  {'mode':>4}  {'alpha':>5}  pad(t,b,l,r px)")
     for r in results:
         flag = "✓" if r["ok"] else "✗"
         print(
             f"{r['out'].name.ljust(name_w)}  {str(r['size']):>11}  "
-            f"{r['mode']:>4}  {str(r['has_alpha']):>5}  {str(r['cropped'])}  {flag}"
+            f"{r['mode']:>4}  {str(r['has_alpha']):>5}  {str(r['pad'])}  {flag}"
         )
     print("─────────────────────────────────────────────────────────────────")
 

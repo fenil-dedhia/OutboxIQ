@@ -201,13 +201,24 @@ dropdown + a scrollbar/inbox peek), and its very last row was an anomalous light
 `(114,113,118)` — so the bottom bar came out lighter than its surroundings (the
 band) and the near-white dropdown pixels sat right at the seam (the spots).
 
-**Fixed at the source:** rewrote the script to use **cover** (scale-to-fill +
-center-crop) instead of contain+pad. The output now fully fills 1280×800 with
-**no letterbox bars at all** — so no seam, no fill-color guess, no edge spots
-are even possible. The trade-off is a small center-crop of the overflow axis;
-for these wide (~1.72) Gmail captures that's ~86–103px of **width** only
-(peripheral nav-rail / app-panel chrome), never the top/bottom where the modal
-header + buttons live. Regenerated all six store-ready PNGs and refreshed
-`docs/assets/screenshots/schedule-optimize.png`. Raw originals untouched
-(script re-verified the originals-unchanged guard). Verified the result fills
-edge-to-edge with no flat bar (top/bottom rows now carry real, varied content).
+**First attempt (cover):** rewrote the script to *cover* (scale-to-fill +
+center-crop) — full-bleed, no bars. Owner then pointed out it removed the
+breathing room: the open dropdown sat jammed against the bottom edge. They
+wanted the padding *back*, just executed naturally.
+
+**Final approach (contain + blurred edge-extension):** the screenshot is
+*contained* (scaled to fit, nothing cropped), and each letterbox bar is filled
+by sampling a thin strip of the screenshot's **own adjacent edge**, stretching
+it across the bar, and heavily Gaussian-blurring it (radius 18). So the padding
+is built from the image's own colors, softened into an out-of-focus
+continuation — which solves the two failure modes of a flat fill: a busy edge
+(white dropdown over dark chrome) has no single matching color, and the blur
+blends them rather than picking one wrong hue; and any hard white-spots at the
+seam dissolve in the blur. The vertical slack is split **bottom-heavy**
+(`TOP_FRAC=0.40` → ~40% above / ~60% below) so low-sitting content like an open
+dropdown gets comfortable room beneath it (~35px on the hero shot). A 2px
+`EDGE_TRIM` first drops the window-border/scrollbar ring. Regenerated all six
+store-ready PNGs and refreshed `docs/assets/screenshots/schedule-optimize.png`;
+raw originals untouched (originals-unchanged guard re-verified). Visually
+confirmed against three candidates (old flat-median, uniform-grey, blurred) —
+the blurred bottom-biased fill read as the most natural.
