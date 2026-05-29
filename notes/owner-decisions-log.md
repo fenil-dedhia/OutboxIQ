@@ -2801,6 +2801,14 @@ this one.
 
 ---
 
+Session 20 — no entries this session. (Built the `fashionablylate.app` apex
+marketing landing page, `docs/index.html`. The honest "coming soon" CTA
+approach — non-clickable pending button + GitHub secondary + a comment-marked
+launch swap site — was specified in the owner's session prompt, not a
+mid-build trajectory fork, so there is no counterfactual to record.)
+
+---
+
 *New entries are appended at every session close-out, alongside the session
 summary. If a session produced no trajectory-changing owner input, record that
 explicitly (`Session N — no entries this session.`) rather than leaving a gap
