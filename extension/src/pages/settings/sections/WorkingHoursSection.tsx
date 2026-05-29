@@ -72,8 +72,10 @@ export function WorkingHoursSection({ workingHours, onChange }: Props) {
     <section className="fl-set-section" aria-labelledby="fl-set-wh-h">
       <h2 id="fl-set-wh-h">Working hours</h2>
       <p className="fl-set-help">
-        We&rsquo;ll double-check before sending outside these hours. Scheduling
-        for later is always fine.
+        We&rsquo;ll double-check before sending outside these hours in
+        real-time.
+        <br />
+        Scheduling for later is always fine.
       </p>
 
       <fieldset className="fl-set-wh-days">

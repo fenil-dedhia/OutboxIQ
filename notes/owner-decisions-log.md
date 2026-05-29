@@ -2609,6 +2609,68 @@ this one.
 
 ---
 
+## Entry 57 — Workspace admin-policy interaction surface accepted as a documented Free-v1 launch gap
+
+- **Session:** 17 (2026-05-28 — final pre-submission gate / close-out).
+- **Moment:** Two related items had been carried forward as "honest gaps /
+  known unknowns" since Sessions 15–16: (a) the **admin-disabled
+  Schedule-Send graceful-degradation** path (§6.7), never exercised because
+  the owner isn't a Workspace tenant admin (Session 15 honest gap); and
+  (b) the broader **admin-policy / DLP / content-compliance / send-event-hook
+  interaction surface** (Session 16 security Flag 2 — `notes/session-16-summary.md`
+  §c). Both were explicitly deferred to "Session 17 if tenant access becomes
+  available, else accept as a launch gap." At the Session-17 close-out — the
+  last gate before Chrome Web Store submission — that conditional had to be
+  resolved one way or the other.
+- **My input (owner):** **Confirmed I have no Workspace-tenant-admin access,
+  and that acquiring a tenant environment (DLP / send-event hooks) purely to
+  close these is not worth it for Free v1.** Both items are therefore
+  **consciously accepted as documented Free-v1 launch gaps**, not left as
+  ambiguous "pending." Reasoning, in my framing: Free v1 makes no Google API
+  call (Entry 39), so there is **no data-perimeter axis** for a tenant DLP /
+  compliance policy to collide with; and on every ambiguous step Free v1
+  **fails toward Gmail's own native path** (the multi-compose safety net, the
+  §5.5.1 30-second watchdog, the `gmail-recipe.ts` step-failure fallbacks) —
+  the same shape of graceful degradation an admin-disabled Schedule Send would
+  need. So the *structural* risk is low even though it's untested. This is the
+  same accept-and-document posture as Entry 55, now applied to the one
+  remaining carried-forward unknown.
+- **What Claude Code would have done without it (Entry 17 honesty rule):**
+  Claude had already recommended exactly this disposition in Sessions 15–16
+  ("carry forward if a tenant appears, else accept as a launch gap"), so on
+  *direction* this is owner-confirmed, not owner-corrected. The load-bearing
+  owner contribution is the same as Entry 55's lesson: **converting a
+  conditional "accept if we can't test it" into an unconditional, on-the-record
+  "the owner consciously accepted at the final gate, having confirmed the test
+  environment is unavailable and not worth acquiring."** A future auditor asking
+  "did you know about the admin-policy unknown at launch?" can now read a clear
+  yes with the owner's reasoning, rather than an unresolved carry-forward.
+- **Honest counterfactual cost:** the theoretically-safer path is "delay
+  launch until a real Workspace tenant with DLP can be borrowed/stood up and
+  the path driven." Rejected — paid in *a documented, structurally-low-risk
+  unknown carried into launch* to avoid an open-ended pre-launch delay for an
+  axis Free v1's no-API posture already largely neutralizes. Future cost if a
+  real tenant later reports a collision: a scoped reactive fix post-launch,
+  slower-and-louder than pre-launch would have been — the calculated bet,
+  named here so it isn't second-guessed later.
+- **Outcome:** Recorded as **accepted Free-v1 launch gaps** in
+  `PRE_LAUNCH_CHECKLIST.md` ("Google Workspace compatibility" honest-gap note
+  → accepted-gap; "Security audit" Flag 2 → ACCEPTED), in
+  `notes/session-17-summary.md`, and in this entry. No code change, no spec
+  change, no SCHEMA_VERSION bump. Cross-refs: Entry 39 (no-OAuth invariant
+  that bounds the data-perimeter axis), Entry 55 (the sibling
+  conscious-acceptance entry from the S16 security gate), Session 15 / 16
+  summaries (the original gap framing).
+- **Lesson (for coaching):** the mirror of Entry 55's lesson — *a
+  carried-forward "known unknown" must be explicitly closed at the final gate,
+  one way or the other.* Letting it stay "pending / accept if we can't test"
+  through launch would read, to a later auditor, as something that slipped
+  through. Confirming the test environment is genuinely unavailable, naming the
+  structural reasons the risk is low, and signing off on the acceptance is what
+  turns a loose end into a deliberate, defensible launch decision.
+
+---
+
 *New entries are appended at every session close-out, alongside the session
 summary. If a session produced no trajectory-changing owner input, record that
 explicitly (`Session N — no entries this session.`) rather than leaving a gap

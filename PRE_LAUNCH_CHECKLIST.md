@@ -12,103 +12,25 @@ Items that must be completed **before Fashionably Late Free v1 can be made publi
 
 ---
 
-## Google / OAuth
+## Google / OAuth — N/A for Free v1 (RESOLVED, Entry 39)
 
-### CASA security assessment — NOT required for Free v1 (RESOLVED, Entry 39)
-
-> **DEFINITIVE 2026-05-19 (owner-decisions-log Entry 39 — supersedes all
-> "verify whether…" framing below).** Free v1 requests **zero OAuth
-> scopes and makes no Google API call** (cascade is cache→manual,
-> recipient is DOM-read). CASA is triggered by *restricted* scopes and
-> the consent-screen verification by *sensitive* scopes — Free v1 has
-> **neither, nor any consent screen at all**. So **no CASA and no
-> sensitive-scope consent-screen verification gate apply to Free v1's
-> launch.** This removes the single largest pre-launch OAuth cost/lead
-> item. The OAuth stack (and therefore CASA Tier-2, consent
-> verification, etc.) is **Premium v1** scope — `PREMIUM_LAUNCH_CHECKLIST.md`
-> + `extension/src/premium-v1/`. The reframed-but-now-moot Session-8/9
-> analysis below is retained as Premium-v1 history (Entry-4 discipline).
-
-> **Materially reframed 2026-05-17 (Session 8 scope trim, Entry 36 —
-> supersedes the Entry-32 "Free v1 still needs *a* CASA assessment"
-> framing).** That earlier framing was correct *while Free v1 requested
-> the restricted Gmail scopes*. **Session 8 trimmed Free v1's OAuth ask
-> to `contacts.readonly` only** (PRD §6.6 amendment) — a Google
-> **"sensitive"** scope, **not "restricted."** CASA is triggered by
-> **restricted** scopes. So Free v1 may now require **no CASA assessment
-> at all**, which would make the Testing→Production path materially
-> simpler and remove the single biggest pre-launch cost/lead-time item
-> from Free v1.
+> **Free v1 requests zero OAuth scopes and makes no Google API call**
+> (recipient timezone is cache→manual; recipient identity is DOM-read), and
+> shows **no consent screen at all**. So **none of the OAuth launch gates
+> apply to Free v1**: no CASA assessment (CASA is triggered by *restricted*
+> scopes — Free v1 has none), no sensitive-scope consent-screen
+> verification, no Testing→Production switch, no consent-screen app branding,
+> no authorized-domain requirement. This was the single largest pre-launch
+> cost/lead item and it is **gone** for Free v1.
 >
-> **Session-9 update (2026-05-19, Entry 38 + CORRECTION) — no change to
-> this reframe; one HIGH-LEVERAGE open question added.** Free v1's scope
-> set is now **three**: `contacts.readonly` (sensitive) **+**
-> `userinfo.email` **+** `openid` (the latter two non-sensitive, added
-> for the `login_hint` id_token — PRD §6.6 / §7.5). Non-sensitive scopes
-> add **nothing** to CASA or the sensitive-scope consent-screen
-> verification (both driven solely by `contacts.readonly`) — so the
-> "possibly no CASA, otherwise just standard consent-screen
-> verification" conclusion above stands **unchanged**.
->
-> **Open Session-10 question with direct pre-launch leverage
-> (owner-surfaced 2026-05-19):** `contacts.readonly` is the **only
-> sensitive scope**, and its real-world recipient-timezone hit-rate is
-> near-zero (§5.4.1 amendment — Google stores no usable IANA tz). If the
-> §5.3.5 build concludes it doesn't earn its place and it is dropped,
-> Free v1 becomes an **all-non-sensitive-scope app** — which may remove
-> the **consent-screen verification gate itself**, not just CASA (the
-> single largest remaining pre-launch OAuth item). This is **not decided
-> here** — it is the tracked headline decision for Session 10, to be made
-> *with* the feature build, not before. Flagged here because the answer
-> materially reshapes this checklist's OAuth section.
-
-- **The actual pre-launch task is now a verification, not an
-  assessment:** confirm against Google's current OAuth-verification /
-  CASA documentation whether an app requesting **only
-  `contacts.readonly`** (sensitive, no restricted scopes, no backend)
-  needs **any** CASA tier, or only standard OAuth-consent
-  verification. **Do not assume "none"** — verify and record the
-  finding; the answer drives the Production timeline.
-- If verification says **no CASA**: Free v1's Production gate is just
-  the standard consent-screen verification (homepage / Privacy / ToS /
-  authorized domain) — see "OAuth consent screen — Production status".
-- If verification says **some CASA still applies** to a lone sensitive
-  scope: budget that lead time; it is still far lighter than Tier 2.
-- **Premium v1** still faces the full **CASA Tier 2** (restricted Gmail
-  scopes **+** backend) — tracked in `PREMIUM_LAUNCH_CHECKLIST.md`,
-  unchanged by this reframe.
-- **Trigger:** when Free v1 is feature-complete and ready for users
-  beyond the test allowlist. Until then we stay in **OAuth Testing
-  mode** (fully functional for dev; not public).
-- **Reference:** https://support.google.com/cloud/answer/13465431
-
-### OAuth consent screen — Production status
-
-- **Now concretely active (Session 7):** GCP project `outboxiq-dev`, OAuth
-  consent screen configured **External / Testing mode**, explicit test-user
-  allowlist, the 4 restricted/sensitive scopes requested, Web-application
-  OAuth client live. This item is therefore no longer abstract — the
-  Testing→Production gate (and the restricted-scope CASA item above) is the
-  next real OAuth milestone once **Free v1** is feature-complete.
-- **Free v1 OAuth model (tier split — Entry 32):** the Web-application
-  client is **retained for Free v1** and used with
-  **`access_type=online`** (access tokens only, no refresh token, no
-  backend; multi-Google-account UX is why the Web-app client over a
-  Chrome-extension client — PRD §7.5). The Testing→Production switch and
-  the restricted-scope CASA assessment are the only Free-v1 OAuth gates.
-  The online→**offline** switch (Premium Option-B, backend refresh tokens)
-  is a **Premium v1** gate — `PREMIUM_LAUNCH_CHECKLIST.md`.
-- Switching to **Production** requires Google verification of the app's homepage, Privacy Policy URL, Terms of Service URL, and authorized domains.
-- The Privacy/ToS/authorized-domain fields were **deliberately left blank**
-  in Testing mode: Google requires an *owned* authorized domain even for
-  the Branding URL fields, so the raw-GitHub placeholder stubs cannot be
-  used there. Hosting the real docs on a rename-proof, owned/brand-neutral
-  URL is tracked under "Naming / rebrand readiness" below — settle it
-  together with the Production switch.
-
-### App branding for OAuth consent screen
-
-- Verified app name, logo, support email, and authorized domains.
+> **Cleanup note (Session 17, owner-approved PRE_LAUNCH audit):** the prior
+> detailed CASA / consent-screen-Production / consent-screen-branding
+> sub-sections were removed here — they were always **Premium-only** work
+> (OAuth + Gmail API), and Premium v1 is out of scope of this project
+> (Entry 52). A future Premium fork re-derives its own OAuth/CASA gates in
+> its own checklist. The full reasoning chain (Entries 36/38/39 — the
+> scope-trim → no-OAuth pivot) lives in `notes/owner-decisions-log.md` and
+> this repo's git history; nothing Free-v1-blocking remains in this section.
 
 ---
 
@@ -143,7 +65,7 @@ Items that must be completed **before Fashionably Late Free v1 can be made publi
 - **Brand identity finalized.** Logo, color palette, typography direction. v1 development uses **placeholder icons** (a colored square with "OQ" text or similar minimal mark). PRD §8.1 ("native feel over branded feel") means Fashionably Late's in-Gmail surface intentionally does not lean on brand — brand mainly shows up in the Chrome Web Store listing, the OAuth consent screen, and the onboarding flow.
 - **Extension icons (16, 48, 128 PNG).** Production-quality artwork, replacing the placeholders in `extension/public/icons/`.
 - ~~**Scheduled-email badge artwork.**~~ **Removed (2026-05-17, Session 8):** the §5.7.2 Fashionably Late badge was removed from product scope (see the PRD §5.7 amendment / owner-decisions-log Entry 37) — post-install it differentiates against an empty set. No badge artwork is needed. (Struck through, not deleted, so the scope-change is on the record.)
-- **OAuth consent screen logo.** 120×120 minimum, follows Google's OAuth branding requirements.
+- ~~**OAuth consent screen logo.**~~ **N/A for Free v1 (Session 17 audit; Entry 39):** Free v1 has no OAuth consent screen, so no consent-screen logo is needed. (A future Premium fork that brings OAuth back will need one.)
 - **Chrome Web Store listing assets.** Promotional images (440×280 small tile, 920×680 marquee), screenshots (1280×800 or 640×400, up to 5), short description, detailed description, support email.
 - **Trigger:** before Chrome Web Store submission. Fenil intends to commission or design these assets — does not need to happen during feature development.
 
@@ -309,18 +231,20 @@ hard-blocking to polish.
 - **What to verify:** that Gmail's Schedule Send UI is present, functional, and DOM-driveable on Workspace accounts; that Workspace admins cannot disable scheduled sending in a way that breaks Fashionably Late without a clear error; that the `SCHEDULED` label and `messages.delete` cancellation pathway (per `research/scheduled-send-api-spike.md` Open Question 1) behave identically on Workspace.
 - **How to verify:** hands-on test on a Workspace account in a controlled domain. Re-test after any major Gmail UI update.
 - **Trigger:** ~~before Chrome Web Store submission, and after any major Gmail UI change.~~ **Initial verification DONE 2026-05-28**; the post-Gmail-UI-change re-verification trigger remains (re-run if Gmail materially changes the Schedule Send UI).
-- **Honest gap (carry to Session 16/17 or post-launch):** the
-  admin-disabled-Schedule-Send graceful-degradation path (§6.7) was not
-  exercised — the owner isn't the tenant admin on the account used here,
-  so admin policy could not be toggled. Logged in
-  `notes/session-15-summary.md` rather than swept under "verified". If
-  Session 16 (security) or 17 (comprehensive hands-on) has access to a
-  tenant where Schedule Send is disabled by policy, drive it through there;
-  otherwise accept the gap for Free-v1 launch (Free v1 falls back to
-  Gmail's native Schedule Send path when our chain breaks, per the
-  multi-compose safety-net pattern — same shape of graceful degradation).
+- **Accepted Free-v1 launch gap (Session 17, owner-confirmed — Entry 57):**
+  the admin-disabled-Schedule-Send graceful-degradation path (§6.7) and the
+  broader admin-policy / DLP / send-event-hook interaction surface (S16
+  Flag 2) were **not** exercised — the owner has no Workspace-tenant-admin
+  access, and acquiring a tenant environment to close this is **explicitly
+  not worth it** for Free v1. **Consciously accepted as a documented launch
+  gap:** Free v1 fails toward Gmail's native path on every ambiguous step
+  (the multi-compose safety net, the §5.5.1 watchdog, the `gmail-recipe.ts`
+  step-failure paths), and its no-Google-API posture (Entry 39) means there
+  is no data-perimeter axis to collide with — so the structural risk is low.
+  Revisit post-launch only if a real tenant becomes available or a user
+  reports an issue. Full reasoning in `notes/owner-decisions-log.md` Entry 57.
 - **Reference:** `research/scheduled-send-api-spike.md` Open Question 4;
-  `notes/session-15-summary.md`.
+  `notes/session-15-summary.md`; `notes/owner-decisions-log.md` Entry 57.
 
 ### Multi-compose targeting — full fix (v2 deferral — NOT launch-blocking)
 
@@ -340,7 +264,16 @@ Fashionably Late's scheduling path cannot currently tell which compose window th
 - **Trigger:** v2 / post-launch — revisit with real usage signal, as an explicit additive decision. **Not** a Chrome-Web-Store-submission gate.
 - **Reference:** the "v1 vs. v2 decisions" entry below; `notes/owner-decisions-log.md` Entry 27 (reframing) and Entry 18 (the original silent-vs-visible-bug decision); `notes/session-5-summary.md` (Scenario 4 result).
 
-### Duplicate-instance regression (Session 17 hands-on test plan)
+### Duplicate-instance regression — VERIFIED (Session 17, owner hands-on)
+
+> **VERIFIED 2026-05-28 (Session 17, owner hands-on).** The owner drove the
+> full test plan below — reload the extension with Gmail open, then without a
+> Gmail refresh confirm Schedule Send opens OUR modal, "Send now anyway"
+> actually sends, and no duplicate modals / relabel churn — across ~3 reload
+> cycles, plus the post-default-boundaries-refactor re-verification (the
+> §5.5.1 guard + config-cache changes did not regress page-ownership). The
+> newest-live-owns-the-page model held every cycle. The test plan is retained
+> below as the record of what was exercised.
 
 The Session-13 page-ownership fix (commits `d7c54f7` + `3c74e55`,
 owner-decisions-log Entry 51) is reasoned + unit-tested at the **logic
@@ -386,9 +319,12 @@ and the `contextAlive()` (`chrome.runtime?.id`) check are both being
 consulted at the top of the §5.2 interceptor, the relabel observer, and
 the §5.5.1 send guard.
 
-- **Trigger:** Session 17 (final comprehensive hands-on testing pass).
+- **Trigger:** ~~Session 17 (final comprehensive hands-on testing pass).~~
+  **DONE — Session 17.** Re-run only if a future change touches the
+  page-ownership mechanism (`page-install-latch.ts`) or the three handlers
+  that consult it (§5.2 interceptor / relabel observer / §5.5.1 guard).
 - **Reference:** `notes/owner-decisions-log.md` Entry 51;
-  `notes/session-13-summary.md` §f.
+  `notes/session-13-summary.md` §f; `notes/session-17-summary.md`.
 
 ---
 
@@ -445,7 +381,18 @@ feel compelled to relitigate it (Entry 22 discipline):
 
 ---
 
-## Pre-launch probes (run after Free v1 feature work, before naming/positioning is finalized)
+## Gmail-API feasibility probes — NOT a Free-v1 launch gate (post-launch future-direction research)
+
+> **Relabeled 2026-05-28 (Session 17, owner-approved PRE_LAUNCH audit).**
+> These two probes are **not a Free-v1 launch gate** and never were a
+> Free-v1 deliverable — they are *post-launch future-direction research* for
+> a possible inbox-organization feature, and they require the Gmail API
+> (which Free v1 doesn't use — Entry 39). Their original trigger ("before
+> naming/positioning is finalized") is also moot: naming is finalized
+> (Fashionably Late, Entry 41). They do **not** block Chrome Web Store
+> submission. Retained below as a tracked future-research idea, not a
+> launch obligation; the sequencing note that mentions "CASA / consent-screen
+> Production" is historical (those gates no longer apply — Entry 39).
 
 > **Added 2026-05-17 (owner-directed — tier split close-out, Entry 32,
 > sub-decision).** Two **informational** Gmail-API probes. They are
@@ -621,7 +568,7 @@ End-to-end security review against the seven-area audit surface (DOM-injection /
   - `CacheSection` Recipient Timezone Cache list — same guarantees for name + email.
 - **Flagged for owner (full reasoning in `notes/session-16-summary.md` §c):**
   - **Page-ownership forging (low severity).** Session 13's `<html>[data-fashionably-late-owner]` token can be forged by a co-installed malicious extension or Gmail-side compromise; blast radius = §5.5.1 outside-hours safety prompt suppressed, no data harm. The DOM-attribute coordination is structurally forced by MV3 isolated worlds; recommended **accept + document**.
-  - **Admin-policy interaction surface (unknown, cannot close).** Workspace tenants with DLP / content-compliance / send-event hooks were not driven (Session 15 carry-forward — owner not a tenant admin). Free v1's no-API-call posture (Entry 39) means no data-perimeter axis to collide with; gesture-replay matches Gmail's own shape so the structural collision risk is low; but this remains a known unknown until a real-tenant probe is possible. Recommended **carry forward to Session 17 if a tenant becomes available, else accept as Free-v1-launch gap** (Free v1 fails toward native Gmail on every ambiguous path).
+  - **Admin-policy interaction surface (unknown) — ACCEPTED as a Free-v1 launch gap (Session 17, Entry 57).** Workspace tenants with DLP / content-compliance / send-event hooks were not driven (Session 15 carry-forward — owner not a tenant admin). Free v1's no-API-call posture (Entry 39) means no data-perimeter axis to collide with; gesture-replay matches Gmail's own shape so the structural collision risk is low; but this remains a known unknown until a real-tenant probe is possible. **Session 17 resolution:** the owner confirmed no tenant-admin access and that acquiring one is not worth it for Free v1 — **consciously accepted as a documented launch gap** (Free v1 fails toward native Gmail on every ambiguous path). See the "Google Workspace compatibility" accepted-gap note above + `notes/owner-decisions-log.md` Entry 57.
   - **`npm audit` advisory (runtime: none).** Two high-sev advisories in `rollup` < 2.80.0 reached transitively through `@crxjs/vite-plugin` — **build/dev-only, not in shipped runtime**; `npm audit --omit=dev` is `0 vulnerabilities`. Only `fixAvailable` is a SemVer-major downgrade of `@crxjs/vite-plugin` (would break the build). Status unchanged from CLAUDE.md's existing locked-decision note; recommended **accept + monitor for an upstream patched-rollup release**.
   - **`console.info` "multi-compose detected" line** is intentionally not DEV-gated (owner decision pre-S16) — confirmed no security impact (local console only, fixed string, no PII / no outbound), flagged for audit-trail completeness.
 - **Trigger:** before Chrome Web Store submission; re-run after any change that touches network, storage, message-passing, the page-ownership mechanism, or adds a dependency that ships at runtime.

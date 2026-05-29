@@ -51,7 +51,9 @@ export function WorkingHoursStep({ workingHours, onChange }: Props) {
       <fieldset className="oq-days">
         <legend>Working days and times</legend>
         <p className="oq-help">
-          We&rsquo;ll double-check before sending outside these hours.
+          We&rsquo;ll double-check before sending outside these hours in
+          real-time.
+          <br />
           Scheduling for later is always fine.
         </p>
         {WEEKDAYS.map((day) => {
