@@ -273,8 +273,9 @@ the feature optimizes for **one chosen** recipient, not all of them; the old
 "every recipient" phrasing overstated it. Body rewritten to say Fashionably Late
 "lets you pick the one you're writing to," keeps the brand wordplay
 **"fashionably late (😉)"** (emoji intentional), and **bolds** the value-prop
-closer: *"Pick someone's time zone once and it's remembered, so you never re-pick
-it for the same person."* Do not reintroduce "every"/"all" phrasing here.
+hook *"Pick someone's time zone once and it's remembered"* (the consequence
+clause ", so you never re-pick it for the same person." is regular weight). Do
+not reintroduce "every"/"all" phrasing here.
 
 **Two screenshot swaps** — both processed through the existing
 `media/web-store/screenshots/make-store-ready.py` (folder-scan; contain-fit +
