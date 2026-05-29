@@ -32,8 +32,7 @@ Fashionably Late (Free) will be listed on the Chrome Web Store very soon.
 
 - [`extension/`](./extension) — the Chrome extension (Manifest V3). The whole product, running entirely in your browser.
 - [`Fashionably_Late_PRD.md`](./Fashionably_Late_PRD.md) — the full product requirements document and source of truth.
-- [`PRE_LAUNCH_CHECKLIST.md`](./PRE_LAUNCH_CHECKLIST.md) — launch obligations and open pre-release items.
-- [`notes/`](./notes) — design history and decision log.
+- [`notes/`](./notes) — design history and owner decisions log. 
 
 This repository is the **Free version** of Fashionably Late — the canonical, open-source, public codebase. A paid Premium tier (with a server-side component) is **out of scope of this project**; if it is ever built, it will be a separate, private project with its own Chrome Web Store listing, not part of this repo.
 
