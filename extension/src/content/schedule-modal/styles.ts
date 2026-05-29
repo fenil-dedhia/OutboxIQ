@@ -49,32 +49,32 @@ h1 { font-size: 16px; font-weight: 500; margin: 0 0 4px; }
 }
 .preset:hover, .preset:focus-visible { background: #f1f3f4; outline: none; }
 .preset.selected {
-  background: #e8f0fe; box-shadow: inset 3px 0 0 #1a73e8;
+  background: #eff7f8; box-shadow: inset 3px 0 0 #367b87;
 }
-.preset.selected span:first-child { color: #1a73e8; font-weight: 500; }
+.preset.selected span:first-child { color: #367b87; font-weight: 500; }
 .preset .when { color: #5f6368; font-size: 12px; }
-.preset.selected .when { color: #1a73e8; }
+.preset.selected .when { color: #367b87; }
 .divider { border: 0; border-top: 1px solid #e0e0e0; margin: 12px 0; }
 .pick { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .pick input {
   font: inherit; padding: 6px 8px; border: 1px solid #dadce0;
   border-radius: 4px; color: #202124;
 }
-.pick.selected input { border-color: #1a73e8; box-shadow: 0 0 0 1px #1a73e8; }
+.pick.selected input { border-color: #367b87; box-shadow: 0 0 0 1px #367b87; }
 .note { font-size: 12px; color: #5f6368; margin: 8px 0 0; }
 .actions {
   display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;
 }
 button.text {
-  font: inherit; background: none; border: 0; color: #1a73e8;
+  font: inherit; background: none; border: 0; color: #367b87;
   padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: 500;
 }
-button.text:hover, button.text:focus-visible { background: #e8f0fe; outline:none; }
+button.text:hover, button.text:focus-visible { background: #eff7f8; outline:none; }
 button.primary {
-  font: inherit; background: #1a73e8; color: #fff; border: 0;
+  font: inherit; background: #367b87; color: #fff; border: 0;
   padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: 500;
 }
-button.primary:hover { background: #1b66c9; }
+button.primary:hover { background: #295f68; }
 button:disabled { opacity: .6; cursor: default; }
 .status { font-size: 12px; color: #5f6368; margin-top: 8px; }
 .status.error { color: #c5221f; }
@@ -87,12 +87,12 @@ button:disabled { opacity: .6; cursor: default; }
 .warn-actions { display: flex; flex-direction: column; gap: 8px; }
 .warn-actions button { width: 100%; text-align: center; }
 button.secondary {
-  font: inherit; background: #fff; color: #1a73e8;
+  font: inherit; background: #fff; color: #367b87;
   border: 1px solid #dadce0; padding: 8px 16px; border-radius: 4px;
   cursor: pointer; font-weight: 500;
 }
 button.secondary:hover, button.secondary:focus-visible {
-  background: #f8fafe; border-color: #1a73e8; outline: none;
+  background: #eff7f8; border-color: #367b87; outline: none;
 }
 
 /* §5.3.5 Optimize-for-X section (locked items a–n, Session 10).
@@ -120,7 +120,7 @@ button.secondary:hover, button.secondary:focus-visible {
   color: #202124; cursor: pointer; flex: 0 0 auto; white-space: nowrap;
 }
 .optimize-engage input[type="checkbox"] {
-  width: 16px; height: 16px; accent-color: #1a73e8; cursor: pointer;
+  width: 16px; height: 16px; accent-color: #367b87; cursor: pointer;
 }
 .optimize-recipient {
   font: inherit; border: 1px solid #dadce0;
@@ -162,7 +162,7 @@ button.secondary:hover, button.secondary:focus-visible {
   font-weight: 600;
 }
 .optimize-tooltip-btn:hover, .optimize-tooltip-btn:focus-visible {
-  background: #e8f0fe; border-color: #1a73e8; color: #1a73e8; outline: none;
+  background: #eff7f8; border-color: #367b87; color: #367b87; outline: none;
 }
 .optimize-tooltip {
   font-size: 12px; color: #5f6368; margin: 0;
@@ -193,13 +193,13 @@ button.secondary:hover, button.secondary:focus-visible {
 }
 .optimize-remember > span { overflow-wrap: anywhere; min-width: 0; }
 .optimize-remember input[type="checkbox"] {
-  width: 14px; height: 14px; accent-color: #1a73e8; cursor: pointer;
+  width: 14px; height: 14px; accent-color: #367b87; cursor: pointer;
   flex: 0 0 auto; margin-top: 1px;
 }
 .optimize-confirm {
   font-size: 13px; color: #202124; margin: 2px 0 0;
-  padding: 8px 10px; background: #e8f0fe; border-radius: 4px;
-  border-left: 3px solid #1a73e8; line-height: 1.5;
+  padding: 8px 10px; background: #eff7f8; border-radius: 4px;
+  border-left: 3px solid #367b87; line-height: 1.5;
   overflow-wrap: anywhere;
 }
 `;

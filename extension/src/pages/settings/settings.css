@@ -9,8 +9,8 @@
   color-scheme: light;
   --fl-fg: #1a1a1a;
   --fl-muted: #5f6368;
-  --fl-accent: #1a73e8;
-  --fl-accent-dark: #1b66c9;
+  --fl-accent: #367b87;
+  --fl-accent-dark: #295f68;
   --fl-border: #dadce0;
   --fl-danger: #c5221f;
   --fl-bg: #f5f6f8;
@@ -98,7 +98,7 @@ body {
 }
 
 .fl-set-nav-item.is-active {
-  background: #e8f0fe;
+  background: #eff7f8;
   color: var(--fl-accent);
   font-weight: 600;
 }
@@ -186,7 +186,7 @@ body {
 
 .fl-set-linkbtn:hover,
 .fl-set-linkbtn:focus-visible {
-  background: #e8f0fe;
+  background: #eff7f8;
   outline: none;
 }
 

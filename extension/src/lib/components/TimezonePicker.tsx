@@ -442,7 +442,7 @@ const PICKER_CSS = `
   padding: 8px 10px; border: 1px solid #dadce0; border-radius: 6px;
   background: #fff; color: #202124; line-height: 1.3;
 }
-.fl-tzp-trigger:focus-visible { outline: none; border-color: #1a73e8; box-shadow: 0 0 0 1px #1a73e8; }
+.fl-tzp-trigger:focus-visible { outline: none; border-color: #367b87; box-shadow: 0 0 0 1px #367b87; }
 .fl-tzp-trigger:disabled { background: #f8f9fa; color: #5f6368; cursor: default; }
 .fl-tzp-trigger[data-placeholder="true"] .fl-tzp-trigger-text { color: #5f6368; }
 .fl-tzp-trigger-text { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -462,7 +462,7 @@ const PICKER_CSS = `
   font: inherit; margin: 8px; padding: 7px 9px; border: 1px solid #dadce0;
   border-radius: 6px; color: #202124; outline: none; min-width: 0;
 }
-.fl-tzp-search:focus { border-color: #1a73e8; box-shadow: 0 0 0 1px #1a73e8; }
+.fl-tzp-search:focus { border-color: #367b87; box-shadow: 0 0 0 1px #367b87; }
 .fl-tzp-list { list-style: none; margin: 0; padding: 0 0 4px; overflow-y: auto; overflow-x: hidden; }
 .fl-tzp-option {
   padding: 8px 12px; cursor: pointer; color: #202124; font-size: 13px;
@@ -470,12 +470,12 @@ const PICKER_CSS = `
   /* So a keyboard-focused option scrolls clear of the sticky header above it. */
   scroll-margin-top: 30px;
 }
-.fl-tzp-option.is-active { background: #e8f0fe; }
+.fl-tzp-option.is-active { background: #eff7f8; }
 .fl-tzp-option.is-selected { font-weight: 600; }
-.fl-tzp-option.is-selected::after { content: " ✓"; color: #1a73e8; }
+.fl-tzp-option.is-selected::after { content: " ✓"; color: #367b87; }
 .fl-tzp-empty { padding: 12px; color: #5f6368; font-size: 13px; text-align: center; }
 /* Section headers ("Pinned" / "All timezones"): a full-width neutral-gray
-   band — deliberately a DIFFERENT hue from the blue option-hover (#e8f0fe) so
+   band — deliberately a DIFFERENT hue from the teal option-hover (#eff7f8) so
    a header never reads as a focused row. Sticky to the top of the scrolling
    list, so the current section's header stays visible and swaps PINNED ↔ ALL
    TIMEZONES as you scroll across the boundary (only one stuck at a time). */

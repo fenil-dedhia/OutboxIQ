@@ -246,8 +246,8 @@ const PTZ_CSS = `
 }
 .fl-ptz-chip {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 4px 6px 4px 10px; background: #e8f0fe; border: 1px solid #d2e3fc;
-  border-radius: 16px; font-size: 13px; color: #1a3a6b;
+  padding: 4px 6px 4px 10px; background: #eff7f8; border: 1px solid #b6dce2;
+  border-radius: 16px; font-size: 13px; color: #295f68;
 }
 
 /* Vertical drag-to-reorder list (Settings). */
@@ -257,10 +257,10 @@ const PTZ_CSS = `
 }
 .fl-ptz-item {
   display: flex; align-items: center; gap: 10px;
-  padding: 8px 12px; background: #e8f0fe; border: 1px solid #d2e3fc;
-  border-radius: 10px; font-size: 14px; color: #1a3a6b;
+  padding: 8px 12px; background: #eff7f8; border: 1px solid #b6dce2;
+  border-radius: 10px; font-size: 14px; color: #295f68;
 }
-.fl-ptz-item.is-over { border-color: #1a73e8; box-shadow: 0 0 0 1px #1a73e8; }
+.fl-ptz-item.is-over { border-color: #367b87; box-shadow: 0 0 0 1px #367b87; }
 .fl-ptz-item.is-dragging { opacity: .45; }
 .fl-ptz-item-label { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
 .fl-ptz-grip {
@@ -270,31 +270,31 @@ const PTZ_CSS = `
   line-height: 1; cursor: grab;
 }
 .fl-ptz-grip:hover:not(:disabled), .fl-ptz-grip:focus-visible:not(:disabled) {
-  background: #d2e3fc; color: #1a3a6b; outline: none;
+  background: #b6dce2; color: #295f68; outline: none;
 }
 .fl-ptz-grip:active { cursor: grabbing; }
-.fl-ptz-grip:disabled { color: #b6c6e0; cursor: default; }
+.fl-ptz-grip:disabled { color: #b8bcc0; cursor: default; }
 
 .fl-ptz-chip-label { white-space: nowrap; }
 .fl-ptz-chip-remove {
   display: inline-flex; align-items: center; justify-content: center;
   width: 20px; height: 20px; border: 0; border-radius: 50%;
-  background: transparent; color: #1a73e8; font-size: 16px; line-height: 1;
+  background: transparent; color: #367b87; font-size: 16px; line-height: 1;
   cursor: pointer; flex: 0 0 auto;
 }
 .fl-ptz-chip-remove:hover:not(:disabled),
 .fl-ptz-chip-remove:focus-visible:not(:disabled) {
-  background: #d2e3fc; outline: none;
+  background: #b6dce2; outline: none;
 }
-.fl-ptz-chip-remove:disabled { color: #b6c6e0; cursor: default; }
+.fl-ptz-chip-remove:disabled { color: #b8bcc0; cursor: default; }
 
 .fl-ptz-max { font-size: 13px; color: #5f6368; margin: 12px 0 4px; }
 .fl-ptz-linkbtn {
-  border: 0; background: none; padding: 0; color: #1a73e8; font: inherit;
+  border: 0; background: none; padding: 0; color: #367b87; font: inherit;
   cursor: pointer; text-decoration: underline;
 }
 .fl-ptz-linkbtn:hover:not(:disabled),
-.fl-ptz-linkbtn:focus-visible:not(:disabled) { color: #1b66c9; outline: none; }
+.fl-ptz-linkbtn:focus-visible:not(:disabled) { color: #295f68; outline: none; }
 .fl-ptz-add-label { display: block; font-size: 13px; color: #5f6368; margin-bottom: 6px; }
 .fl-ptz-add-picker { max-width: 360px; }
 `;
