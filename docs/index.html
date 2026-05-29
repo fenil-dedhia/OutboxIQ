@@ -1,0 +1,864 @@
+---
+# layout: null opts this page OUT of the Primer `default` layout that
+# _config.yml applies to every other page (the legal docs). This is a fully
+# self-contained marketing page: its own <head>, its own scoped CSS, no Primer
+# CSS, no theme JS. The legal pages at /legal/{privacy,terms} are untouched and
+# keep the Primer layout — nothing here can reach them (separate pages load
+# separate CSS; every rule below is additionally namespaced under .fl-page).
+layout: null
+title: "Fashionably Late — Schedule Gmail emails in your recipient's time zone"
+---
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Fashionably Late — Schedule Gmail emails in your recipient's time zone</title>
+    <meta
+      name="description"
+      content="Fashionably Late is a free, open-source Chrome extension that enhances Gmail's Schedule Send so your emails arrive at the right local time for each recipient — and reminds you before you send outside your own working hours. Local-first, no sign-in, no tracking."
+    />
+    <link rel="canonical" href="https://fashionablylate.app/" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" sizes="any" />
+
+    <!-- Open Graph / social — honest tags, real assets only -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://fashionablylate.app/" />
+    <meta property="og:title" content="Fashionably Late — Schedule Gmail emails in your recipient's time zone" />
+    <meta
+      property="og:description"
+      content="A free, open-source Chrome extension that enhances Gmail's Schedule Send: emails land at the right local time for each recipient. Local-first, no sign-in, no tracking."
+    />
+    <meta property="og:image" content="https://fashionablylate.app/assets/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Fashionably Late — Schedule Gmail emails in your recipient's time zone" />
+    <meta
+      name="twitter:description"
+      content="A free, open-source Chrome extension that enhances Gmail's Schedule Send: emails land at the right local time for each recipient. Local-first, no sign-in, no tracking."
+    />
+    <meta name="twitter:image" content="https://fashionablylate.app/assets/og-image.png" />
+
+    <style>
+      /* ============================================================
+         Fashionably Late — landing page styles.
+         Self-contained, no external fonts/CDNs (matches the product's
+         no-tracking promise). Every rule is scoped under .fl-page so it
+         cannot affect any other page even if the layout opt-out regressed.
+
+         Palette (media/palette.md, Entry 57/58):
+           Moonstone #5EB1BF .... logo + accent + hero background ONLY
+                                  (fails AA as white-text/link — never used so)
+           #367B87 (700) ........ buttons, links, icons on white (4.84:1 AA)
+           #295F68 (800) ........ button hover, strong accent text (7.16:1)
+           #EFF7F8 (50) ......... light tint backgrounds
+           #B6DCE2 (200) ........ tinted borders
+         Dark ink on Moonstone (#0e2c31 on #5EB1BF) ~8.5:1 — hero text is dark.
+         ============================================================ */
+      .fl-page,
+      .fl-page * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+      }
+      .fl-page {
+        /* System font stack — the wordmark is the only typeset brand element */
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        color: #1f2a2c;
+        line-height: 1.6;
+        font-size: 17px;
+        -webkit-font-smoothing: antialiased;
+      }
+      .fl-page h1,
+      .fl-page h2,
+      .fl-page h3 {
+        line-height: 1.2;
+        color: #102a2e;
+        margin: 0 0 0.5em;
+        font-weight: 700;
+        overflow-wrap: break-word;
+      }
+      .fl-page p {
+        margin: 0 0 1em;
+      }
+      .fl-page a {
+        color: #367b87;
+        text-decoration: none;
+      }
+      .fl-page a:hover {
+        text-decoration: underline;
+      }
+      .fl-page a:focus-visible,
+      .fl-page .fl-btn:focus-visible {
+        outline: 3px solid #367b87;
+        outline-offset: 2px;
+        border-radius: 6px;
+      }
+      .fl-wrap {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+
+      /* ---- Header / nav ---- */
+      .fl-nav {
+        border-bottom: 1px solid #e6edee;
+      }
+      .fl-nav .fl-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 16px;
+        padding-bottom: 16px;
+        gap: 16px;
+      }
+      .fl-brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        font-size: 19px;
+        color: #102a2e;
+      }
+      .fl-brand:hover {
+        text-decoration: none;
+      }
+      .fl-brand img {
+        height: 34px;
+        width: 34px;
+        display: block;
+      }
+      .fl-nav-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        font-weight: 600;
+        font-size: 15px;
+      }
+      .fl-nav-link svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      /* ---- Buttons ---- */
+      .fl-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        font-size: 16px;
+        font-weight: 600;
+        padding: 13px 22px;
+        border-radius: 10px;
+        border: 1.5px solid transparent;
+        text-align: center;
+        cursor: pointer;
+      }
+      .fl-btn svg {
+        width: 19px;
+        height: 19px;
+        flex: none;
+      }
+      /* Real, clickable action — solid AA-safe teal */
+      .fl-btn-primary {
+        background: #367b87;
+        color: #ffffff;
+        border-color: #367b87;
+      }
+      .fl-btn-primary:hover {
+        background: #295f68;
+        border-color: #295f68;
+        text-decoration: none;
+      }
+      /* Outline action on light backgrounds */
+      .fl-btn-ghost {
+        background: #ffffff;
+        color: #295f68;
+        border-color: #b6dce2;
+      }
+      .fl-btn-ghost:hover {
+        background: #eff7f8;
+        text-decoration: none;
+      }
+      /* Pending CTA — visibly NOT clickable (the Web Store listing isn't live
+         yet). Styled as "awaiting launch", not a dead link: muted surface,
+         dashed border, default cursor, no href. See the swap comment in the
+         hero markup for exactly what to replace at launch. */
+      .fl-btn-pending {
+        background: #ffffff;
+        color: #295f68;
+        border: 1.5px dashed #7abeca;
+        cursor: default;
+      }
+      .fl-btn-pending .fl-pending-sub {
+        font-weight: 500;
+        opacity: 0.85;
+      }
+
+      /* ---- Hero ---- */
+      .fl-hero {
+        background: #5eb1bf; /* Moonstone — accent/decorative use, dark text */
+        color: #102a2e;
+      }
+      .fl-hero .fl-wrap {
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        gap: 48px;
+        align-items: center;
+        padding-top: 72px;
+        padding-bottom: 72px;
+      }
+      .fl-hero h1 {
+        font-size: 42px;
+        color: #0e2c31;
+        margin-bottom: 18px;
+      }
+      .fl-hero .fl-lede {
+        font-size: 19px;
+        color: #143a42;
+        margin-bottom: 28px;
+        max-width: 34em;
+      }
+      .fl-hero .fl-tagline {
+        display: inline-block;
+        font-weight: 600;
+        font-size: 14px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #14454f;
+        margin-bottom: 14px;
+      }
+      .fl-cta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin-top: 6px;
+      }
+      .fl-hero-shot {
+        margin: 0;
+      }
+      .fl-hero-shot img {
+        width: 100%;
+        height: auto;
+        border-radius: 12px;
+        border: 1px solid rgba(16, 42, 46, 0.12);
+        box-shadow: 0 18px 40px rgba(16, 42, 46, 0.22);
+        display: block;
+      }
+
+      /* ---- Section scaffolding ---- */
+      .fl-section {
+        padding: 72px 0;
+      }
+      .fl-section--tint {
+        background: #eff7f8;
+      }
+      .fl-section-head {
+        max-width: 40em;
+        margin: 0 auto 48px;
+        text-align: center;
+      }
+      .fl-section-head h2 {
+        font-size: 32px;
+      }
+      .fl-section-head p {
+        font-size: 18px;
+        color: #44585b;
+        margin: 0;
+      }
+
+      /* ---- "What it does" alternating blocks ---- */
+      .fl-feature {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 48px;
+        align-items: center;
+        margin-bottom: 64px;
+      }
+      .fl-feature:last-child {
+        margin-bottom: 0;
+      }
+      .fl-feature--reverse .fl-feature-media {
+        order: -1;
+      }
+      .fl-feature h3 {
+        font-size: 24px;
+      }
+      .fl-feature p {
+        font-size: 17px;
+        color: #3a4d50;
+        margin: 0;
+      }
+      .fl-feature-media img {
+        width: 100%;
+        height: auto;
+        border-radius: 12px;
+        border: 1px solid #d6e4e6;
+        box-shadow: 0 10px 28px rgba(16, 42, 46, 0.12);
+        display: block;
+      }
+      /* Illustration tile used where no real screenshot exists (the
+         after-hours warning shot isn't captured) — honest, not a fake. */
+      .fl-illus {
+        background: #eff7f8;
+        border: 1px solid #d6e4e6;
+        border-radius: 12px;
+        aspect-ratio: 16 / 11;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .fl-illus svg {
+        width: 132px;
+        height: 132px;
+        color: #367b87;
+      }
+
+      /* ---- Highlights grid ---- */
+      .fl-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 28px;
+      }
+      .fl-card {
+        background: #ffffff;
+        border: 1px solid #e1ebec;
+        border-radius: 14px;
+        padding: 26px 24px;
+      }
+      .fl-card-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        border-radius: 11px;
+        background: #eff7f8;
+        margin-bottom: 14px;
+      }
+      .fl-card-icon svg {
+        width: 24px;
+        height: 24px;
+        color: #367b87;
+      }
+      .fl-card h3 {
+        font-size: 18px;
+        margin-bottom: 6px;
+      }
+      .fl-card p {
+        font-size: 15px;
+        color: #44585b;
+        margin: 0;
+      }
+
+      /* ---- Privacy ---- */
+      .fl-privacy .fl-wrap {
+        max-width: 820px;
+      }
+      .fl-privacy h2 {
+        font-size: 32px;
+      }
+      .fl-privacy-lede {
+        font-size: 19px;
+        color: #3a4d50;
+        margin-bottom: 28px;
+      }
+      .fl-privacy-list {
+        list-style: none;
+        margin: 0 0 24px;
+        padding: 0;
+        display: grid;
+        gap: 14px;
+      }
+      .fl-privacy-list li {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        font-size: 16px;
+        color: #28383b;
+      }
+      .fl-check {
+        flex: none;
+        width: 22px;
+        height: 22px;
+        color: #367b87;
+        margin-top: 2px;
+      }
+
+      /* ---- Screenshots ---- */
+      .fl-shots-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 28px;
+      }
+      .fl-shot figure {
+        margin: 0;
+      }
+      .fl-shot img {
+        width: 100%;
+        height: auto;
+        border-radius: 12px;
+        border: 1px solid #d6e4e6;
+        box-shadow: 0 10px 26px rgba(16, 42, 46, 0.12);
+        display: block;
+      }
+      .fl-shot figcaption {
+        font-size: 14px;
+        color: #44585b;
+        margin-top: 12px;
+        text-align: center;
+      }
+
+      /* ---- Footer ---- */
+      .fl-footer {
+        background: #102a2e;
+        color: #d6e4e6;
+        padding: 56px 0 40px;
+      }
+      .fl-footer h2 {
+        color: #ffffff;
+        font-size: 26px;
+        margin-bottom: 18px;
+      }
+      .fl-footer .fl-btn-pending {
+        background: transparent;
+        color: #d6e4e6;
+        border-color: #4d7e88;
+      }
+      .fl-footer a {
+        color: #9fd2db;
+      }
+      .fl-footer-cta {
+        margin-bottom: 36px;
+      }
+      .fl-footer-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 22px;
+        align-items: center;
+        border-top: 1px solid #25474c;
+        padding-top: 24px;
+        font-size: 15px;
+      }
+      .fl-footer-sep {
+        color: #4d7e88;
+      }
+      .fl-footer-built {
+        margin-left: auto;
+        color: #9fb6b9;
+      }
+
+      /* ---- Responsive ---- */
+      @media (max-width: 860px) {
+        .fl-hero .fl-wrap,
+        .fl-feature {
+          grid-template-columns: 1fr;
+          gap: 32px;
+        }
+        .fl-hero .fl-wrap {
+          padding-top: 52px;
+          padding-bottom: 52px;
+        }
+        .fl-feature--reverse .fl-feature-media {
+          order: 0;
+        }
+        .fl-hero h1 {
+          font-size: 34px;
+        }
+        .fl-grid,
+        .fl-shots-grid {
+          grid-template-columns: 1fr;
+        }
+        .fl-footer-built {
+          margin-left: 0;
+          width: 100%;
+        }
+      }
+      @media (max-width: 480px) {
+        .fl-page {
+          font-size: 16px;
+        }
+        .fl-wrap {
+          padding: 0 18px;
+        }
+        .fl-hero h1 {
+          font-size: 28px;
+        }
+        .fl-hero .fl-lede {
+          font-size: 17px;
+        }
+        .fl-section,
+        .fl-hero .fl-wrap {
+          padding-top: 44px;
+          padding-bottom: 44px;
+        }
+        .fl-section-head h2,
+        .fl-privacy h2 {
+          font-size: 26px;
+        }
+        .fl-btn {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="fl-page">
+      <!-- ============ HEADER ============ -->
+      <header class="fl-nav">
+        <div class="fl-wrap">
+          <a class="fl-brand" href="/" aria-label="Fashionably Late — home">
+            <img src="/assets/symbol.svg" alt="" />
+            <span>Fashionably Late</span>
+          </a>
+          <a
+            class="fl-nav-link"
+            href="https://github.com/fenil-dedhia/fashionably-late"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.3.8-.6v-2c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.7 1.3 3.4 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.4 11.4 0 0 1 6 0C17.3 4.7 18.3 5 18.3 5c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z" />
+            </svg>
+            Open source
+          </a>
+        </div>
+      </header>
+
+      <main>
+        <!-- ============ HERO ============ -->
+        <section class="fl-hero">
+          <div class="fl-wrap">
+            <div class="fl-hero-copy">
+              <span class="fl-tagline">Schedule emails at their perfect time</span>
+              <h1>Your emails land at the right moment — in your recipients' time, not yours.</h1>
+              <p class="fl-lede">
+                Fashionably Late is a free Chrome extension that enhances Gmail's
+                own Schedule Send. It suggests the right local time for each
+                recipient and quietly checks before you send outside your own
+                working hours — no account, no tracking.
+              </p>
+              <div class="fl-cta-row">
+                <!-- ============================================================
+                     PENDING PRIMARY CTA — SWAP AT LAUNCH.
+                     The extension is NOT live on the Chrome Web Store yet, so
+                     this is intentionally non-clickable (no href, default
+                     cursor). When the listing goes live, replace this single
+                     <span> with the real link, e.g.:
+
+                       <a class="fl-btn fl-btn-primary"
+                          href="https://chrome.google.com/webstore/detail/<EXTENSION_ID>">
+                         <svg>…chrome badge…</svg> Get it for Chrome
+                       </a>
+
+                     (Owner may prefer the official "Available in the Chrome Web
+                     Store" badge image instead — drop it in here.) The footer
+                     has an identical pending CTA — swap both.
+                     ============================================================ -->
+                <span
+                  class="fl-btn fl-btn-pending"
+                  role="button"
+                  aria-disabled="true"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 7v5l3 2" />
+                  </svg>
+                  Coming soon to the Chrome Web Store
+                </span>
+                <a
+                  class="fl-btn fl-btn-primary"
+                  href="https://github.com/fenil-dedhia/fashionably-late"
+                >
+                  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.3.8-.6v-2c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.7 1.3 3.4 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.4 11.4 0 0 1 6 0C17.3 4.7 18.3 5 18.3 5c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z" />
+                  </svg>
+                  View source on GitHub
+                </a>
+              </div>
+            </div>
+            <figure class="fl-hero-shot">
+              <img
+                src="/assets/screenshots/schedule-optimize.jpg"
+                alt="Fashionably Late's enhanced Schedule Send modal open in Gmail, showing time-zone-aware send-time suggestions for a selected recipient."
+                width="1863"
+                height="1082"
+              />
+            </figure>
+          </div>
+        </section>
+
+        <!-- ============ WHAT IT DOES ============ -->
+        <section class="fl-section" id="how-it-works">
+          <div class="fl-wrap">
+            <div class="fl-section-head">
+              <h2>What it does</h2>
+              <p>
+                Three quiet improvements to scheduling you already do — without
+                changing how Gmail works.
+              </p>
+            </div>
+
+            <div class="fl-feature">
+              <div class="fl-feature-copy">
+                <h3>The right local time, for every recipient</h3>
+                <p>
+                  When you schedule an email, Fashionably Late reads the
+                  recipients from your compose window and offers a research-backed
+                  morning or midday slot in <em>their</em> local time zone — so
+                  your message arrives during their working day instead of getting
+                  buried overnight. Pick someone's time zone once and it's
+                  remembered, so you never re-pick it for the same person.
+                </p>
+              </div>
+              <div class="fl-feature-media">
+                <img
+                  src="/assets/screenshots/schedule-optimize.jpg"
+                  alt="The Schedule Send modal with the Optimize-for-recipient section open, a recipient selected, and morning and midday send times shown in the recipient's time zone."
+                  width="1863"
+                  height="1082"
+                />
+              </div>
+            </div>
+
+            <div class="fl-feature fl-feature--reverse">
+              <div class="fl-feature-copy">
+                <h3>A gentle nudge before after-hours sends</h3>
+                <p>
+                  Fashionably Late double-checks before a regular Send goes out
+                  past the working hours you set — with three clear choices: send
+                  anyway, snap to your working hours, or cancel. Scheduling a
+                  message for later is always fine and never warns; deliberately
+                  timing an email for a recipient's window is exactly what the
+                  product is for. You stay in control either way.
+                </p>
+              </div>
+              <div class="fl-feature-media">
+                <!-- Illustration, not a screenshot: the after-hours warning shot
+                     isn't in the captured set, so we don't pass off an unrelated
+                     image as it. -->
+                <div class="fl-illus" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 7v5l3 2" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <div class="fl-feature">
+              <div class="fl-feature-copy">
+                <h3>Built into Gmail's own Schedule Send</h3>
+                <p>
+                  Nothing new to learn. The "Schedule send" option becomes
+                  "Schedule Send (powered by Fashionably Late)", the familiar
+                  modal gains a few time-zone-aware options, and your scheduled
+                  emails stay right where Gmail puts them — in the Scheduled
+                  folder, with Gmail's own interactions and labels preserved.
+                </p>
+              </div>
+              <div class="fl-feature-media">
+                <img
+                  src="/assets/screenshots/schedule-modal.jpg"
+                  alt="Gmail's Schedule Send modal, enhanced by Fashionably Late, sitting inside the standard Gmail compose window."
+                  width="1863"
+                  height="1080"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ HIGHLIGHTS ============ -->
+        <section class="fl-section fl-section--tint">
+          <div class="fl-wrap">
+            <div class="fl-section-head">
+              <h2>Highlights</h2>
+              <p>Small, focused, and respectful of your data.</p>
+            </div>
+            <div class="fl-grid">
+              <div class="fl-card">
+                <span class="fl-card-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" />
+                  </svg>
+                </span>
+                <h3>Time-zone-aware suggestions</h3>
+                <p>Morning or midday delivery in each recipient's local time.</p>
+              </div>
+              <div class="fl-card">
+                <span class="fl-card-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 3l7 3v5c0 4.5-3 7.6-7 9-4-1.4-7-4.5-7-9V6l7-3z" />
+                    <path d="M12 8v4l2.5 1.5" />
+                  </svg>
+                </span>
+                <h3>Working-hours guard</h3>
+                <p>A soft warning before a regular send goes out after hours.</p>
+              </div>
+              <div class="fl-card">
+                <span class="fl-card-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="3" y="5" width="18" height="14" rx="2" />
+                    <path d="M3 7l9 6 9-6" />
+                  </svg>
+                </span>
+                <h3>Native Gmail feel</h3>
+                <p>Enhances Schedule Send — it doesn't replace or rebuild it.</p>
+              </div>
+              <div class="fl-card">
+                <span class="fl-card-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M3 7l2-2h5l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7z" />
+                    <path d="M13 11v3l2 1" />
+                  </svg>
+                </span>
+                <h3>Stays in your Scheduled folder</h3>
+                <p>Scheduled emails live in Gmail exactly as they always have.</p>
+              </div>
+              <div class="fl-card">
+                <span class="fl-card-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="5" y="11" width="14" height="9" rx="2" />
+                    <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+                  </svg>
+                </span>
+                <h3>Local-first, no tracking</h3>
+                <p>Everything runs in your browser. No server, no analytics.</p>
+              </div>
+              <div class="fl-card">
+                <span class="fl-card-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M8 9l-4 3 4 3M16 9l4 3-4 3M13.5 7l-3 10" />
+                  </svg>
+                </span>
+                <h3>Open source</h3>
+                <p>Apache-2.0 licensed — read, fork, and audit the whole thing.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ PRIVACY ============ -->
+        <section class="fl-section fl-privacy">
+          <div class="fl-wrap">
+            <h2>Private by design</h2>
+            <p class="fl-privacy-lede">
+              Fashionably Late is local-first and privacy-first. Everything runs
+              in your browser, and nothing about your email ever leaves your
+              device. There's no account to create and no inbox to connect.
+            </p>
+            <ul class="fl-privacy-list">
+              <li>
+                <svg class="fl-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5" /></svg>
+                <span>Stored entirely on your device — there is no Fashionably Late server, account, or backend.</span>
+              </li>
+              <li>
+                <svg class="fl-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5" /></svg>
+                <span>No Google sign-in and no Gmail API. It reads only the recipients in your compose window to suggest good send times — never your message content.</span>
+              </li>
+              <li>
+                <svg class="fl-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5" /></svg>
+                <span>No tracking, no telemetry, no analytics. It never tracks opens or builds profiles, and collects no usage data.</span>
+              </li>
+              <li>
+                <svg class="fl-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5" /></svg>
+                <span>You can edit, export, or delete everything from Settings at any time.</span>
+              </li>
+            </ul>
+            <p>
+              Read the full
+              <a href="https://fashionablylate.app/legal/privacy">Privacy Policy</a>
+              and
+              <a href="https://fashionablylate.app/legal/terms">Terms of Service</a>.
+            </p>
+          </div>
+        </section>
+
+        <!-- ============ SCREENSHOTS ============ -->
+        <section class="fl-section fl-section--tint">
+          <div class="fl-wrap">
+            <div class="fl-section-head">
+              <h2>A closer look</h2>
+              <p>Real screenshots from the extension running inside Gmail.</p>
+            </div>
+            <div class="fl-shots-grid">
+              <div class="fl-shot">
+                <figure>
+                  <img
+                    src="/assets/screenshots/onboarding.jpg"
+                    alt="Fashionably Late's onboarding Welcome screen, with the brand symbol, a plain-language privacy summary, and the consent checkbox."
+                    width="1863"
+                    height="1085"
+                  />
+                  <figcaption>Privacy-first onboarding — your data, your control.</figcaption>
+                </figure>
+              </div>
+              <div class="fl-shot">
+                <figure>
+                  <img
+                    src="/assets/screenshots/pinned-timezones.jpg"
+                    alt="The Settings page open on Pinned Timezones, showing a searchable, plain-language time-zone list with pinned zones."
+                    width="1863"
+                    height="1091"
+                  />
+                  <figcaption>A friendly time-zone picker, with the zones you use most pinned.</figcaption>
+                </figure>
+              </div>
+              <div class="fl-shot">
+                <figure>
+                  <img
+                    src="/assets/screenshots/privacy-data.jpg"
+                    alt="The Privacy & Data section of Settings, showing on-device Export and Delete controls."
+                    width="1863"
+                    height="1090"
+                  />
+                  <figcaption>Export or delete everything on-device, any time.</figcaption>
+                </figure>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <!-- ============ FOOTER ============ -->
+      <footer class="fl-footer">
+        <div class="fl-wrap">
+          <div class="fl-footer-cta">
+            <h2>Schedule emails at their perfect time.</h2>
+            <div class="fl-cta-row">
+              <!-- PENDING PRIMARY CTA (footer copy) — swap together with the
+                   hero CTA when the Chrome Web Store listing goes live. -->
+              <span class="fl-btn fl-btn-pending" role="button" aria-disabled="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 7v5l3 2" />
+                </svg>
+                Coming soon to the Chrome Web Store
+              </span>
+              <a class="fl-btn fl-btn-ghost" href="https://github.com/fenil-dedhia/fashionably-late">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.3.8-.6v-2c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.7 1.3 3.4 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.4 11.4 0 0 1 6 0C17.3 4.7 18.3 5 18.3 5c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z" />
+                </svg>
+                View source on GitHub
+              </a>
+            </div>
+          </div>
+          <div class="fl-footer-links">
+            <a href="https://fashionablylate.app/legal/privacy">Privacy</a>
+            <span class="fl-footer-sep" aria-hidden="true">·</span>
+            <a href="https://fashionablylate.app/legal/terms">Terms</a>
+            <span class="fl-footer-sep" aria-hidden="true">·</span>
+            <a href="https://github.com/fenil-dedhia/fashionably-late">GitHub</a>
+            <span class="fl-footer-built">
+              Built by
+              <a href="https://www.linkedin.com/in/fenildedhia/">Fenil Dedhia</a>
+            </span>
+          </div>
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>
