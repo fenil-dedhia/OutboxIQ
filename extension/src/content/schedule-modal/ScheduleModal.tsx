@@ -89,6 +89,18 @@ export interface ScheduleModalProps {
 
 type ScheduleAction = () => Promise<void>;
 
+// (c) reveal-on-stall backstop (Session 19). If a hand-off neither succeeds
+// nor fails within this window, our max-z backdrop is torn down so Gmail's
+// native surface (already being driven underneath) is visible instead of
+// occluding it for the recipe's full ~4s row-wait timeout. Chosen to sit
+// safely ABOVE a normal successful hand-off (~1s: chevron→menu→dialog→row
+// clicks, each gated by a ~120ms recipe sleep) and BELOW the recipe's 4000ms
+// waitFor failure timeout — so a healthy schedule closes on success before
+// this fires (no native-menu flash on the happy path), while a genuinely
+// stuck hand-off reveals native Gmail promptly. This is the one timing
+// coupling here; if the recipe's waitFor timeout changes, revisit this value.
+const REVEAL_ON_STALL_MS = 2500;
+
 function lastToRemember(ls: LastScheduled): LastScheduled {
   return {
     display: ls.display,
@@ -120,6 +132,27 @@ export function ScheduleModal({
   // OptimizeSection clears its own checkbox (one-decision-at-a-time, §8.7).
   const [optimizeReset, setOptimizeReset] = useState(0);
   const cardRef = useRef<HTMLDivElement>(null);
+
+  // (b) Recipient guard (Session 19, Entry 59). Whether the compose has at
+  // least one TOKENIZED To/CC chip, read ONCE at modal-open time (the
+  // `recipients` prop is the single `readComposeRecipients()` snapshot the
+  // content script took on open — §5.3.5 (b)). When false, the Schedule action
+  // is hard-disabled so we never hand off a send Gmail will reject for "specify
+  // at least one recipient" (whose native error would otherwise render BEHIND
+  // our max-z backdrop, leaving the user with no visible reason — the bug this
+  // fixes). Static for this modal instance by design: no observer/poll — the
+  // user Cancels, adds a recipient, and reopens (the same close-fix-reopen flow
+  // as Gmail's own scheduler).
+  //
+  // DOCUMENTED GMAIL-COUPLING ASSUMPTION (Entry 59): this relies on Gmail
+  // tokenizing the To field into a chip before the user can reach this action.
+  // Owner-tested — writing the subject/body tokenizes a typed To address, and
+  // the modal is never opened before a body exists, so the "valid address typed
+  // but not yet tokenized into a chip" case (which `readComposeRecipients`, a
+  // chip-only reader, cannot distinguish from truly-empty — see
+  // research/compose-recipients-probe.md) does not occur in the real flow. If
+  // Gmail ever changes tokenization timing, THIS check is the thing to revisit.
+  const hasRecipient = recipients.length > 0;
 
   // §5.8.2 live link: pins reorder/add/remove from the Settings page reflect in
   // this open modal's §5.3.5 (i) picker without reopening (owner UX call,
@@ -209,33 +242,64 @@ export function ScheduleModal({
 
   // Commit `action`, then persist `remember`. Any failure hands off to
   // Gmail's own scheduler so the user is never stranded (PRD §5.2.3).
+  //
+  // (c) reveal-on-failure / reveal-on-stall backstop (Session 19, Entry 59):
+  // our backdrop is z-index max, so while we drive Gmail underneath it any
+  // native surface (the schedule dialog, or a validation error) is occluded.
+  // On the HAPPY path that's invisible and intended — the recipe completes in
+  // ~1s and we close, revealing Gmail's "Message scheduled" confirmation; no
+  // native-menu flash. But if the hand-off FAILS (recipe throws) or STALLS
+  // (recipe sits in its ~4s waitFor), we tear our modal down promptly so
+  // Gmail's own surface is visible rather than stranding the user behind our
+  // backdrop. We never setState after a reveal — onClose has unmounted us — so
+  // the failure path no longer surfaces an in-modal error (the recipe's own
+  // native-dialog fallback is the "never stranded" guarantee, §5.2.3 / §8.1).
   async function run(
     action: () => Promise<void>,
     remember: LastScheduled,
   ): Promise<void> {
     if (status.kind === "busy") return;
     setStatus({ kind: "busy" });
+
+    let revealed = false;
+    const reveal = (): void => {
+      if (revealed) return;
+      revealed = true;
+      onClose();
+    };
+    // Reveal-on-stall: fires only if neither success nor failure has resolved
+    // by REVEAL_ON_STALL_MS (well under the recipe's 4s failure timeout, well
+    // over a normal ~1s success), so the user never stares at our backdrop for
+    // the full timeout. A late success still persists via onScheduled below;
+    // onClose is idempotent.
+    const stallTimer = setTimeout(reveal, REVEAL_ON_STALL_MS);
+
     try {
       await action();
+      clearTimeout(stallTimer);
+      // Success persists "Last scheduled time" even if the stall-reveal already
+      // closed us (the schedule did land) — but we only close here if it
+      // hasn't already, so the happy path keeps its single seamless close.
       onScheduled(remember);
-      onClose();
+      if (!revealed) onClose();
     } catch (err) {
+      clearTimeout(stallTimer);
       if (import.meta.env.DEV) {
         console.warn(
           "[Fashionably Late] §5.3 scheduling failed → native:",
           err,
         );
       }
-      try {
-        await openNativeScheduleDialog();
-        onClose();
-      } catch {
-        setStatus({
-          kind: "error",
-          message:
-            "Couldn't open scheduling. Use Gmail's own Schedule send instead.",
-        });
-      }
+      // Reveal-on-failure: drop our backdrop NOW (before the native fallback)
+      // so Gmail's surface isn't occluded; never await the fallback first.
+      reveal();
+      // Best-effort: (re)open Gmail's native scheduler underneath. Fire-and-
+      // forget — we've already revealed, so if this also fails Gmail's own
+      // state (its error / the compose) is what shows: the correct
+      // fail-toward-native outcome (§5.2.3).
+      void openNativeScheduleDialog().catch(() => {
+        /* nothing more we can do; native state is already visible */
+      });
     }
   }
 
@@ -307,6 +371,11 @@ export function ScheduleModal({
   // pickSelection / OptimizeSection engagement contract makes them
   // mutually exclusive in steady state).
   function commit(): void {
+    // (b) genuine guard, not just a greyed button: never proceed with zero
+    // tokenized recipients, whatever invoked us (click, Enter, a future
+    // caller). The Schedule button is also natively `disabled` in this state,
+    // which already blocks click + Enter; this is belt-and-suspenders.
+    if (!hasRecipient) return;
     if (optimize) {
       commitOptimize(optimize);
       return;
@@ -472,12 +541,28 @@ export function ScheduleModal({
         )}
 
         <div className="actions">
+          {/* (b) Recipient guard hint — a validation message for the Schedule
+              action, so it lives IN the action row (flush-left of the buttons),
+              not under Pick custom. Danger-red (#c5221f danger token, 5.8:1 on
+              the white card — AA for normal text), role="alert" so it's
+              announced on open even though the disabled Schedule button isn't
+              focusable; also associated via aria-describedby. Cancel stays the
+              obvious working exit (close-fix-reopen). */}
+          {!hasRecipient && (
+            <p className="actions-hint" id="fl-recipient-hint" role="alert">
+              Please add at least one recipient to continue.
+            </p>
+          )}
           <button className="text" onClick={onClose} disabled={busy}>
-            Cancel
+            {/* In the no-recipient state the only forward path is to back out,
+                add a recipient, and reopen — so the exit reads "Go back" rather
+                than "Cancel" (which implies abandoning a scheduling choice). */}
+            {hasRecipient ? "Cancel" : "Go back"}
           </button>
           <button
             className="primary"
-            disabled={busy || (!selection && !optimize)}
+            disabled={busy || !hasRecipient || (!selection && !optimize)}
+            aria-describedby={!hasRecipient ? "fl-recipient-hint" : undefined}
             onClick={commit}
           >
             Schedule

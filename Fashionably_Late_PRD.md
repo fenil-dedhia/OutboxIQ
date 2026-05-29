@@ -278,6 +278,25 @@ If the Fashionably Late extension fails to load or encounters an error, Gmail's 
 
 ### 5.3 Enhanced Schedule Send Modal
 
+> **Entry-59 amendment (2026-05-29, Session 19).** Two additions to the modal's
+> behaviour, neither changing the scheduling spec below:
+> 1. **No-recipient guard.** The modal's primary **Schedule** action is
+>    hard-disabled (greyed + keyboard-inert, with a short red hint) when the
+>    compose has **zero tokenized To/CC recipients at the moment the modal
+>    opens** — checked once via the existing `readComposeRecipients()` snapshot,
+>    no live re-check. The user backs out (the exit button reads **"Go back"** in
+>    this state), adds a recipient, and reopens (same close-fix-reopen flow as
+>    Gmail's native scheduler). This prevents handing a recipient-less send to
+>    Gmail, whose native "specify at least one recipient" error would otherwise
+>    render *behind* our top-of-stack modal, leaving the user with no visible
+>    reason nothing scheduled. Relies on Gmail tokenizing the To field into a
+>    chip before Schedule Send is reachable (owner-tested); see
+>    `notes/owner-decisions-log.md` Entry 59 for the coupling assumption + risk.
+> 2. **Dismiss-on-hand-off-failure.** On a successful schedule the modal closes
+>    seamlessly as before (no native-menu flash). If the Gmail hand-off **fails
+>    or stalls**, the modal/backdrop is torn down promptly so Gmail's own
+>    surface is visible rather than occluded — fail-toward-native (§5.2.3).
+
 #### 5.3.1 Layout
 
 The modal preserves the visual style and dimensions of Gmail's native scheduling modal but adds the following enhancements.

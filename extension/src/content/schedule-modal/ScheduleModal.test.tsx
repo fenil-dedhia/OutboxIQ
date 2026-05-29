@@ -24,7 +24,11 @@ vi.mock("./schedule-actions", () => ({
 }));
 
 // Imported AFTER vi.mock so we get the spy versions.
-import { scheduleAt, schedulePreset } from "./schedule-actions";
+import {
+  scheduleAt,
+  schedulePreset,
+  openNativeScheduleDialog,
+} from "./schedule-actions";
 
 const sarah: ComposeRecipient = {
   email: "sarah@example.com",
@@ -111,6 +115,177 @@ describe("ScheduleModal — no §5.5 warning on Schedule Send (v4)", () => {
       }),
     ).not.toBeInTheDocument();
     expect(schedulePreset).toHaveBeenCalledTimes(1);
+  });
+});
+
+// Session 19 (Entry 59) — (b) recipient guard: when the compose has no
+// tokenized recipient at open, the Schedule action is hard-disabled (greyed +
+// keyboard-inert) with a hint, so we never hand off a send Gmail rejects for
+// "specify at least one recipient" (whose native error would otherwise render
+// behind our max-z backdrop). Checked ONCE at open; close-fix-reopen to clear.
+describe("ScheduleModal — (b) recipient guard (Session 19)", () => {
+  it("disables Schedule and shows the associated hint when there is no recipient", () => {
+    render(
+      <ScheduleModal
+        timezone="America/New_York"
+        lastScheduled={null}
+        recipients={[]}
+        pinnedTimezones={[]}
+        optimizeEnabled={true}
+        onScheduled={vi.fn()}
+        onOpenSettings={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+    // Selecting a Quick Option does NOT enable Schedule — the recipient guard
+    // is independent of having made a time choice.
+    fireEvent.click(
+      screen.getAllByRole("button", { name: /tomorrow|next monday/i })[0]!,
+    );
+    const scheduleBtn = screen.getByRole("button", { name: /^schedule$/i });
+    expect(scheduleBtn).toBeDisabled();
+
+    // Hint present and associated to the button (SR coherence, S14 a11y).
+    const hint = screen.getByText(/please add at least one recipient/i);
+    expect(hint).toBeInTheDocument();
+    expect(scheduleBtn).toHaveAttribute("aria-describedby", hint.id);
+
+    // The exit reads "Go back" (not "Cancel") in this state.
+    expect(
+      screen.getByRole("button", { name: /^go back$/i }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^cancel$/i })).toBeNull();
+  });
+
+  it("does not hand off (commit is inert) with zero recipients, even if Schedule is clicked", () => {
+    render(
+      <ScheduleModal
+        timezone="America/New_York"
+        lastScheduled={null}
+        recipients={[]}
+        pinnedTimezones={[]}
+        optimizeEnabled={true}
+        onScheduled={vi.fn()}
+        onOpenSettings={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+    fireEvent.click(
+      screen.getAllByRole("button", { name: /tomorrow|next monday/i })[0]!,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /^schedule$/i }));
+    // Neither hand-off path runs — the genuine guard (disabled + commit
+    // early-return), not just a greyed button.
+    expect(schedulePreset).not.toHaveBeenCalled();
+    expect(scheduleAt).not.toHaveBeenCalled();
+  });
+
+  it("enables Schedule once a recipient is present and a choice is made; no hint", () => {
+    render(
+      <ScheduleModal
+        timezone="America/New_York"
+        lastScheduled={null}
+        recipients={[sarah]}
+        pinnedTimezones={[]}
+        optimizeEnabled={false}
+        onScheduled={vi.fn()}
+        onOpenSettings={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+    expect(screen.queryByText(/please add at least one recipient/i)).toBeNull();
+    // Exit reverts to "Cancel" once there's a recipient.
+    expect(
+      screen.getByRole("button", { name: /^cancel$/i }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^go back$/i })).toBeNull();
+    const scheduleBtn = screen.getByRole("button", { name: /^schedule$/i });
+    expect(scheduleBtn).toBeDisabled(); // no time choice yet
+    fireEvent.click(
+      screen.getAllByRole("button", { name: /tomorrow|next monday/i })[0]!,
+    );
+    expect(scheduleBtn).not.toBeDisabled();
+  });
+});
+
+// Session 19 (Entry 59) — (c) reveal backstop. On SUCCESS the modal closes
+// seamlessly and never opens the native dialog (no native-menu flash). On
+// FAILURE it reveals (onClose) and falls back to native without persisting.
+// On STALL it reveals after REVEAL_ON_STALL_MS so the user isn't stuck behind
+// our backdrop for the recipe's full ~4s timeout.
+describe("ScheduleModal — (c) reveal backstop (Session 19)", () => {
+  function renderWithRecipient(over: {
+    onClose?: () => void;
+    onScheduled?: () => void;
+  }) {
+    return render(
+      <ScheduleModal
+        timezone="America/New_York"
+        lastScheduled={null}
+        recipients={[sarah]}
+        pinnedTimezones={[]}
+        optimizeEnabled={false}
+        onScheduled={over.onScheduled ?? vi.fn()}
+        onOpenSettings={vi.fn()}
+        onClose={over.onClose ?? vi.fn()}
+      />,
+    );
+  }
+
+  it("happy path: closes + persists on success, without opening the native dialog", async () => {
+    const onClose = vi.fn();
+    const onScheduled = vi.fn();
+    renderWithRecipient({ onClose, onScheduled });
+    fireEvent.click(
+      screen.getAllByRole("button", { name: /tomorrow|next monday/i })[0]!,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /^schedule$/i }));
+
+    await waitFor(() => expect(schedulePreset).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
+    expect(onScheduled).toHaveBeenCalledTimes(1);
+    // No native flash on the happy path.
+    expect(openNativeScheduleDialog).not.toHaveBeenCalled();
+  });
+
+  it("failure path: reveals (onClose) and falls back to native, without persisting", async () => {
+    vi.mocked(schedulePreset).mockRejectedValueOnce(new Error("recipe broke"));
+    const onClose = vi.fn();
+    const onScheduled = vi.fn();
+    renderWithRecipient({ onClose, onScheduled });
+    fireEvent.click(
+      screen.getAllByRole("button", { name: /tomorrow|next monday/i })[0]!,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /^schedule$/i }));
+
+    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
+    expect(openNativeScheduleDialog).toHaveBeenCalledTimes(1);
+    // A failed hand-off must NOT be remembered as "Last scheduled time".
+    expect(onScheduled).not.toHaveBeenCalled();
+  });
+
+  it("stall path: reveals (onClose) after REVEAL_ON_STALL_MS when the hand-off hangs", async () => {
+    vi.useFakeTimers();
+    try {
+      // A hand-off that neither resolves nor rejects (Gmail DOM stuck).
+      vi.mocked(schedulePreset).mockImplementationOnce(
+        () => new Promise<void>(() => {}),
+      );
+      const onClose = vi.fn();
+      renderWithRecipient({ onClose });
+      fireEvent.click(
+        screen.getAllByRole("button", { name: /tomorrow|next monday/i })[0]!,
+      );
+      fireEvent.click(screen.getByRole("button", { name: /^schedule$/i }));
+
+      // Still occluding right after the click — the watchdog hasn't fired.
+      expect(onClose).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(2500);
+      // Backdrop torn down so Gmail's native surface is visible.
+      expect(onClose).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 

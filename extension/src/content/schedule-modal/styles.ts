@@ -66,7 +66,21 @@ h1 { font-size: 16px; font-weight: 500; margin: 0 0 4px; }
 .pick.selected input { border-color: #367b87; box-shadow: 0 0 0 1px #367b87; }
 .note { font-size: 12px; color: #5f6368; margin: 8px 0 0; }
 .actions {
-  display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;
+  display: flex; justify-content: flex-end; align-items: center;
+  gap: 8px; margin-top: 16px;
+}
+/* Cancel/Go back + Schedule keep their natural width on one line; the hint
+   (flex:1 1 auto, min-width:0) absorbs all shrinking and wraps instead, so a
+   wider label like "Go back" never breaks across two lines. */
+.actions button { flex: 0 0 auto; white-space: nowrap; }
+/* (b) Recipient-guard validation message, sat IN the action row: margin-right
+   auto pushes it flush-left while Cancel/Schedule stay right; min-width:0 lets
+   it shrink/wrap on the 460px card instead of crowding the buttons. Danger red
+   = the same #c5221f token as .status.error / the Delete action (5.8:1 on the
+   white card → WCAG AA for normal text at this 12px size). */
+.actions-hint {
+  margin: 0 auto 0 0; min-width: 0; flex: 1 1 auto;
+  font-size: 12px; color: #c5221f; text-align: left; line-height: 1.4;
 }
 button.text {
   font: inherit; background: none; border: 0; color: #367b87;
