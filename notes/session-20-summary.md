@@ -169,3 +169,22 @@ New assets: `docs/assets/screenshots/after-hours-warning.jpg`,
 `docs/assets/screenshots/schedule-optimize.png`. No new product claims; still no
 extension-code/§11/schema impact. Re-verified (headless render + a forced-open
 lightbox state). Same live-Pages confirmation applies to the redeploy.
+
+## §j — CSS specificity fix + nav change (third round)
+
+Owner spotted the "View source on GitHub" button text was invisible in the hero
+and faint in the footer. **Root cause: CSS specificity.** The generic link rules
+`.fl-page a { color:#367b87 }` and `.fl-footer a { color:#9fd2db }` are
+specificity (0,1,1); the button color rules (`.fl-btn-primary`/`.fl-btn-ghost`,
+0,1,0) lost to them, so an `<a class="fl-btn-*">` inherited the *link* color —
+teal text on the teal hero button (invisible), light-teal on the white footer
+button (faint). **Fix:** scoped the button color rules under `.fl-page`
+(→ 0,2,0) so they win, and pinned `color` explicitly in the `:hover` states; a
+code comment documents why the prefix must stay. (Lesson for future edits to
+this file: any rule setting a button's text color must out-specify the broad
+link-color rules.)
+
+Also per owner: the top-right nav **"Open source" GitHub link → "Built by Fenil
+Dedhia"**, with "Fenil Dedhia" linking to LinkedIn in a new tab
+(`target="_blank" rel="noopener noreferrer"`). GitHub stays reachable via the
+hero + footer buttons. Re-verified in headless render (hero + footer crops).
