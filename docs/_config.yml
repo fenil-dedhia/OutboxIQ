@@ -1,3 +1,16 @@
 title: Fashionably Late
 description: A Chrome extension that enhances Gmail's Schedule Send with timezone-aware scheduling.
 url: https://fashionablylate.app
+
+# The live site already renders with GitHub's Primer theme; pin it explicitly
+# so the build no longer relies on the implicit default, and so our
+# _layouts/default.html override (logo header) resolves deterministically.
+theme: jekyll-theme-primer
+
+# All pages (index + legal/*) have no `layout:` in front matter — apply the
+# overridden default layout to every page so the logo header + favicon show.
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
