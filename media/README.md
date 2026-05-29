@@ -27,8 +27,19 @@ dark-mode raster is not produced. Flagged at the Phase 1 gate.
 
 ## web-store/
 
-Populated in Phase 6: store icon, small promo tile (440×280), marquee
-(1400×560), and `screenshots/` (owner captures these from live Gmail).
+Chrome Web Store listing assets (teal `#5EB1BF` background, white logo —
+owner-chosen; tagline "Schedule emails at their perfect time.").
+
+| File | Size | Use |
+|------|------|-----|
+| `icon-128.png` | 128×128 | Store listing icon (teal plate, white symbol; slightly more padding than the shipped `extension/public/icons/icon-128.png`). |
+| `promo-small-440x280.png` | 440×280 | Small promo tile. **Exact** dims required. |
+| `promo-marquee-1400x560.png` | 1400×560 | Marquee promo. **Exact** dims required. |
+| `screenshots/README.md` | — | Capture guide for the 1–5 listing screenshots (owner captures from live Gmail). |
+
+Honest note: the promo tiles are algorithmically composed (correct dims,
+colors, crisp logo + tagline) but not designer-grade. Redo in Canva if they
+don't pass the eye-test — the source palette/logo are here to reuse.
 
 ## social/
 
