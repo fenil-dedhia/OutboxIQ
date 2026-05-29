@@ -46,7 +46,7 @@ A paid Premium version of Fashionably Late may be offered in the future. If it i
 Fashionably Late handles the following categories of data, all of which are stored **only in your browser** using the standard Chrome extension storage mechanism (`chrome.storage.local`):
 
 - **Your timezone**, which you set during onboarding and can change in Settings at any time.
-- **Your working hours and "default boundaries"**, which you configure to control when the extension suggests scheduling sends.
+- **Your working hours**, which you configure to control when the extension suggests scheduling sends.
 - **Your pinned timezones**, a list of up to five timezones you choose for quick access in the picker.
 - **Your feature preferences**, such as whether the recipient-optimized scheduling suggestion is enabled.
 - **A local cache of recipient timezones** you have manually picked when scheduling emails. Each entry consists of an email address, the timezone you picked for that recipient, and the date you picked it. This cache exists only on your device, is never transmitted, and exists to save you from re-picking the same person's timezone repeatedly.
