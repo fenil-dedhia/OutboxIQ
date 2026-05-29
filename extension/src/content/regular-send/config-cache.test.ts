@@ -53,3 +53,57 @@ describe("config-cache — autoRescheduleOnOutsideHours propagation", () => {
     expect(getCachedConfig()?.autoRescheduleOnOutsideHours).toBe(false);
   });
 });
+
+// Session 17 hardening: re-read on tab re-show / re-focus (DOM events fire in
+// every isolated world regardless of chrome.* liveness), and null the snapshot
+// when a read fails (severed context → guard fails open). Defensive freshness
+// for the multi-instance reload case.
+describe("config-cache — freshness on return-to-tab + fail-open", () => {
+  it("re-reads working hours when the tab becomes visible again", async () => {
+    const before = createDefaultState();
+    before.workingHours.monday.end = "17:00";
+    await setState(before);
+    // Seeded with the (stale) snapshot, as on reload.
+    teardown = startConfigWatch({
+      timezone: before.user.timezone,
+      workingHours: before.workingHours,
+      autoRescheduleOnOutsideHours: true,
+    });
+    expect(getCachedConfig()?.workingHours.monday.end).toBe("17:00");
+
+    // Settings widens Monday's hours while away — NO onChanged fired (the path
+    // that proved unreliable across instances).
+    const after = createDefaultState();
+    after.workingHours.monday.end = "23:00";
+    await setState(after);
+
+    // Returning to the tab fires visibilitychange (jsdom defaults to visible).
+    document.dispatchEvent(new Event("visibilitychange"));
+    await flush();
+
+    expect(getCachedConfig()?.workingHours.monday.end).toBe("23:00");
+  });
+
+  it("nulls the snapshot (fails open) when a read throws — severed context", async () => {
+    await setState(createDefaultState());
+    teardown = startConfigWatch({
+      timezone: "America/New_York",
+      workingHours: createDefaultState().workingHours,
+      autoRescheduleOnOutsideHours: true,
+    });
+    expect(getCachedConfig()).not.toBeNull();
+
+    const realGet = chrome.storage.local.get;
+    chrome.storage.local.get = (() =>
+      Promise.reject(
+        new Error("Extension context invalidated."),
+      )) as typeof chrome.storage.local.get;
+    try {
+      document.dispatchEvent(new Event("visibilitychange"));
+      await flush();
+      expect(getCachedConfig()).toBeNull(); // guard sees null → native Send proceeds
+    } finally {
+      chrome.storage.local.get = realGet;
+    }
+  });
+});

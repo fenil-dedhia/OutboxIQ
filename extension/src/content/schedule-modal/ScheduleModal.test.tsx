@@ -1,11 +1,12 @@
 // Copyright 2026 Fenil Dedhia
 // SPDX-License-Identifier: Apache-2.0
 
-// Integration test for the §5.5 trigger split locked by Entry 40:
-//   • Case 1 — Optimize-for-X computed time crosses Default boundaries:
-//     §5.5 warning is SUPPRESSED; the schedule fires directly.
-//   • Case 2 — manual selection (Quick Option) crosses Default boundaries:
-//     §5.5 warning fires (existing behaviour, regression-guarded).
+// Integration test for the Schedule Send modal. As of SCHEMA_VERSION 4
+// (Session 17) the Schedule Send path raises NO §5.5 soft warning at all —
+// deliberately scheduling outside your working hours is the core use case
+// (Entry 21), and the global "Default boundaries" that were its only warning
+// trigger have been removed. So every path here schedules directly. (The
+// working-hours warning now lives only on §5.5.1 regular Send.)
 //
 // We mock the schedule-actions module so neither path tries to drive Gmail's
 // real DOM under jsdom; we only need to observe which one was invoked.
@@ -14,8 +15,6 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ScheduleModal } from "./ScheduleModal";
 import { setManualRecipientTimezone } from "../../lib/recipient-cache";
-import { createDefaultState } from "../../lib/storage";
-import type { WorkingHours } from "../../lib/storage";
 import type { ComposeRecipient } from "../compose/compose-recipients";
 
 vi.mock("./schedule-actions", () => ({
@@ -27,14 +26,6 @@ vi.mock("./schedule-actions", () => ({
 // Imported AFTER vi.mock so we get the spy versions.
 import { scheduleAt, schedulePreset } from "./schedule-actions";
 
-// User in New York; Default boundaries clamp 8 AM–5 PM so 9 AM Tokyo
-// (= 8 PM previous day NYC EDT in summer) falls OUTSIDE the user's latest.
-const narrowBoundaries: WorkingHours = {
-  ...createDefaultState().workingHours,
-  absoluteEarliest: "08:00",
-  absoluteLatest: "17:00",
-};
-
 const sarah: ComposeRecipient = {
   email: "sarah@example.com",
   displayName: "Sarah Chen",
@@ -45,18 +36,15 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe("ScheduleModal §5.5 trigger split (Entry 40)", () => {
-  it("Case 1: Optimize-for-X SUPPRESSES the §5.5 Default-boundaries warning", async () => {
-    // Recipient in Tokyo cached → cache hit; "Morning peak" = 9 AM JST =
-    // 20:00 NYC EDT the previous day → outside the user's 08:00–17:00
-    // Default boundaries. Under the old rule this would fire §5.5; under
-    // Entry 40 Case 1 it must NOT.
+describe("ScheduleModal — no §5.5 warning on Schedule Send (v4)", () => {
+  it("Optimize-for-X schedules directly, no warning dialog", async () => {
+    // Tokyo recipient cached → "Morning peak" lands far outside the user's
+    // hours, but Schedule Send never warns: it schedules directly.
     await setManualRecipientTimezone(sarah.email, "Asia/Tokyo", "Sarah Chen");
 
     render(
       <ScheduleModal
         timezone="America/New_York"
-        workingHours={narrowBoundaries}
         lastScheduled={null}
         recipients={[sarah]}
         pinnedTimezones={[]}
@@ -70,11 +58,8 @@ describe("ScheduleModal §5.5 trigger split (Entry 40)", () => {
     fireEvent.click(
       screen.getByRole("checkbox", { name: /optimize delivery for/i }),
     );
-    // Wait for both: (1) the confirmation line is rendered (the section's
-    // own state is ready) AND (2) the parent's Schedule button is enabled
-    // (the bubbled choice has propagated up via useEffect → setOptimize).
-    // These commit on separate render passes — the section renders before
-    // its useEffect fires onChange, so testing only #1 races the click.
+    // Wait for both: the confirmation line is rendered AND the Schedule button
+    // is enabled (the bubbled choice has propagated up via useEffect).
     await waitFor(() => {
       expect(document.querySelector(".optimize-confirm")).not.toBeNull();
       const btn = screen.getByRole("button", { name: /^schedule$/i });
@@ -82,41 +67,24 @@ describe("ScheduleModal §5.5 trigger split (Entry 40)", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: /^schedule$/i }));
 
-    // The §5.5 warning modal MUST NOT appear (Case 1 exception).
     await waitFor(() => {
       expect(scheduleAt).toHaveBeenCalledTimes(1);
     });
+    // No soft-warning modal anywhere.
     expect(
       screen.queryByRole("alertdialog", {
         name: /outside your working hours/i,
       }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByText(/earliest you said you'd ever send/i),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByText(/latest you said you'd ever send/i),
+      screen.queryByText(/past your working hours/i),
     ).not.toBeInTheDocument();
   });
 
-  it("Case 2: a Quick Option violating Default boundaries STILL fires §5.5", () => {
-    // Compute presets with a real `new Date()` — we don't control the date,
-    // so we use a workingHours config that's guaranteed to be violated by
-    // ANY of the standard presets. The standard Quick Options sit at 8:00
-    // AM and 1:00 PM; clamp Default boundaries to 14:00–16:00 so the 8:00
-    // AM "Tomorrow morning" and "Next Monday morning" presets are both
-    // before-earliest violations (8:00 < 14:00). "Tomorrow afternoon" at
-    // 13:00 is also before 14:00 — every preset is guaranteed-violating.
-    const clamped: WorkingHours = {
-      ...createDefaultState().workingHours,
-      absoluteEarliest: "14:00",
-      absoluteLatest: "16:00",
-    };
-
+  it("a Quick Option schedules directly, no warning dialog", () => {
     render(
       <ScheduleModal
         timezone="America/New_York"
-        workingHours={clamped}
         lastScheduled={null}
         recipients={[sarah]}
         pinnedTimezones={[]}
@@ -127,8 +95,8 @@ describe("ScheduleModal §5.5 trigger split (Entry 40)", () => {
       />,
     );
 
-    // Click any Quick Option preset row — they're all violating under
-    // these boundaries.
+    // The standard Quick Options sit at 8:00 AM / 1:00 PM — outside the default
+    // 9–5 working hours — but Schedule Send no longer warns; it schedules.
     const presetRows = screen.getAllByRole("button", {
       name: /tomorrow|next monday/i,
     });
@@ -136,12 +104,13 @@ describe("ScheduleModal §5.5 trigger split (Entry 40)", () => {
     fireEvent.click(presetRows[0]!);
     fireEvent.click(screen.getByRole("button", { name: /^schedule$/i }));
 
-    // The §5.5 warning MUST appear (manual selection — Case 2 unchanged).
+    // No warning, and the preset is scheduled directly.
     expect(
-      screen.getByRole("alertdialog", { name: /outside your working hours/i }),
-    ).toBeInTheDocument();
-    // Preset must NOT have been scheduled — the warning is gating it.
-    expect(schedulePreset).not.toHaveBeenCalled();
+      screen.queryByRole("alertdialog", {
+        name: /outside your working hours/i,
+      }),
+    ).not.toBeInTheDocument();
+    expect(schedulePreset).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -151,7 +120,6 @@ describe("ScheduleModal a11y — focus trap (Session 14)", () => {
     render(
       <ScheduleModal
         timezone="America/New_York"
-        workingHours={createDefaultState().workingHours}
         lastScheduled={null}
         recipients={[sarah]}
         pinnedTimezones={[]}
@@ -171,7 +139,6 @@ describe("ScheduleModal a11y — focus trap (Session 14)", () => {
     render(
       <ScheduleModal
         timezone="America/New_York"
-        workingHours={createDefaultState().workingHours}
         lastScheduled={null}
         recipients={[sarah]}
         pinnedTimezones={[]}
@@ -199,7 +166,6 @@ describe("ScheduleModal a11y — focus trap (Session 14)", () => {
     render(
       <ScheduleModal
         timezone="America/New_York"
-        workingHours={createDefaultState().workingHours}
         lastScheduled={null}
         recipients={[sarah]}
         pinnedTimezones={[]}
@@ -228,7 +194,6 @@ describe("ScheduleModal a11y — focus trap (Session 14)", () => {
     render(
       <ScheduleModal
         timezone="America/New_York"
-        workingHours={createDefaultState().workingHours}
         lastScheduled={null}
         recipients={[sarah]}
         pinnedTimezones={[]}
@@ -267,9 +232,6 @@ describe("ScheduleModal a11y — focus trap (Session 14)", () => {
 describe("ScheduleModal — XSS guard (Session 16 security audit)", () => {
   it("renders an attacker-flavored recipient display name as escaped text, never HTML", () => {
     const malicious: ComposeRecipient = {
-      // The kind of name a hostile sender could put in a chip: HTML-flavored
-      // text + an event handler + a <script> tag. React `{value}` text
-      // rendering must escape ALL of it.
       email: "attacker@example.com",
       displayName:
         '<img src=x onerror="window.__xss=1"><script>window.__xss=1</script>',
@@ -280,7 +242,6 @@ describe("ScheduleModal — XSS guard (Session 16 security audit)", () => {
     render(
       <ScheduleModal
         timezone="America/New_York"
-        workingHours={createDefaultState().workingHours}
         lastScheduled={null}
         recipients={[malicious]}
         pinnedTimezones={[]}
@@ -292,24 +253,18 @@ describe("ScheduleModal — XSS guard (Session 16 security audit)", () => {
     );
 
     // The malicious display name appears in the Optimize recipient <select> as
-    // an <option>'s text content (the only place a single-recipient compose
-    // renders the recipient before the user engages). React must have escaped
-    // the angle brackets — the literal text node carries them.
+    // an <option>'s text content. React must have escaped the angle brackets.
     expect(
       screen.getByText(malicious.displayName as string),
     ).toBeInTheDocument();
 
-    // The rendered DOM must NOT have parsed an <img> or <script> element from
-    // the recipient name. (If a future refactor introduced an unsafe sink,
-    // these queries would find injected nodes.)
+    // The rendered DOM must NOT have parsed an <img> or <script> element.
     const injectedImg = document.querySelector('img[src="x"]');
     const injectedScript = Array.from(document.querySelectorAll("script")).find(
       (s) => /window\.__xss/.test(s.textContent ?? ""),
     );
     expect(injectedImg).toBeNull();
     expect(injectedScript).toBeUndefined();
-
-    // And the onerror payload definitely never executed.
     expect((window as unknown as { __xss?: number }).__xss).toBeUndefined();
   });
 });
@@ -319,7 +274,6 @@ describe("ScheduleModal — §5.8.2 recipientOptimization toggle", () => {
     render(
       <ScheduleModal
         timezone="America/New_York"
-        workingHours={createDefaultState().workingHours}
         lastScheduled={null}
         recipients={[sarah]}
         pinnedTimezones={[]}
@@ -338,7 +292,6 @@ describe("ScheduleModal — §5.8.2 recipientOptimization toggle", () => {
     render(
       <ScheduleModal
         timezone="America/New_York"
-        workingHours={createDefaultState().workingHours}
         lastScheduled={null}
         recipients={[sarah]}
         pinnedTimezones={[]}

@@ -116,6 +116,8 @@ The onboarding flow opens automatically on install, and again on browser startup
 - A required consent checkbox: "I understand how Fashionably Late uses my data and agree to the Privacy Policy." The "Privacy Policy" link opens the full policy in a new tab.
 - A "Get Started" button that is **disabled until the consent checkbox is checked**. This is the consent gate: the flow cannot advance — and therefore onboarding cannot complete — without explicit consent.
 
+> **Amendment (2026-05-28, Session 17 follow-up — combined Privacy + ToS consent).** The single-document consent text above is superseded to satisfy §6.1 ("Both [Privacy Policy and Terms of Service] are linked at install time, during onboarding, and in the Settings panel") — onboarding previously linked only the Privacy Policy. Pattern 1 (one combined checkbox, owner-chosen): the checkbox label now reads exactly **"I agree to the Privacy Policy and Terms of Service, and understand how Fashionably Late uses my data."**, where "Privacy Policy" and "Terms of Service" are inline links (to `PRIVACY_POLICY_URL` / `TERMS_OF_SERVICE_URL`) opening in new tabs, with a helper line below surfacing both as "Read the …" links. The Get-Started gate is unchanged (still disabled until the combined checkbox is checked). No storage-schema change: the stored consent record's `privacyPolicyVersion` field name is retained (no SCHEMA_VERSION bump) — it records the legal-docs version sentinel at consent time, now covering both documents.
+
 > **Why does Fashionably Late need this information?**
 >
 > Google's APIs don't expose your working hours to third-party plugins, and we can't always determine a recipient's timezone automatically. To power our smart scheduling features, we need to ask you directly.
@@ -139,6 +141,26 @@ The onboarding flow opens automatically on install, and again on browser startup
 > OutboxIQ → Fashionably Late before public launch
 > (owner-decisions-log Entry 41; `notes/naming-history.md` /
 > `CLAUDE.md` top). All other locked-copy properties are unchanged.
+
+> **Step-1 copy refresh (2026-05-28, Session 17, owner-directed).** Tightens
+> the Welcome step's verbatim copy above; supersedes the corresponding lines:
+> - **Brief explanation** (line ~114) is reworded to: *"Fashionably Late helps
+>   your emails land at the right moment, in your recipients' time, not yours.
+>   We'll need your timezone and working hours to make that happen."*
+> - **The "Why do we need this information?" section is removed entirely** —
+>   both the heading (line ~115) and the transparency paragraph (the "Why does
+>   Fashionably Late need this information?" block, lines ~121–123). The step
+>   now goes straight from the brief explanation to "Your data, your control".
+> - **"Your data, your control" bullet 1** is reworded to: *"This information
+>   stays on your device, we don't have servers."* (bullets 2–3 unchanged).
+> - **"What you get in return" bullets** are replaced with exactly: *"Send
+>   emails at the right moment for each recipient, learned once and remembered."
+>   / "Avoid sending after-hours emails that hurt your professional brand." /
+>   "Your data stays on your device, no account, no tracking."* — the prior
+>   third bullet ("Cancel scheduled emails when someone replies…") is dropped
+>   (it described the Premium Unschedule-on-Reply feature, out of scope of this
+>   project — Entry 52). Layout, headings, and the consent gesture are
+>   unchanged.
 
 **Step 2: Timezone confirmation.**
 - The plugin pre-fills the user's timezone from the **browser** (`Intl.DateTimeFormat().resolvedOptions().timeZone`), labelled "Detected from your browser".
@@ -211,8 +233,10 @@ The onboarding flow opens automatically on install, and again on browser startup
 - The plugin presents an interface for configuring working days and per-day start/end times.
 - Default values: Monday through Friday, 9:00 AM to 5:00 PM.
 - The user can toggle individual days on or off and customize times per day.
-- Two optional fields under a **"Default boundaries"** group: **"Default boundaries — Earliest send"** (default 7:00 AM) and **"Default boundaries — Latest send"** (default 7:00 PM). Helper text: *"Times when you usually don't want emails going out. We'll check in if you schedule outside these hours — unless you're using Optimize-for-X, where we respect your choice to reach recipients in their working hours."* (Replaces the prior "absolute floors and ceilings" framing — see the Entry-40 amendment below; `notes/owner-decisions-log.md` Entry 40.)
+- Two optional fields under a **"Default boundaries"** group: **"Default boundaries — Earliest send"** (default 7:00 AM) and **"Default boundaries — Latest send"** (default 7:00 PM). Helper text: *"Times when you usually don't want emails going out. We'll check in if you schedule outside these hours — unless you're using Optimize-for-X, where we respect your choice to reach recipients in their working hours."* (Replaces the prior "absolute floors and ceilings" framing — see the Entry-40 amendment below; `notes/owner-decisions-log.md` Entry 40.) **[REMOVED in v4 — see Entry-56 amendment below: the onboarding Working Hours step no longer captures Default boundaries; per-day working days/times only.]**
 - A "Finish Setup" button completes onboarding. On completion the user is returned to their nearest open Gmail tab (the onboarding tab simply closes if no Gmail tab is open).
+
+> **Entry-56 amendment (2026-05-28, Session 17).** The "Default boundaries" group above is **removed** (SCHEMA_VERSION v3→v4) — see the §5.5 Entry-56 amendment for the full rationale. The onboarding Working Hours step now collects per-day working days/times only; it stays Step 3 of 3 (the boundaries were inputs *within* the step, not a separate step).
 
 > **Entry-40 amendment (2026-05-19, owner-directed).** The fields previously specified as "Earliest I'd ever send an email" / "Latest I'd ever send an email" — described as "absolute floors and ceilings" — are **renamed product-wide to "Default boundaries"** to honestly reflect their behaviour: they are *defaults* the product nudges around, **not** absolute hard rules. The §5.5 soft-warning trigger fires on Default-boundaries violations from Quick Options, Pick Custom, "Last scheduled time", and §5.5.1 regular Send — **but NOT when the violating time was computed by §5.3.5 Optimize-for-X** (the four-step engagement = explicit feature-mediated intent; Case 1 / Case 2 in `notes/owner-decisions-log.md` Entry 40). The §7.2 storage field names `absoluteEarliest`/`absoluteLatest` are kept as **stable internal identifiers** (CLAUDE.md "Locked tech decisions" / Entry-30 pattern: opaque internal names don't follow user-facing renames; renaming them would force a `SCHEMA_VERSION` bump with no user-facing benefit). The locked-copy onboarding strings (above) are spec text — the running UI implementation in `WorkingHoursStep.tsx` is tracked as a Session-10 spec-code alignment task (Phase G close-out).
 
@@ -375,7 +399,7 @@ User reviews → clicks **Schedule** → the native Gmail Schedule Send mechanis
 
 #### 5.3.6 Working Hours Check (Default-boundaries routing)
 
-If the computed send time falls outside the user's **Default boundaries** (§5.1.3 / §5.5), a §5.5 soft-warning modal may appear before the email is scheduled — **unless** the time was produced by §5.3.5 Optimize-for-X, in which case the warning is suppressed by design (item (n) above; Entry-40 Case 1). The §5.5 calculation runs unconditionally; only the trigger predicate is narrowed.
+If the computed send time falls outside the user's **Default boundaries** (§5.1.3 / §5.5), a §5.5 soft-warning modal may appear before the email is scheduled — **unless** the time was produced by §5.3.5 Optimize-for-X, in which case the warning is suppressed by design (item (n) above; Entry-40 Case 1). The §5.5 calculation runs unconditionally; only the trigger predicate is narrowed. **[Entry-56 (v4): Default boundaries removed AND the §5.3 Schedule Send modal now raises no §5.5 warning at all — so this paragraph is moot for Optimize-for-X, which already schedules directly. See the §5.5 Entry-56 amendment.]**
 
 #### 5.3.7 Recipient Timezone Picker (primary path in Free v1)
 
@@ -472,7 +496,45 @@ When a recipient is selected for optimization, the plugin executes the following
 
 ---
 
-### 5.5 Default Boundaries Warning (was: "Auto-Reschedule on Outside Working Hours")
+### 5.5 Working Hours Warning (was: "Default Boundaries Warning"; orig. "Auto-Reschedule on Outside Working Hours")
+
+> **Entry-56 amendment (2026-05-28, Session 17, owner-directed — DEFAULT
+> BOUNDARIES REMOVED ENTIRELY; SCHEMA_VERSION v3→v4; `notes/owner-decisions-log.md`
+> Entry 56).** This SUPERSEDES the Entry-40 amendment below and all
+> "Default boundaries" / "absolute limits" / "hard limits" / "earliest I'd
+> ever send" / "latest I'd ever send" spec text product-wide (this section,
+> §5.1.3, §5.3.5, §5.8.2, §7.2, and the warning copy). The two-rule model
+> (per-day working hours + a global earliest/latest pair) produced **two
+> functionally redundant warnings** on regular Send; the owner consolidated
+> to **per-day working hours as the single send-time window**. Binding new
+> behaviour:
+>
+> - **The global "Default boundaries" (`absoluteEarliest`/`absoluteLatest`)
+>   are removed** from the schema (v3→v4 migration drops them), Settings, and
+>   onboarding. The §5.5 calc has ONE rule type: the per-day working-hours
+>   window.
+> - **The §5.5 soft warning now fires ONLY on §5.5.1 regular Send** (an
+>   immediate off-hours send is plausibly unintended). The §5.3 **Schedule
+>   Send modal raises no warning at all** — its only prior trigger was the
+>   absolute-boundary violation (the locked Entry-21 split already exempted
+>   working-hours violations there, since deliberate off-hours *scheduling* is
+>   the core use case). With the absolute rule gone, Schedule Send schedules
+>   directly.
+> - **The Optimize-for-X exemption is preserved** and unchanged: Optimize-
+>   computed times never raise the warning. (It was always architectural —
+>   Optimize bypasses the warning gate — not bound to which boundary type, so
+>   nothing about it changed.)
+> - **Warning copy:** the after-hours line reads *"…past your working
+>   hours."* (was "…after your working hours end").
+> - The three-choice soft-warning pattern (Proceed / Reschedule / Cancel),
+>   the next-working-day snap algorithm (§5.5.3), and inclusivity of day
+>   start/end are **unchanged**. Every working-hours snap is strictly future,
+>   so the former absolute-`after-latest` forward-roll (`ensureFutureSnap`) is
+>   removed as no-longer-reachable.
+>
+> The Entry-40 amendment and the original §5.5 body below are retained
+> verbatim per Entry-4 discipline as the historical record of the two-rule
+> era — read them as superseded by this amendment, not as current spec.
 
 > **Entry-40 amendment (2026-05-19, owner-directed — RENAME + new
 > Optimize-for-X exception; refines, does NOT invalidate, Entries 19, 20,
@@ -791,10 +853,11 @@ Accessible via:
 >   (same control as onboarding Step 2). Pinned **order is authoritative** and
 >   surfaces in that order in every picker. A reorder in Settings live-updates
 >   an already-open Schedule Send modal (Entry 47).
-> - **Working Hours** — per-day toggle + times + **Default boundaries**
->   (Entry-40 framing; schema fields stay `absoluteEarliest`/`absoluteLatest`)
->   + "Reset to defaults" (with confirm). Edits **autosave only when valid**.
->   This section edits state only; §5.5 enforcement is untouched (Entries 19/40).
+> - **Working Hours** — per-day toggle + times + "Reset to defaults" (with
+>   confirm). Edits **autosave only when valid**. This section edits state
+>   only. **[Entry-56 (v4): the "Default boundaries" sub-block is removed —
+>   per-day working hours only; see the §5.5 Entry-56 amendment. The section
+>   stays one of the seven §5.8.2 sections.]**
 > - **Feature Toggles** — **exactly two** in Free v1: "Recipient optimized
 >   scheduling" (`recipientOptimization`) and "Auto-reschedule prompt outside
 >   working hours" (`autoRescheduleOnOutsideHours`, scoped to the **regular Send
@@ -831,7 +894,7 @@ Accessible via:
 
 **Working Hours**
 - Per-day toggle and time pickers.
-- **Default boundaries** — earliest and latest send times outside which the product warns (overridable per §5.5; auto-overridden for §5.3.5 Optimize-for-X — see §5.5 Entry-40 amendment).
+- **Default boundaries** — earliest and latest send times outside which the product warns (overridable per §5.5; auto-overridden for §5.3.5 Optimize-for-X — see §5.5 Entry-40 amendment). **[REMOVED in v4 — Entry-56 amendment (§5.5): consolidated into per-day working hours.]**
 - A "Reset to defaults" button.
 
 **Feature Toggles**
@@ -1141,8 +1204,8 @@ All local data is stored in the browser's extension storage. Suggested schema:
     "monday": { "enabled": true, "start": "09:00", "end": "17:00" },
     "tuesday": { ... },
     ...
-    "absoluteEarliest": "07:00",
-    "absoluteLatest": "19:00"
+    // absoluteEarliest / absoluteLatest REMOVED in SCHEMA_VERSION 4
+    // (Session 17, Entry 56) — see the §5.5 Entry-56 amendment.
   },
   "featureToggles": {
     "recipientOptimization": true,
@@ -1169,7 +1232,8 @@ All local data is stored in the browser's extension storage. Suggested schema:
 
 > **Implementation note:** the implemented `OutboxIQState` (a **frozen internal
 > type name** — Entry 30; deliberately *not* renamed with the brand) adds a
-> top-level `schemaVersion` (**currently `3`**; `SCHEMA_VERSION` in
+> top-level `schemaVersion` (**currently `4`** as of Session 17 — the v3→v4
+> bump removed `absoluteEarliest`/`absoluteLatest`, Entry 56; `SCHEMA_VERSION` in
 > `extension/src/lib/constants.ts`) and represents `consent` as **nullable** —
 > it is `null` until the user completes onboarding (PRD §5.1), then set to the
 > object shown above. The schema here describes the shape once consent exists.

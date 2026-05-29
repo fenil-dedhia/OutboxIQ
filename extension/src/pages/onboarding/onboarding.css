@@ -63,6 +63,16 @@ body {
   margin: 0 0 12px;
 }
 
+/* Session 14 a11y: each step heading is tabIndex={-1} and receives focus on
+   mount so screen-reader / keyboard users are announced the new step. That
+   focus-move is intentional and stays — but a visible focus RING on a
+   non-interactive heading reads as a UI glitch (it's never keyboard-reachable
+   via Tab, so the outline guides nothing). Suppress the outline on these
+   programmatically-focused headings ONLY; interactive controls keep theirs. */
+.oq-step h1[tabindex="-1"]:focus {
+  outline: none;
+}
+
 .oq-step h2 {
   font-size: 15px;
   margin: 20px 0 8px;
@@ -76,17 +86,6 @@ body {
 .oq-bullets {
   padding-left: 20px;
   line-height: 1.6;
-}
-
-.oq-field {
-  display: block;
-  margin: 16px 0;
-}
-
-.oq-field > span {
-  display: block;
-  font-size: 14px;
-  margin-bottom: 6px;
 }
 
 select,
@@ -196,17 +195,6 @@ legend {
   align-items: flex-start;
   line-height: 1.5;
   margin-top: 20px;
-}
-
-/* Privacy Policy link: body-prominent, not muted — it sits on a legally
-   meaningful consent gate (PRD §8.5/§8.8, GDPR transparency). */
-.oq-consent-link {
-  margin: 8px 0 0;
-}
-
-.oq-consent-link a {
-  color: var(--oq-accent);
-  font-weight: 400;
 }
 
 .oq-error {

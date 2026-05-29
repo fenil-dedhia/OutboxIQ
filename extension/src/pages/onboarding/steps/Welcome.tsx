@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useEffect, useRef } from "react";
-import { PRIVACY_POLICY_URL } from "../../../lib/constants";
+import {
+  PRIVACY_POLICY_URL,
+  TERMS_OF_SERVICE_URL,
+} from "../../../lib/constants";
 
 interface Props {
   consentChecked: boolean;
@@ -36,22 +39,14 @@ export function Welcome({
       </h1>
       <p className="oq-lede">
         Fashionably Late helps your emails land at the right moment, in your
-        recipients&rsquo; time, not yours. To power our intelligent features,
-        we&rsquo;ll require information about your timezone and working hours.
-      </p>
-
-      <h2>Why do we need this information?</h2>
-      <p>
-        Google&rsquo;s APIs don&rsquo;t expose your working hours to third-party
-        plugins, and we can&rsquo;t always determine a recipient&rsquo;s
-        timezone automatically. To power our smart scheduling features, we need
-        to ask you directly.
+        recipients&rsquo; time, not yours. We&rsquo;ll need your timezone and
+        working hours to make that happen.
       </p>
 
       <h2>Your data, your control:</h2>
       <ul className="oq-bullets">
         <li>
-          This information is stored locally on your device, not on our servers.
+          This information stays on your device, we don&rsquo;t have servers.
         </li>
         <li>We never share your data with third parties.</li>
         <li>
@@ -62,21 +57,23 @@ export function Welcome({
       <h2>What you get in return:</h2>
       <ul className="oq-bullets">
         <li>
-          Send emails at the optimal moment for each recipient, automatically.
+          Send emails at the right moment for each recipient, learned once and
+          remembered.
         </li>
         <li>
           Avoid sending after-hours emails that hurt your professional brand.
         </li>
-        <li>
-          Cancel scheduled emails when someone replies, so you never send a
-          stale message.
-        </li>
+        <li>Your data stays on your device, no account, no tracking.</li>
       </ul>
 
-      {/* The Privacy Policy link is intentionally OUTSIDE the label: a label
-          must not contain interactive content, and nesting the link inside it
-          let a link click also toggle consent. Consent now registers ONLY via
-          the checkbox's own onChange. */}
+      {/* Combined Privacy Policy + Terms of Service consent (PRD §6.1: both
+          documents linked at install/onboarding; Pattern 1 — one combined
+          checkbox, owner-chosen 2026-05-28). The legal links live INSIDE the
+          label so the consent sentence reads as one gesture (no separate
+          "Read the…" line — the inline links are the access point); each link
+          calls stopPropagation on click so opening a document does NOT also
+          toggle the checkbox (clicking a label otherwise activates its
+          control). Consent still registers via the checkbox's own onChange. */}
       <div className="oq-consent">
         <input
           id="oq-consent-checkbox"
@@ -85,15 +82,27 @@ export function Welcome({
           onChange={(e) => onConsentChange(e.target.checked)}
         />
         <label htmlFor="oq-consent-checkbox">
-          I understand how Fashionably Late uses my data and agree to the
-          Privacy Policy.
+          I agree to the{" "}
+          <a
+            href={PRIVACY_POLICY_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+          >
+            Privacy Policy
+          </a>{" "}
+          and{" "}
+          <a
+            href={TERMS_OF_SERVICE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+          >
+            Terms of Service
+          </a>
+          , and understand how Fashionably Late uses my data.
         </label>
       </div>
-      <p className="oq-consent-link">
-        <a href={PRIVACY_POLICY_URL} target="_blank" rel="noopener noreferrer">
-          Read the Privacy Policy
-        </a>
-      </p>
 
       <div className="oq-actions">
         <button

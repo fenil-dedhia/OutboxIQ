@@ -4,12 +4,13 @@
 // PRD §5.5 — the soft-warning modal (locked pattern, CLAUDE.md "Locked
 // product decisions"). NOT a hard block and NOT a silent auto-snap: it
 // names the specific violation and offers exactly three explicit choices —
-//   • Reschedule to [boundary]  (the recommended/primary action)
-//   • Send … anyway             (override the rule just this once)
-//   • Cancel                    (back to the schedule modal to adjust)
-// Absolute-limit violations are surfaced ahead of working-hours ones (the
-// harder constraint) — that precedence lives in checkWorkingHours; this
-// component just renders whatever verdict it is handed.
+//   • Reschedule to [next working window]  (the recommended/primary action)
+//   • Send … anyway                         (override the rule just this once)
+//   • Cancel                                (back to compose to adjust)
+// Since SCHEMA_VERSION 4 (Session 17) the only rule is the per-day working
+// window — the global "Default boundaries" were removed — and only §5.5.1
+// regular Send raises this (a deliberate Schedule Send is never warned). This
+// component just renders whatever verdict checkWorkingHours hands it.
 //
 // §8.4: every time shown carries the timezone abbreviation adjacent.
 // §8.5: the "why" paragraph (verbatim PRD §5.5.2 rationale) is kept.
@@ -47,22 +48,18 @@ function leadText(
   context: WarningContext,
 ): string {
   const req = `${formatForGmail(v.requested).display} ${abbr}`;
-  const boundary = v.snap ? `${formatForGmail(v.snap).gmailTime} ${abbr}` : "";
-  // §5.3: a future time was *picked* ("This email is scheduled for …").
-  // §5.5.1: the user is sending *now* ("It's … — before/after …").
+  // §5.5.1: the user is sending *now* ("It's …"). The "schedule" verb is
+  // retained for the shared component API though §5.3 no longer raises a
+  // warning (it never reaches this with a violation).
   const at =
     context === "send" ? `It's ${req}` : `This email is scheduled for ${req}`;
   switch (v.detail) {
-    case "before-earliest":
-      return `${at} — before ${boundary}, the earliest you said you'd ever send an email.`;
-    case "after-latest":
-      return `${at} — after ${boundary}, the latest you said you'd ever send an email.`;
     case "non-working-day":
       return `${req} isn't one of your working days.`;
     case "before-start":
       return `${at}, before your working hours start.`;
     case "after-end":
-      return `${at}, after your working hours end.`;
+      return `${at}, past your working hours.`;
     default:
       return `${at}.`;
   }

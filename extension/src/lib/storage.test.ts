@@ -21,7 +21,7 @@ import {
 } from "./constants";
 
 describe("storage defaults (PRD §7.2)", () => {
-  it("defaults to Mon–Fri 09:00–17:00 with 07:00/19:00 absolute bounds", () => {
+  it("defaults to Mon–Fri 09:00–17:00 (no global boundaries since v4)", () => {
     const s = createDefaultState();
     expect(s.workingHours.monday).toEqual({
       enabled: true,
@@ -29,8 +29,13 @@ describe("storage defaults (PRD §7.2)", () => {
       end: "17:00",
     });
     expect(s.workingHours.saturday.enabled).toBe(false);
-    expect(s.workingHours.absoluteEarliest).toBe("07:00");
-    expect(s.workingHours.absoluteLatest).toBe("19:00");
+    // Default boundaries removed in v4 — the field must not exist.
+    expect(
+      (s.workingHours as Record<string, unknown>).absoluteEarliest,
+    ).toBeUndefined();
+    expect(
+      (s.workingHours as Record<string, unknown>).absoluteLatest,
+    ).toBeUndefined();
     expect(s.featureToggles.unscheduleOnReply).toBe(true);
     expect(s.featureToggles.alwaysScheduleOutsideHours).toBe(false);
   });
@@ -75,8 +80,8 @@ describe("completeOnboarding (PRD §5.1.4)", () => {
       consentChecked: true,
       workingHours: {
         ...base.workingHours,
-        absoluteEarliest: "19:00",
-        absoluteLatest: "07:00", // ceiling before floor → invalid
+        // An enabled day whose end is before its start → invalid.
+        monday: { enabled: true, start: "17:00", end: "09:00" },
       },
     };
     await expect(
@@ -85,7 +90,7 @@ describe("completeOnboarding (PRD §5.1.4)", () => {
     expect(await isOnboardingComplete()).toBe(false);
   });
 
-  it("accepts zero enabled working days (absolute-limits-only is valid)", async () => {
+  it("accepts zero enabled working days (a no-window config is valid)", async () => {
     const base = createDefaultDraft();
     const workingHours = { ...base.workingHours };
     for (const d of WEEKDAYS) {
@@ -100,11 +105,11 @@ describe("completeOnboarding (PRD §5.1.4)", () => {
 });
 
 describe("lastScheduled (PRD §5.3.3 amendment) + schema version", () => {
-  it("defaults to null and stamps the current schema version (v3)", () => {
+  it("defaults to null and stamps the current schema version (v4)", () => {
     const s = createDefaultState();
     expect(s.lastScheduled).toBeNull();
     expect(s.schemaVersion).toBe(SCHEMA_VERSION);
-    expect(SCHEMA_VERSION).toBe(3);
+    expect(SCHEMA_VERSION).toBe(4);
   });
 
   it("setLastScheduled persists and is read back by getState", async () => {
@@ -183,5 +188,52 @@ describe("pinnedTimezones (PRD §5.1.3 Step 2, schema v3)", () => {
       outboxiqState: { schemaVersion: 2, user: { timezone: "UTC" } },
     });
     expect((await getState()).pinnedTimezones).toEqual([]);
+  });
+});
+
+describe("v3→v4 migration: Default boundaries removed (Session 17)", () => {
+  it("drops absoluteEarliest/absoluteLatest from a v3 record, keeps everything else, and writes back v4", async () => {
+    // A v3 record with the old boundary keys populated + real user data.
+    await chrome.storage.local.set({
+      outboxiqState: {
+        schemaVersion: 3,
+        user: { timezone: "Asia/Tokyo", onboardingCompletedAt: "2026-05-01" },
+        workingHours: {
+          monday: { enabled: true, start: "08:00", end: "16:00" },
+          tuesday: { enabled: true, start: "09:00", end: "17:00" },
+          wednesday: { enabled: true, start: "09:00", end: "17:00" },
+          thursday: { enabled: true, start: "09:00", end: "17:00" },
+          friday: { enabled: true, start: "09:00", end: "17:00" },
+          saturday: { enabled: false, start: "09:00", end: "17:00" },
+          sunday: { enabled: false, start: "09:00", end: "17:00" },
+          absoluteEarliest: "06:00",
+          absoluteLatest: "22:00",
+        },
+        pinnedTimezones: ["Asia/Tokyo"],
+      },
+    });
+
+    const s = await getState();
+
+    // Boundary keys gone; everything else intact.
+    const wh = s.workingHours as Record<string, unknown>;
+    expect(wh.absoluteEarliest).toBeUndefined();
+    expect(wh.absoluteLatest).toBeUndefined();
+    expect(s.workingHours.monday).toEqual({
+      enabled: true,
+      start: "08:00",
+      end: "16:00",
+    });
+    expect(s.user.timezone).toBe("Asia/Tokyo");
+    expect(s.pinnedTimezones).toEqual(["Asia/Tokyo"]);
+    expect(s.schemaVersion).toBe(4);
+
+    // Written back to storage as a clean v4 record (no boundary keys persisted).
+    const raw = (await chrome.storage.local.get("outboxiqState"))
+      .outboxiqState as { schemaVersion: number; workingHours: object };
+    expect(raw.schemaVersion).toBe(4);
+    expect(
+      (raw.workingHours as Record<string, unknown>).absoluteEarliest,
+    ).toBeUndefined();
   });
 });

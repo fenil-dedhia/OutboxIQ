@@ -24,10 +24,9 @@ const DAY_LABEL: Record<Weekday, string> = {
   sunday: "Sunday",
 };
 
-// PRD §5.1.3 step 3 (Entry-40 rename, 2026-05-19): working days/times +
-// Default boundaries (formerly "hard limits"). The schema fields
-// `absoluteEarliest`/`absoluteLatest` are deliberately kept as stable
-// internal identifiers per Entry-30 — only user-facing copy renamed.
+// PRD §5.1.3 step 3: working days/times. (The global "Default boundaries"
+// captured here through SCHEMA_VERSION 3 were removed in v4, Session 17 —
+// per-day working hours is now the sole send-time window.)
 export function WorkingHoursStep({ workingHours, onChange }: Props) {
   function patchDay(day: Weekday, patch: Partial<WorkingHours[Weekday]>): void {
     onChange({
@@ -52,9 +51,8 @@ export function WorkingHoursStep({ workingHours, onChange }: Props) {
       <fieldset className="oq-days">
         <legend>Working days and times</legend>
         <p className="oq-help">
-          When you&rsquo;d normally send &mdash; your regular send-time pattern,
-          in your local time. If you click Send outside these hours, Fashionably
-          Late will gently confirm before sending.
+          We&rsquo;ll double-check before sending outside these hours.
+          Scheduling for later is always fine.
         </p>
         {WEEKDAYS.map((day) => {
           const d = workingHours[day];
@@ -101,42 +99,6 @@ export function WorkingHoursStep({ workingHours, onChange }: Props) {
           );
         })}
       </fieldset>
-
-      <fieldset className="oq-bounds">
-        <legend>Default boundaries (your local time)</legend>
-        <p className="oq-help">
-          Times when you usually don&rsquo;t want emails going out. We&rsquo;ll
-          check in if you schedule outside these hours &mdash; unless
-          you&rsquo;re using Optimize-for-X, where we respect your choice to
-          reach recipients in their working hours.
-        </p>
-        <label className="oq-field">
-          <span>Default boundaries &mdash; Earliest send</span>
-          <input
-            type="time"
-            value={workingHours.absoluteEarliest}
-            onChange={(e) =>
-              onChange({ ...workingHours, absoluteEarliest: e.target.value })
-            }
-          />
-        </label>
-        <label className="oq-field">
-          <span>Default boundaries &mdash; Latest send</span>
-          <input
-            type="time"
-            value={workingHours.absoluteLatest}
-            onChange={(e) =>
-              onChange({ ...workingHours, absoluteLatest: e.target.value })
-            }
-          />
-        </label>
-      </fieldset>
-
-      {errors.bounds && (
-        <p className="oq-error" role="alert">
-          {errors.bounds}
-        </p>
-      )}
     </section>
   );
 }

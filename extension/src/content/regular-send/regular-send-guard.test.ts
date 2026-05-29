@@ -26,11 +26,9 @@ vi.mock("./config-cache", () => ({
 
 const checkWorkingHours = vi.fn();
 vi.mock("../../lib/schedule/working-hours", () => ({
+  // The guard mocks the verdict math so each branch is isolated to guard
+  // logic; the working-hours calc itself is covered in working-hours.test.ts.
   checkWorkingHours: (...a: unknown[]) => checkWorkingHours(...a),
-  // The guard mocks the verdict math (see header); ensureFutureSnap is part
-  // of it — identity here keeps each guard branch isolated to guard logic.
-  // Its forward-roll correctness is covered in working-hours.test.ts.
-  ensureFutureSnap: (v: unknown) => v,
 }));
 
 const openRegularSendWarning = vi.fn();
@@ -78,13 +76,13 @@ const SNAP: WallTime = {
   hour: 9,
   minute: 0,
 };
-const violation = (
-  kind: "absolute" | "working-hours",
-): WorkingHoursVerdict => ({
+// Since v4 there is one rule type (working-hours); the guard doesn't branch
+// on kind — it acts on any non-ok verdict that has a snap.
+const violation = (): WorkingHoursVerdict => ({
   ok: false,
-  kind,
-  detail: kind === "absolute" ? "before-earliest" : "before-start",
-  requested: { year: 2026, month: 5, day: 16, hour: 3, minute: 33 },
+  kind: "working-hours",
+  detail: "after-end",
+  requested: { year: 2026, month: 5, day: 16, hour: 21, minute: 0 },
   snap: SNAP,
 });
 const okVerdict: WorkingHoursVerdict = {
@@ -138,7 +136,7 @@ describe("§5.5.1 — never block an in-hours / unclassifiable Send (§5.2.3)", 
 
   it("no cached config → fail-open (native Send proceeds)", () => {
     getCachedConfig.mockReturnValue(null);
-    checkWorkingHours.mockReturnValue(violation("absolute"));
+    checkWorkingHours.mockReturnValue(violation());
     const { send } = buildCompose();
     teardown = installRegularSendGuard();
     expect(fire(send, "pointerdown").defaultPrevented).toBe(false);
@@ -153,7 +151,7 @@ describe("§5.5.1 — never block an in-hours / unclassifiable Send (§5.2.3)", 
       workingHours: {} as never,
       autoRescheduleOnOutsideHours: false,
     });
-    checkWorkingHours.mockReturnValue(violation("absolute"));
+    checkWorkingHours.mockReturnValue(violation());
     const { send } = buildCompose();
     teardown = installRegularSendGuard();
     const evs = ["pointerdown", "mousedown", "pointerup", "mouseup", "click"];
@@ -162,7 +160,7 @@ describe("§5.5.1 — never block an in-hours / unclassifiable Send (§5.2.3)", 
   });
 
   it("≥2 composes → safety net: does NOT intercept", () => {
-    checkWorkingHours.mockReturnValue(violation("absolute"));
+    checkWorkingHours.mockReturnValue(violation());
     const a = buildCompose();
     buildCompose(); // 2nd chevron → ambiguous
     teardown = installRegularSendGuard();
@@ -181,7 +179,7 @@ describe("§5.5.1 — never block an in-hours / unclassifiable Send (§5.2.3)", 
   });
 
   it("never acts on unrelated clicks", () => {
-    checkWorkingHours.mockReturnValue(violation("absolute"));
+    checkWorkingHours.mockReturnValue(violation());
     buildCompose();
     const other = document.createElement("button");
     document.body.appendChild(other);
@@ -191,7 +189,7 @@ describe("§5.5.1 — never block an in-hours / unclassifiable Send (§5.2.3)", 
   });
 
   it("teardown removes the listeners", () => {
-    checkWorkingHours.mockReturnValue(violation("absolute"));
+    checkWorkingHours.mockReturnValue(violation());
     const { send } = buildCompose();
     const down = installRegularSendGuard();
     down();
@@ -201,31 +199,28 @@ describe("§5.5.1 — never block an in-hours / unclassifiable Send (§5.2.3)", 
   });
 });
 
-describe("§5.5.1 — violation blocks the WHOLE gesture, warns once (FULL verdict)", () => {
-  it.each(["absolute", "working-hours"] as const)(
-    "%s violation → blocks every gesture event + opens the warning once",
-    (kind) => {
-      checkWorkingHours.mockReturnValue(violation(kind));
-      const { send } = buildCompose();
-      teardown = installRegularSendGuard();
-      const inner = send.querySelector("span") as HTMLElement;
-      for (const t of [
-        "pointerdown",
-        "mousedown",
-        "pointerup",
-        "mouseup",
-        "click",
-      ]) {
-        expect(fire(inner, t).defaultPrevented).toBe(true);
-      }
-      // FULL verdict: working-hours ALSO warns here (contrast §5.3
-      // absolute-only) — and the modal opens exactly once for the gesture.
-      expect(openRegularSendWarning).toHaveBeenCalledTimes(1);
-    },
-  );
+describe("§5.5.1 — violation blocks the WHOLE gesture, warns once", () => {
+  it("a working-hours violation → blocks every gesture event + opens the warning once", () => {
+    checkWorkingHours.mockReturnValue(violation());
+    const { send } = buildCompose();
+    teardown = installRegularSendGuard();
+    const inner = send.querySelector("span") as HTMLElement;
+    for (const t of [
+      "pointerdown",
+      "mousedown",
+      "pointerup",
+      "mouseup",
+      "click",
+    ]) {
+      expect(fire(inner, t).defaultPrevented).toBe(true);
+    }
+    // §5.5.1 warns on an immediate off-hours send — and the modal opens
+    // exactly once for the gesture.
+    expect(openRegularSendWarning).toHaveBeenCalledTimes(1);
+  });
 
   it("⌘/Ctrl+Enter keydown is intercepted (keyboard path)", () => {
-    checkWorkingHours.mockReturnValue(violation("working-hours"));
+    checkWorkingHours.mockReturnValue(violation());
     const { send } = buildCompose();
     teardown = installRegularSendGuard();
     const ev = fire(send, "keydown", {
@@ -237,7 +232,7 @@ describe("§5.5.1 — violation blocks the WHOLE gesture, warns once (FULL verdi
   });
 
   it("while the modal is open, further Send attempts stay blocked but don't re-open it", () => {
-    checkWorkingHours.mockReturnValue(violation("absolute"));
+    checkWorkingHours.mockReturnValue(violation());
     const { send } = buildCompose();
     teardown = installRegularSendGuard();
     fire(send, "pointerdown");
@@ -247,7 +242,7 @@ describe("§5.5.1 — violation blocks the WHOLE gesture, warns once (FULL verdi
   });
 
   it("passes context-appropriate verdict + a snap to the warning", () => {
-    checkWorkingHours.mockReturnValue(violation("working-hours"));
+    checkWorkingHours.mockReturnValue(violation());
     const { send } = buildCompose();
     teardown = installRegularSendGuard();
     fire(send, "pointerdown");
@@ -276,7 +271,7 @@ describe("§5.5.1 — the three choices", () => {
   };
 
   it("Send now anyway → replays the native Send via fireFull", async () => {
-    checkWorkingHours.mockReturnValue(violation("absolute"));
+    checkWorkingHours.mockReturnValue(violation());
     const onScheduled = vi.fn();
     const { send } = buildCompose();
     teardown = installRegularSendGuard({ onScheduled });
@@ -290,7 +285,7 @@ describe("§5.5.1 — the three choices", () => {
   });
 
   it("Reschedule → schedules the snap time and persists it", async () => {
-    checkWorkingHours.mockReturnValue(violation("absolute"));
+    checkWorkingHours.mockReturnValue(violation());
     const onScheduled = vi.fn();
     const { send } = buildCompose();
     teardown = installRegularSendGuard({ onScheduled });
@@ -308,7 +303,7 @@ describe("§5.5.1 — the three choices", () => {
   });
 
   it("Reschedule failing → opens Gmail's native scheduler, never sends now", async () => {
-    checkWorkingHours.mockReturnValue(violation("working-hours"));
+    checkWorkingHours.mockReturnValue(violation());
     scheduleAt.mockRejectedValue(new Error("recipe broke"));
     const a = openAndGetArgs();
     a.onSnap();
@@ -319,7 +314,7 @@ describe("§5.5.1 — the three choices", () => {
   });
 
   it("Cancel → nothing sent or scheduled; a later violation re-opens", async () => {
-    checkWorkingHours.mockReturnValue(violation("absolute"));
+    checkWorkingHours.mockReturnValue(violation());
     const { send } = buildCompose();
     teardown = installRegularSendGuard();
     fire(send, "pointerdown");
@@ -335,7 +330,7 @@ describe("§5.5.1 — the three choices", () => {
 
 describe("§5.5.1 — modal failure falls toward sending (§5.2.3)", () => {
   it("synchronous mount throw → replays the native Send", async () => {
-    checkWorkingHours.mockReturnValue(violation("absolute"));
+    checkWorkingHours.mockReturnValue(violation());
     openRegularSendWarning.mockImplementation(() => {
       throw new Error("mount failed");
     });
@@ -347,7 +342,7 @@ describe("§5.5.1 — modal failure falls toward sending (§5.2.3)", () => {
   });
 
   it("render-time throw (onRenderError) → replays the native Send", async () => {
-    checkWorkingHours.mockReturnValue(violation("working-hours"));
+    checkWorkingHours.mockReturnValue(violation());
     let captured: { onRenderError: () => void } | null = null;
     openRegularSendWarning.mockImplementation((a: unknown) => {
       captured = a as { onRenderError: () => void };

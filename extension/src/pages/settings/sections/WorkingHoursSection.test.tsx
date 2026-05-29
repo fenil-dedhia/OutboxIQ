@@ -33,13 +33,13 @@ describe("WorkingHoursSection (PRD §5.8.2)", () => {
     expect(onChange.mock.calls[0]![0].monday.enabled).toBe(false);
   });
 
-  it("editing a Default boundary autosaves", () => {
+  it("editing a day's time autosaves", () => {
     const { onChange } = renderSection();
-    fireEvent.change(screen.getByLabelText(/Earliest send/i), {
-      target: { value: "06:30" },
+    fireEvent.change(screen.getByLabelText("Monday start"), {
+      target: { value: "08:00" },
     });
     expect(onChange).toHaveBeenCalledTimes(1);
-    expect(onChange.mock.calls[0]![0].absoluteEarliest).toBe("06:30");
+    expect(onChange.mock.calls[0]![0].monday.start).toBe("08:00");
   });
 
   it("an invalid edit (end before start) shows an error and does NOT autosave", () => {
@@ -54,19 +54,10 @@ describe("WorkingHoursSection (PRD §5.8.2)", () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it("invalid Default boundaries (latest before earliest) shows an error, no autosave", () => {
-    const { onChange } = renderSection();
-    fireEvent.change(screen.getByLabelText(/Latest send/i), {
-      target: { value: "05:00" }, // before the 07:00 earliest
-    });
-    expect(
-      screen.getByText(/Latest send time must be after the earliest/i),
-    ).toBeInTheDocument();
-    expect(onChange).not.toHaveBeenCalled();
-  });
-
   it("Reset to defaults asks for confirmation, then restores defaults", () => {
-    const { onChange } = renderSection({ absoluteEarliest: "06:00" });
+    const { onChange } = renderSection({
+      monday: { enabled: true, start: "06:00", end: "14:00" },
+    });
     fireEvent.click(screen.getByRole("button", { name: /reset to defaults/i }));
     expect(screen.getByRole("alertdialog")).toBeInTheDocument();
     expect(onChange).not.toHaveBeenCalled();
@@ -74,6 +65,7 @@ describe("WorkingHoursSection (PRD §5.8.2)", () => {
       screen.getByRole("button", { name: /^reset to defaults$/i }),
     );
     expect(onChange).toHaveBeenCalledTimes(1);
-    expect(onChange.mock.calls[0]![0].absoluteEarliest).toBe("07:00");
+    expect(onChange.mock.calls[0]![0].monday.start).toBe("09:00");
+    expect(onChange.mock.calls[0]![0].monday.end).toBe("17:00");
   });
 });

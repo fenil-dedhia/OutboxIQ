@@ -336,16 +336,14 @@ body {
   border: 0;
 }
 
-.fl-set-wh-days,
-.fl-set-wh-bounds {
+.fl-set-wh-days {
   border: 1px solid var(--fl-border);
   border-radius: 8px;
   margin: 0 0 16px;
   padding: 8px 16px 14px;
 }
 
-.fl-set-wh-days legend,
-.fl-set-wh-bounds legend {
+.fl-set-wh-days legend {
   font-size: 13px;
   color: var(--fl-muted);
   padding: 0 6px;
@@ -363,19 +361,6 @@ body {
   align-items: center;
   gap: 8px;
   width: 130px;
-}
-
-.fl-set-wh-field {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  max-width: 380px;
-  margin: 10px 0 0;
-}
-
-.fl-set-wh-field > span {
-  font-size: 14px;
 }
 
 .fl-set-section input[type="time"] {

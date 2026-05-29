@@ -101,7 +101,6 @@ function handleScheduleSend(): void {
       const recipients = readComposeRecipients();
       openScheduleModal({
         timezone: state.user.timezone,
-        workingHours: state.workingHours,
         lastScheduled: state.lastScheduled,
         recipients,
         // §5.1.3 Step 2: surface the user's pinned zones in the cache-miss

@@ -100,10 +100,25 @@ export function useSettings(): UseSettings {
   }, []);
 
   // Cache mutations go through the dedicated atomic recipient-cache helpers
-  // (they own the recipientCache read-modify-write), then re-sync local from
-  // the fully-consistent persisted state. Serialized on the same chain.
+  // (they own the recipientCache read-modify-write) for the AUTHORITATIVE
+  // persist, then re-sync local from the fully-consistent persisted state.
+  // Serialized on the same chain.
+  //
+  // `optimistic` applies the same change to local state SYNCHRONOUSLY first
+  // (mirroring setTimezone/setPinned/etc., which are all optimistic). Without
+  // it the UI only refreshed after the async storage round-trip resolved — in
+  // the live extension that real IPC delay, combined with CacheSection closing
+  // the row's editor immediately, left the OLD timezone visibly on screen until
+  // a second edit (owner-reported, Session 17). The atomic helper still does a
+  // fresh read-modify-write for the persist, so a concurrent Schedule-modal
+  // cache write is never clobbered; the post-write re-sync reconciles the two.
   const runCacheWrite = useCallback(
-    (op: () => Promise<void>) => {
+    (
+      op: () => Promise<void>,
+      optimistic?: (cur: OutboxIQState) => OutboxIQState,
+    ) => {
+      const cur = stateRef.current;
+      if (optimistic && cur) commit(optimistic(cur));
       writeChain.current = writeChain.current
         .then(async () => {
           await op();
@@ -116,6 +131,12 @@ export function useSettings(): UseSettings {
     },
     [commit],
   );
+
+  /** Case-insensitive email match for the optimistic local transforms — mirrors
+   * recipient-cache.ts `sameEmail` so the optimistic state matches the persisted
+   * one exactly (no reconcile flicker on the re-sync commit). */
+  const sameEmail = (a: string, b: string) =>
+    a.trim().toLowerCase() === b.trim().toLowerCase();
 
   const setTimezone = useCallback(
     (timezone: string) => {
@@ -169,16 +190,29 @@ export function useSettings(): UseSettings {
 
   const editCacheTimezone = useCallback(
     (entry: RecipientCacheEntry, timezone: string) => {
-      runCacheWrite(() =>
-        // Upsert keyed on the same email = delete-then-re-add in one storage
-        // transaction. resolvedAt carried through so the "date resolved" stays
-        // (a correction, not a fresh resolution); source forced to "manual".
-        setCachedRecipient({
-          email: entry.email,
-          name: entry.name,
-          timezone,
-          source: "manual",
-          resolvedAt: entry.resolvedAt,
+      const corrected: RecipientCacheEntry = {
+        email: entry.email,
+        name: entry.name,
+        timezone,
+        source: "manual",
+        resolvedAt: entry.resolvedAt,
+      };
+      runCacheWrite(
+        () =>
+          // Upsert keyed on the same email = delete-then-re-add in one storage
+          // transaction. resolvedAt carried through so the "date resolved" stays
+          // (a correction, not a fresh resolution); source forced to "manual".
+          setCachedRecipient(corrected),
+        // Optimistic: mirror setCachedRecipient's upsert (drop the old entry,
+        // append the corrected one) so the UI shows the new zone instantly.
+        (cur) => ({
+          ...cur,
+          recipientCache: [
+            ...cur.recipientCache.filter(
+              (e) => !sameEmail(e.email, entry.email),
+            ),
+            corrected,
+          ],
         }),
       );
     },
@@ -187,13 +221,24 @@ export function useSettings(): UseSettings {
 
   const deleteCacheEntry = useCallback(
     (email: string) => {
-      runCacheWrite(() => removeCachedRecipient(email));
+      runCacheWrite(
+        () => removeCachedRecipient(email),
+        (cur) => ({
+          ...cur,
+          recipientCache: cur.recipientCache.filter(
+            (e) => !sameEmail(e.email, email),
+          ),
+        }),
+      );
     },
     [runCacheWrite],
   );
 
   const clearCache = useCallback(() => {
-    runCacheWrite(() => clearRecipientCache());
+    runCacheWrite(
+      () => clearRecipientCache(),
+      (cur) => ({ ...cur, recipientCache: [] }),
+    );
   }, [runCacheWrite]);
 
   return {

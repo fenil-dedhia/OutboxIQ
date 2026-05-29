@@ -249,8 +249,9 @@ hard-blocking to polish.
 
 > **Session-12 update.** The Settings panel is **built** — all seven §5.8.2
 > sections ship (`src/pages/settings/`): Profile/Timezone, Pinned Timezones
-> (drag-and-drop + keyboard reorder), Working Hours (+ Default boundaries +
-> reset), Feature Toggles (the two Free-v1 toggles, **wired to their
+> (drag-and-drop + keyboard reorder), Working Hours (~~+ Default boundaries~~
+> [Default boundaries REMOVED in v4 — Session 17, owner-decisions-log Entry 56]
+> + reset), Feature Toggles (the two Free-v1 toggles, **wired to their
 > consumers**), Recipient Timezone Cache (view / edit / delete / clear-all),
 > Privacy & Data (structure-only), About. Reached via the three §5.8.1 access
 > points (toolbar icon, onboarding completion link, modal gear). The two pieces

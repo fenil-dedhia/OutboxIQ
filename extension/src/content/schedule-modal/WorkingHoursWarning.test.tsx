@@ -8,7 +8,7 @@ import { checkWorkingHours } from "../../lib/schedule/working-hours";
 import { createDefaultState } from "../../lib/storage";
 import type { WorkingHoursVerdict } from "../../lib/schedule/working-hours";
 
-const WH = createDefaultState().workingHours; // Mon–Fri 9–17, abs 7–19
+const WH = createDefaultState().workingHours; // Mon–Fri 9–17, Sat/Sun off
 const at = (day: number, hour: number) => ({
   year: 2026,
   month: 5,
@@ -17,9 +17,9 @@ const at = (day: number, hour: number) => ({
   minute: 0,
 });
 
-describe("WorkingHoursWarning (PRD §5.5 soft-warning)", () => {
-  it("absolute before-earliest: names the floor, shows all three options", () => {
-    const verdict = checkWorkingHours(at(18, 3), WH); // Mon 03:00
+describe("WorkingHoursWarning (PRD §5.5 soft-warning — working hours only since v4)", () => {
+  it("before-start: names it, shows all three options, tz abbr adjacent", () => {
+    const verdict = checkWorkingHours(at(18, 8), WH); // Mon 08:00 → before-start
     const onSnap = vi.fn();
     const onProceed = vi.fn();
     render(
@@ -32,9 +32,9 @@ describe("WorkingHoursWarning (PRD §5.5 soft-warning)", () => {
         onCancel={vi.fn()}
       />,
     );
-    // §8.4: timezone abbreviation adjacent to the times.
+    // §8.4: timezone abbreviation adjacent to the time.
     expect(
-      screen.getByText(/earliest you said you'd ever send/i),
+      screen.getByText(/before your working hours start/i),
     ).toHaveTextContent("EDT");
     fireEvent.click(screen.getByRole("button", { name: /reschedule to/i }));
     fireEvent.click(screen.getByRole("button", { name: /anyway/i }));
@@ -42,7 +42,29 @@ describe("WorkingHoursWarning (PRD §5.5 soft-warning)", () => {
     expect(onProceed).toHaveBeenCalledTimes(1);
   });
 
-  it("working-hours non-working-day: phrases it as not a working day", () => {
+  it("after-end (regular Send): copy reads 'past your working hours'", () => {
+    const verdict = checkWorkingHours(at(18, 21), WH); // Mon 21:00 → after-end
+    render(
+      <WorkingHoursWarning
+        verdict={verdict}
+        tzAbbr="EDT"
+        context="send"
+        busy={false}
+        onSnap={vi.fn()}
+        onProceed={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+    const lead = screen.getByText(/past your working hours/i);
+    expect(lead.textContent).toMatch(/^It's /);
+    expect(lead).toHaveTextContent("EDT");
+    // Reschedule offers the next working morning (Tue 9:00 AM), strictly future.
+    expect(
+      screen.getByRole("button", { name: /reschedule to/i }),
+    ).toHaveTextContent(/9:00 AM/);
+  });
+
+  it("non-working-day: phrases it as not a working day", () => {
     const verdict = checkWorkingHours(at(23, 10), WH); // Sat 10:00
     render(
       <WorkingHoursWarning
@@ -60,7 +82,7 @@ describe("WorkingHoursWarning (PRD §5.5 soft-warning)", () => {
   });
 
   it("context='send' (§5.5.1): present-tense lead + 'Send now anyway'", () => {
-    const verdict = checkWorkingHours(at(18, 3), WH); // Mon 03:00 → abs floor
+    const verdict = checkWorkingHours(at(18, 8), WH); // Mon 08:00 → before-start
     render(
       <WorkingHoursWarning
         verdict={verdict}
@@ -73,7 +95,7 @@ describe("WorkingHoursWarning (PRD §5.5 soft-warning)", () => {
       />,
     );
     // §5.5.1 sends NOW — copy must say so, not "is scheduled for".
-    const lead = screen.getByText(/earliest you said you'd ever send/i);
+    const lead = screen.getByText(/before your working hours start/i);
     expect(lead.textContent).toMatch(/^It's /);
     expect(lead.textContent).not.toMatch(/is scheduled for/i);
     expect(

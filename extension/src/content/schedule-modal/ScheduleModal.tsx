@@ -11,24 +11,16 @@
 //
 // In scope: §5.3.1 layout, §5.3.2 header + timezone subtitle, §5.3.3 Quick
 // Options + "Last scheduled time" row (§5.3.3 amendment), §5.3.4 custom
-// picker ("Pick custom"), §5.3.5 Optimize-for-X (Session 10 — items a–n),
-// and the §5.3.6 → §5.5 check.
+// picker ("Pick custom"), §5.3.5 Optimize-for-X (Session 10 — items a–n).
 //
-// §5.5 trigger split (Locked product decisions / Entry 40):
-//   • **Quick Options / Pick Custom / Last scheduled time** → §5.5 warns on
-//     **Default-boundaries** violations (Entry 40 Case 2 — manual selection).
-//   • **§5.3.5 Optimize-for-X-computed times** → §5.5 warning SUPPRESSED
-//     (Entry 40 Case 1 — algorithmic, feature-mediated intent). The
-//     four-step engagement (open modal → check Optimize → pick recipient
-//     → pick timing) constitutes explicit intent; surfacing the warning at
-//     the *result* of that engagement would train users to dismiss it.
-//   • Working-hours violations on Schedule Send remain ignored (the core
-//     use case is deliberate off-hours scheduling — Entry 21); they are
-//     still computed by checkWorkingHours and consumed by §5.5.1.
-//
-// Implementation: Optimize is routed through `commitOptimize()` which
-// computes the send time then calls `run()` directly (no `gate()`). Every
-// other path goes through `gate()` so the warning fires as before.
+// §5.5 soft warning: NONE on the Schedule Send path (as of SCHEMA_VERSION 4,
+// Session 17). Deliberately scheduling outside your working hours is the core
+// use case (locked Entry 21), so it was never warned; the global "Default
+// boundaries" that were the only Schedule-Send warning trigger have been
+// removed entirely. So every path here — Quick Options / Pick Custom / Last
+// scheduled time / Optimize-for-X — schedules directly. `gate()` is now just a
+// past-time guard. (The working-hours soft warning lives only on §5.5.1
+// regular Send, where an *immediate* off-hours send is plausibly unintended.)
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -48,22 +40,16 @@ import {
   type WallTime,
 } from "../../lib/schedule/gmail-format";
 import {
-  checkWorkingHours,
-  ensureFutureSnap,
-  type WorkingHoursVerdict,
-} from "../../lib/schedule/working-hours";
-import {
   schedulePreset,
   scheduleAt,
   openNativeScheduleDialog,
 } from "./schedule-actions";
-import { WorkingHoursWarning } from "./WorkingHoursWarning";
 import { OptimizeSection, type OptimizeChoice } from "./OptimizeSection";
 import { useLivePinnedTimezones } from "./use-live-pinned-timezones";
 import { computeOptimizeSendTime } from "../../lib/schedule/optimize-time";
 import { setManualRecipientTimezone } from "../../lib/recipient-cache";
 import type { ComposeRecipient } from "../compose/compose-recipients";
-import type { LastScheduled, WorkingHours } from "../../lib/storage";
+import type { LastScheduled } from "../../lib/storage";
 
 type Status =
   | { kind: "idle" }
@@ -79,8 +65,6 @@ type Selection =
 export interface ScheduleModalProps {
   /** The user's configured IANA timezone (PRD §7.2 user.timezone). */
   timezone: string;
-  /** The user's working hours + Default boundaries (PRD §7.2). §5.5 input. */
-  workingHours: WorkingHours;
   /** Last time scheduled via Fashionably Late, or null (PRD §5.3.3 amendment). */
   lastScheduled: LastScheduled | null;
   /** Compose's current To+CC recipients (PRD §5.3.5 (b); BCC excluded).
@@ -104,15 +88,6 @@ export interface ScheduleModalProps {
 
 type ScheduleAction = () => Promise<void>;
 
-// A scheduling attempt held back by the §5.5 soft-warning modal: `proceed`
-// schedules the user's chosen time as-is; `snap` schedules the corrected
-// time (null only in the unreachable zero-days working-hours case).
-interface PendingWarning {
-  verdict: WorkingHoursVerdict;
-  proceed: { action: ScheduleAction; remember: LastScheduled };
-  snap: { action: ScheduleAction; remember: LastScheduled } | null;
-}
-
 function lastToRemember(ls: LastScheduled): LastScheduled {
   return {
     display: ls.display,
@@ -123,7 +98,6 @@ function lastToRemember(ls: LastScheduled): LastScheduled {
 
 export function ScheduleModal({
   timezone,
-  workingHours,
   lastScheduled,
   recipients,
   pinnedTimezones,
@@ -136,7 +110,6 @@ export function ScheduleModal({
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [selection, setSelection] = useState<Selection | null>(null);
-  const [warning, setWarning] = useState<PendingWarning | null>(null);
   // §5.3.5 Optimize-for-X state. When non-null the user has a complete
   // Optimize choice (recipient + tz + timing); the Schedule button reads
   // EITHER this OR `selection`, and commits via `commitOptimize` (which
@@ -146,10 +119,6 @@ export function ScheduleModal({
   // OptimizeSection clears its own checkbox (one-decision-at-a-time, §8.7).
   const [optimizeReset, setOptimizeReset] = useState(0);
   const cardRef = useRef<HTMLDivElement>(null);
-  // Latest `warning` for the keydown handler without re-subscribing or a
-  // state-updater side effect (StrictMode-safe).
-  const warningRef = useRef<PendingWarning | null>(null);
-  warningRef.current = warning;
 
   // §5.8.2 live link: pins reorder/add/remove from the Settings page reflect in
   // this open modal's §5.3.5 (i) picker without reopening (owner UX call,
@@ -177,10 +146,9 @@ export function ScheduleModal({
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
       if (e.key !== "Escape") return;
-      // §8.9: Escape closes the §5.5 warning back to the modal (selection
-      // kept); only closes the whole modal when no warning is showing.
-      if (warningRef.current) setWarning(null);
-      else onClose();
+      // §8.9: Escape closes the modal. (The §5.5 in-modal warning was removed
+      // with Default boundaries in v4 — Schedule Send no longer warns.)
+      onClose();
     };
     document.addEventListener("keydown", onKey, true);
     return () => document.removeEventListener("keydown", onKey, true);
@@ -270,14 +238,12 @@ export function ScheduleModal({
     }
   }
 
-  // §5.3.6 → §5.5 seam: gate a resolved wall time through the check before
-  // scheduling. Locked Session 5.5: on the **Schedule Send** path only an
-  // **absolute-limit** violation raises the soft warning — a working-hours
-  // "violation" here is the product working as intended (deliberately
-  // scheduling off-hours to land in a recipient's window), so warning on
-  // it would train users to dismiss the modal and gut its value for the
-  // absolute case. So: not absolute → schedule directly; absolute → the
-  // soft-warning modal (proceed / reschedule / cancel).
+  // §5.3.6 seam: validate a resolved wall time before scheduling. As of v4
+  // (Session 17) the **Schedule Send path never raises a working-hours soft
+  // warning** — deliberately scheduling outside your hours is the core use
+  // case (locked Entry 21), and the global Default boundaries that were its
+  // only warning trigger have been removed. The only remaining gate is the
+  // past-time guard; everything else schedules directly.
   function gate(
     wall: WallTime,
     action: ScheduleAction,
@@ -296,45 +262,11 @@ export function ScheduleModal({
       });
       return;
     }
-    // The picked time is future, but its computed snap can still be in the
-    // past in the latent case: picking a later-today time while the clock is
-    // already past the absolute ceiling (after-latest → today's ceiling,
-    // which has elapsed). ensureFutureSnap rolls only that one case forward;
-    // the locked same-day snap for a genuinely future picked day is
-    // untouched. Same fresh `now` as the past-time guard above.
-    const verdict = ensureFutureSnap(
-      checkWorkingHours(wall, workingHours),
-      freshNow,
-      workingHours,
-    );
-    if (verdict.kind !== "absolute") {
-      void run(action, remember);
-      return;
-    }
-    let snap: PendingWarning["snap"] = null;
-    if (verdict.snap) {
-      const f = formatForGmail(verdict.snap);
-      snap = {
-        action: () =>
-          scheduleAt({ gmailDate: f.gmailDate, gmailTime: f.gmailTime }),
-        remember: {
-          display: f.display,
-          gmailDate: f.gmailDate,
-          gmailTime: f.gmailTime,
-        },
-      };
-    }
-    setWarning({ verdict, proceed: { action, remember }, snap });
+    void run(action, remember);
   }
 
-  // §5.3.5 Optimize-for-X commit path. Bypasses gate() per Entry 40 Case 1:
-  // an Optimize-computed time crossing the user's Default boundaries is the
-  // intended output of the feature; surfacing the §5.5 warning at the result
-  // of the four-step engagement would train users to dismiss the modal
-  // (extending Entry 21's "warnings fire for unintended actions, not the
-  // core use case" line of reasoning). Working-hours and Default-boundaries
-  // calc still runs unconditionally elsewhere — only the trigger predicate
-  // narrows here; the warning is not invoked.
+  // §5.3.5 Optimize-for-X commit path. Like every Schedule Send path it does
+  // not warn; the cache write is its only added concern.
   //
   // Cache write: only when the user picked the tz manually via the inline
   // picker AND left "Remember…" checked (spec (i)/(j)). Cache hits aren't
@@ -412,20 +344,6 @@ export function ScheduleModal({
     }
   }
 
-  // §5.5 soft-warning resolutions.
-  function proceedAnyway(): void {
-    const w = warning;
-    if (!w) return;
-    setWarning(null);
-    void run(w.proceed.action, w.proceed.remember);
-  }
-  function takeSnap(): void {
-    const w = warning;
-    if (!w || !w.snap) return;
-    setWarning(null);
-    void run(w.snap.action, w.snap.remember);
-  }
-
   const busy = status.kind === "busy";
   const presetSelected = (p: SchedulePreset): boolean =>
     selection?.kind === "preset" && selection.preset.id === p.id;
@@ -437,21 +355,6 @@ export function ScheduleModal({
     date === minDate
       ? wallToTimeInput(addMinutesToWall(nowWallInTimeZone(timezone, now), 5))
       : undefined;
-
-  // §8.7 one decision per screen: the §5.5 warning replaces the schedule
-  // card (same Shadow-DOM backdrop) rather than stacking on top of it.
-  if (warning) {
-    return (
-      <WorkingHoursWarning
-        verdict={warning.verdict}
-        tzAbbr={tzLabel.abbr}
-        busy={busy}
-        onSnap={takeSnap}
-        onProceed={proceedAnyway}
-        onCancel={() => setWarning(null)}
-      />
-    );
-  }
 
   return (
     <div

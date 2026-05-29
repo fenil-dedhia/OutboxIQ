@@ -44,8 +44,8 @@ export function setCachedConfig(c: SendGuardConfig | null): void {
  * Keep the snapshot fresh: re-derive from getState() whenever the persisted
  * state changes (so an onboarding edit / Settings change takes effect without
  * a page reload). Returns a teardown (used by tests; the content script
- * installs once for the page lifetime). Any failure leaves the prior
- * snapshot (or null) — never throws into Gmail.
+ * installs once for the page lifetime). Any failure nulls the snapshot so the
+ * guard fails OPEN — never throws into Gmail.
  */
 export function startConfigWatch(initial?: SendGuardConfig): () => void {
   let disposed = false;
@@ -64,7 +64,13 @@ export function startConfigWatch(initial?: SendGuardConfig): () => void {
         }
       })
       .catch(() => {
-        /* leave the prior snapshot; fail-open if it was null */
+        // A failed read most likely means a SEVERED extension context — i.e.
+        // an orphaned post-reload instance whose chrome.* is dead. Drop the
+        // snapshot to null so the §5.5.1 guard fails OPEN (no warning) rather
+        // than acting on a frozen, possibly-stale snapshot. A live instance
+        // only hits this on a transient error and recovers on the next
+        // refresh; fail-open is the §5.2.3 / §6.7 contract either way.
+        if (!disposed) cached = null;
       });
   };
 
@@ -79,6 +85,25 @@ export function startConfigWatch(initial?: SendGuardConfig): () => void {
     refresh(); // via getState() so default-merge / schema migration applies
   };
 
+  // Re-read when the tab is re-shown / re-focused. Belt-and-braces for the
+  // multi-instance reload case: after an extension reload the user may edit
+  // Settings and return to an already-open Gmail tab. `onChanged` alone proved
+  // unreliable across the orphaned-old + freshly-injected instance pair, but
+  // the DOM visibilitychange/focus events fire in EVERY isolated world
+  // regardless of whether its chrome.* context is alive — so on return a LIVE
+  // instance re-reads fresh config and a SEVERED one nulls its cache (fails
+  // open). Refresh is fail-open and never throws into Gmail; this does not
+  // touch the guard's decision logic.
+  const onVisible = (): void => {
+    if (document.visibilityState === "visible") refresh();
+  };
+  try {
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+  } catch {
+    /* no DOM here (non-jsdom test env) — onChanged + seed still apply */
+  }
+
   try {
     chrome.storage.onChanged.addListener(listener);
   } catch {
@@ -87,6 +112,12 @@ export function startConfigWatch(initial?: SendGuardConfig): () => void {
 
   return (): void => {
     disposed = true;
+    try {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    } catch {
+      /* ignore */
+    }
     try {
       chrome.storage.onChanged.removeListener(listener);
     } catch {

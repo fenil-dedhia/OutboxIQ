@@ -66,18 +66,18 @@ describe("useSettings — settings autosave (§5.8.2)", () => {
     expect(await listCachedRecipients()).toHaveLength(1);
   });
 
-  it("setWorkingHours persists working hours + Default boundaries", async () => {
+  it("setWorkingHours persists per-day working hours", async () => {
     const { result } = await readyHook();
     const wh = {
       ...createDefaultState().workingHours,
-      absoluteEarliest: "06:00",
       monday: { enabled: false, start: "09:00", end: "17:00" },
+      tuesday: { enabled: true, start: "08:00", end: "16:00" },
     };
     act(() => result.current.setWorkingHours(wh));
     await waitFor(async () => {
       const s = await getState();
-      expect(s.workingHours.absoluteEarliest).toBe("06:00");
       expect(s.workingHours.monday.enabled).toBe(false);
+      expect(s.workingHours.tuesday.start).toBe("08:00");
     });
   });
 
@@ -87,17 +87,17 @@ describe("useSettings — settings autosave (§5.8.2)", () => {
     act(() =>
       result.current.setWorkingHours({
         ...createDefaultState().workingHours,
-        absoluteLatest: "23:00",
+        monday: { enabled: true, start: "09:00", end: "23:00" },
       }),
     );
     await waitFor(async () => {
-      expect((await getState()).workingHours.absoluteLatest).toBe("23:00");
+      expect((await getState()).workingHours.monday.end).toBe("23:00");
     });
     act(() =>
       result.current.setWorkingHours(createDefaultState().workingHours),
     );
     await waitFor(async () => {
-      expect((await getState()).workingHours.absoluteLatest).toBe("19:00");
+      expect((await getState()).workingHours.monday.end).toBe("17:00");
     });
   });
 
@@ -144,6 +144,43 @@ describe("useSettings — recipient cache (§5.8.2)", () => {
       expect(hit.source).toBe("manual");
       expect(all).toHaveLength(1); // not duplicated
     });
+  });
+
+  // Regression (Session 17, owner-reported): the edited zone must appear in
+  // local state SYNCHRONOUSLY (optimistically), not only after the async
+  // storage round-trip. Before the fix the cache mutations deferred their
+  // commit until the write resolved; in the live extension that real IPC delay
+  // — with CacheSection closing the row editor immediately — left the OLD
+  // timezone visibly on screen until a second edit. No `waitFor` here ON
+  // PURPOSE: this asserts the value is present on the same tick as the edit.
+  it("editCacheTimezone updates local state optimistically (same tick, no await)", async () => {
+    await setManualRecipientTimezone("opt@example.com", "America/Los_Angeles");
+    const { result } = await readyHook();
+    const entry = result.current.state!.recipientCache.find(
+      (r) => r.email === "opt@example.com",
+    )!;
+
+    act(() => result.current.editCacheTimezone(entry, "America/New_York"));
+
+    // Synchronous read — the optimistic commit already ran inside act().
+    const hit = result.current.state!.recipientCache.find(
+      (r) => r.email === "opt@example.com",
+    )!;
+    expect(hit.timezone).toBe("America/New_York");
+  });
+
+  it("deleteCacheEntry and clearCache also update local state optimistically", async () => {
+    await setManualRecipientTimezone("x@example.com", "UTC");
+    await setManualRecipientTimezone("y@example.com", "Asia/Tokyo");
+    const { result } = await readyHook();
+
+    act(() => result.current.deleteCacheEntry("x@example.com"));
+    expect(result.current.state!.recipientCache.map((r) => r.email)).toEqual([
+      "y@example.com",
+    ]);
+
+    act(() => result.current.clearCache());
+    expect(result.current.state!.recipientCache).toEqual([]);
   });
 
   it("deleteCacheEntry removes one entry", async () => {

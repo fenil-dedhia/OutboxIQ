@@ -9,6 +9,8 @@ import { seedStorage } from "../../test/chrome-mock";
 import {
   STORAGE_KEY_ONBOARDING_DRAFT,
   PRIVACY_POLICY_VERSION,
+  PRIVACY_POLICY_URL,
+  TERMS_OF_SERVICE_URL,
 } from "../../lib/constants";
 
 describe("Onboarding flow (PRD §5.1, restructured 3-step)", () => {
@@ -42,6 +44,34 @@ describe("Onboarding flow (PRD §5.1, restructured 3-step)", () => {
     const state = await getState();
     expect(state.user.onboardingCompletedAt).not.toBeNull();
     expect(state.consent?.privacyPolicyVersion).toBe(PRIVACY_POLICY_VERSION);
+  });
+
+  // Regression guard (PRD §6.1, 2026-05-28): the consent gesture must link
+  // BOTH legal documents. A future refactor must not silently drop one.
+  it("links both the Privacy Policy and the Terms of Service from the consent line", async () => {
+    render(<App />);
+    await screen.findByRole("checkbox");
+
+    const privacyLinks = screen.getAllByRole("link", {
+      name: /privacy policy/i,
+    });
+    const tosLinks = screen.getAllByRole("link", { name: /terms of service/i });
+
+    // Both appear as inline links inside the consent label.
+    expect(privacyLinks.length).toBeGreaterThanOrEqual(1);
+    expect(tosLinks.length).toBeGreaterThanOrEqual(1);
+
+    // Every legal link points at the right URL and opens safely in a new tab.
+    for (const a of privacyLinks) {
+      expect(a).toHaveAttribute("href", PRIVACY_POLICY_URL);
+      expect(a).toHaveAttribute("target", "_blank");
+      expect(a).toHaveAttribute("rel", "noopener noreferrer");
+    }
+    for (const a of tosLinks) {
+      expect(a).toHaveAttribute("href", TERMS_OF_SERVICE_URL);
+      expect(a).toHaveAttribute("target", "_blank");
+      expect(a).toHaveAttribute("rel", "noopener noreferrer");
+    }
   });
 
   it("resumes mid-flow from a persisted draft (§5.1.4)", async () => {

@@ -41,18 +41,16 @@ export interface DayHours {
   end: string;
 }
 
-export type WorkingHours = Record<Weekday, DayHours> & {
-  /** Absolute floor — never send before this, any timezone. PRD §5.1 step 3. */
-  absoluteEarliest: string;
-  /** Absolute ceiling — never send after this, any timezone. */
-  absoluteLatest: string;
-};
+// The per-weekday working window is the single configured send-time window
+// (PRD §5.1 step 3). The global "Default boundaries" (absoluteEarliest/
+// absoluteLatest) were removed in SCHEMA_VERSION 4 (Session 17) — they produced
+// a redundant second warning on regular Send; working hours is now the only
+// window. See the v3→v4 migration in getState() and owner-decisions-log.
+export type WorkingHours = Record<Weekday, DayHours>;
 
 export interface WorkingHoursErrors {
   /** Message per weekday; only present for an invalid *enabled* day. */
   days: Partial<Record<Weekday, string>>;
-  /** Message for the absolute earliest/latest bounds, or null if valid. */
-  bounds: string | null;
 }
 
 // PRD §5.1 step 3 validation. Zero-padded "HH:MM" strings compare
@@ -66,16 +64,12 @@ export function validateWorkingHours(wh: WorkingHours): WorkingHoursErrors {
       days[day] = "End time must be after start time.";
     }
   }
-  const bounds =
-    wh.absoluteLatest < wh.absoluteEarliest
-      ? "Latest send time must be after the earliest."
-      : null;
-  return { days, bounds };
+  return { days };
 }
 
 export function isWorkingHoursValid(wh: WorkingHours): boolean {
   const e = validateWorkingHours(wh);
-  return Object.keys(e.days).length === 0 && e.bounds === null;
+  return Object.keys(e.days).length === 0;
 }
 
 export interface UserState {
@@ -164,8 +158,6 @@ export function createDefaultState(): OutboxIQState {
       friday: defaultDay(true),
       saturday: defaultDay(false),
       sunday: defaultDay(false),
-      absoluteEarliest: "07:00",
-      absoluteLatest: "19:00",
     },
     featureToggles: {
       recipientOptimization: true,
@@ -208,22 +200,48 @@ export async function getState(): Promise<OutboxIQState> {
   const stored = await rawGet<Partial<OutboxIQState>>(STORAGE_KEY_STATE);
   const defaults = createDefaultState();
   if (!stored) return defaults;
-  return {
-    schemaVersion: stored.schemaVersion ?? defaults.schemaVersion,
+
+  // workingHours is rebuilt weekday-by-weekday over defaults rather than
+  // spread wholesale. This is the v3→v4 migration (Session 17): the obsolete
+  // "Default boundaries" keys (absoluteEarliest/absoluteLatest) that a v3
+  // record still carries are DROPPED here — they are not weekday keys, so the
+  // rebuild simply never copies them. (Earlier bumps stayed additive; this is
+  // the first subtractive one, so it needs an explicit rebuild + write-back.)
+  const storedWH = (stored.workingHours ?? {}) as Partial<
+    Record<Weekday, DayHours>
+  >;
+  const workingHours = WEEKDAYS.reduce((acc, day) => {
+    acc[day] = { ...defaults.workingHours[day], ...storedWH[day] };
+    return acc;
+  }, {} as WorkingHours);
+
+  const next: OutboxIQState = {
+    schemaVersion: SCHEMA_VERSION,
     user: { ...defaults.user, ...stored.user },
-    workingHours: { ...defaults.workingHours, ...stored.workingHours },
+    workingHours,
     featureToggles: { ...defaults.featureToggles, ...stored.featureToggles },
     recipientCache: stored.recipientCache ?? defaults.recipientCache,
     consent: stored.consent ?? defaults.consent,
-    // SCHEMA_VERSION 1→2 added `lastScheduled`. It is purely additive and
-    // nullable, so this default-merge IS the migration: an older v1 record
-    // simply lacks the key and resolves to null. No explicit version branch
-    // is needed yet (see CLAUDE.md migration convention).
+    // SCHEMA_VERSION 1→2 added `lastScheduled`; 2→3 added `pinnedTimezones`.
+    // Both were additive + nullable, so the default-merge above IS their
+    // migration. v3→4 (the workingHours rebuild) is the first SUBTRACTIVE bump.
     lastScheduled: stored.lastScheduled ?? defaults.lastScheduled,
-    // v2→v3 added `pinnedTimezones`; same additive-default migration — an
-    // older record lacks the key and resolves to [] (no silent pinning).
     pinnedTimezones: stored.pinnedTimezones ?? defaults.pinnedTimezones,
   };
+
+  // One-way v3→v4 write-back: persist the cleaned shape once so the obsolete
+  // boundary keys are physically removed from storage (and Export My Data no
+  // longer surfaces them). Self-terminating — once written, schemaVersion is
+  // current and this branch is skipped. Best-effort: the returned `next` is
+  // already clean for this read even if the write fails (§6.7).
+  if (stored.schemaVersion !== SCHEMA_VERSION) {
+    try {
+      await setState(next);
+    } catch {
+      /* in-memory `next` is clean; next successful write will persist it */
+    }
+  }
+  return next;
 }
 
 export async function setState(state: OutboxIQState): Promise<void> {

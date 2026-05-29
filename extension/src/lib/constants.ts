@@ -65,7 +65,13 @@ export const STORAGE_KEY_AUTH = "outboxiqAuth";
 // Purely additive (defaults to []), so the default-merge is again the
 // migration — an existing record simply lacks the key and resolves to empty
 // (no silent default-pinning; the user pins explicitly in onboarding/Settings).
-export const SCHEMA_VERSION = 3;
+// v3→v4 (2026-05-28, Session 17): REMOVED the global "Default boundaries"
+// (absoluteEarliest/absoluteLatest) from WorkingHours — they produced a
+// redundant second warning on regular Send; per-day working hours is now the
+// sole send-time window (owner-decisions-log). First SUBTRACTIVE bump, so it
+// needs an explicit migration: getState() rebuilds workingHours weekday-only
+// (dropping the obsolete keys) and writes the cleaned record back once.
+export const SCHEMA_VERSION = 4;
 
 // PRD §5.1.3 Step 2 (Session 11 — Pinned Timezones). The picker surfaces up to
 // MAX_PINNED_TIMEZONES of the user's most-used zones in a "Pinned" section.

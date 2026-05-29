@@ -2508,6 +2508,107 @@ this one.
 
 ---
 
+## Entry 56 — Default boundaries removed from the product; working hours consolidated as the single send-time window (SCHEMA_VERSION v3→v4)
+
+- **Session:** 17 (2026-05-28 — comprehensive hands-on testing, the final
+  pre-submission gate; this refactor was scoped INTO Session 17 and sequenced
+  *before* the final hands-on pass so testing covers the post-refactor code).
+- **Moment:** During Flow D (the §5.5.1 outside-hours warning) hands-on
+  testing, the owner observed that the product had **two overlapping
+  warnings** on a regular Send: a *working-hours* violation (per-day window,
+  e.g. Thu 9–5) and a *Default-boundaries* violation (global earliest/latest,
+  e.g. 7 AM–7 PM). They fire the same three-choice soft-warning modal with
+  near-identical copy; the only difference is which boundary was crossed.
+  From the user's seat they're two flavors of one thing ("you're sending
+  outside an hour-range you configured") — no progressive escalation, no
+  distinct treatment, functionally redundant. The owner named it a product-
+  coherence problem, parked it ("I'll get back to you on this"), then returned
+  with the decision: **erase Default boundaries from the product entirely**
+  (UI, onboarding, storage, the guard, the PRD as live spec) and let per-day
+  working hours be the single window.
+- **My input (owner):** Drove the consolidation and its shape:
+  - **Working hours alone is sufficient and conceptually richer** (per-day vs
+    a single global pair), so it's the survivor; Default boundaries is the
+    cut.
+  - **The Optimize-for-X warning exemption stays.** (Discovery found it was
+    never bound to Default boundaries anyway — it's architectural: Optimize
+    routes through `commitOptimize()` → `run()`, bypassing the warning gate
+    entirely. So "rebinding" it was a no-op; it survives unchanged.)
+  - **Authorized the SCHEMA_VERSION v3→v4 bump** — the first *subtractive*
+    schema change in the project (prior bumps were additive default-merges).
+    Explicitly overrides the standing "no bump unless necessary" guard for
+    this refactor, with a real one-way migration (drop the keys on read,
+    write back v4).
+  - **Confirmed the consequence I surfaced before editing:** removing Default
+    boundaries also removes the §5.3 **Schedule Send** modal's *only* warning
+    trigger (it warned on absolute-only by the locked Entry-21 split, never on
+    working hours). The owner confirmed Schedule Send should now show **no**
+    soft warning at all — coherent with Entry 21 (a deliberate off-hours
+    *schedule* is the core use case; warning on it trains dismissal). The
+    working-hours warning now lives ONLY on §5.5.1 regular Send.
+- **What Claude Code would have done without it (Entry 17 honesty rule):**
+  Claude would NOT have initiated this on its own — the two-warning design
+  was the locked, shipped behavior (Entries 19/20/21/40), and Claude's
+  standing instructions treat those as not-to-relitigate without explicit
+  owner input. Left alone, Free v1 would have shipped with the redundant
+  pair. The owner's product-coherence judgment is the entire origin of the
+  change. Claude's load-bearing contribution was in execution discipline:
+  reporting before editing that three of the spec's structural assumptions
+  didn't match the code (Default boundaries is a sub-block of the Working
+  Hours Settings section and onboarding step — NOT its own 7th section or a
+  separate step, so no "7→6 sections" change; the Optimize exemption is
+  architectural, not boundary-bound; and the Schedule-Send-loses-its-warning
+  consequence), and getting the owner's explicit yes on the one real
+  behavioral fork before cutting hot-path code.
+- **Honest counterfactual cost:** The cheaper-in-isolation path was
+  **defer-to-Premium** — leave the redundancy for v1 (it's not a bug, just
+  inelegant) and reconsider the warning model whenever Premium is built. The
+  owner rejected that: chose to **pay the cost of a hot-path refactor + a
+  subtractive schema migration at the final pre-submission gate** to ship a
+  *coherent* product rather than a redundant one. The risk taken on: touching
+  the §5.5.1 guard and §5.3 modal (just-validated in Flow F) right before
+  launch — mitigated by full unit-test coverage (incl. the v3→v4 migration
+  test) + the mandatory Flow D / Flow F hands-on re-verification this entry
+  requires before submission. If the consolidation later proves too blunt
+  (e.g. a user wants a hard "never before X" floor *and* a soft per-day
+  window), it returns as an additive Premium/​v2 feature — but the v1 surface
+  is simpler and the schema is clean. The owner judged a clean, coherent v1
+  worth more than the optionality of the second rule type.
+- **Outcome:** Default boundaries removed across UI (Settings Working Hours
+  section + onboarding Working Hours step — both stay single sections/steps,
+  just lose the boundary sub-block), storage (`absoluteEarliest`/
+  `absoluteLatest` dropped from `WorkingHours`; `validateWorkingHours` loses
+  its bounds check; `getState` rebuilds workingHours weekday-only and writes
+  back v4), the §5.5 calc (`checkWorkingHours` loses its absolute branches;
+  `ViolationKind` narrows to `"working-hours"`; `before-earliest`/
+  `after-latest`, the `boundary` field, and `ensureFutureSnap` all removed),
+  the §5.3 modal (no warning path; `gate()` is now a past-time guard only;
+  `workingHours` prop dropped through `mount.tsx` + `content-script.ts`), and
+  the §5.5.1 warning copy ("after your working hours end" → "past your working
+  hours"). `SCHEMA_VERSION` 3→4. PRD §5.5.1 + §5.1.3 + §5.3.5 + §5.8.2
+  amended (Entry-4 discipline — historical text preserved, amendment appended).
+  Test count moved (removed the absolute-rule / `ensureFutureSnap` / boundary
+  tests, added the v3→v4 migration test). Detail in `notes/session-17-summary.md`.
+- **Numbering note:** the session prompts guessed "Entry 56 (Workspace)" /
+  "Entry 58" for this; the actual sequential next number after Entry 55 is
+  **56**, assigned here because this decision was committed first. The
+  Workspace admin-policy launch-gap acceptance (planned for the S17 close-out)
+  follows as the next entry.
+- **Lesson (for coaching):** *Coherence is a feature.* The redundancy wasn't
+  a bug and nothing was broken — every test was green and both warnings
+  "worked." The owner's contribution was noticing that *working correctly* and
+  *making sense to a user* are different bars, and choosing to pay real
+  refactor + migration cost at the worst possible time (the final gate) to
+  clear the higher one. The execution lesson pairs with it: when a detailed
+  spec's structural assumptions don't match the code, **report the mismatches
+  and the one real behavioral fork before editing** — don't silently "make it
+  work" against the wrong mental model. Three of this spec's assumptions were
+  off; surfacing them first turned a possibly-wrong 7→6-sections change into
+  the correct sub-block removal and got explicit sign-off on the Schedule-Send-
+  loses-its-warning consequence.
+
+---
+
 *New entries are appended at every session close-out, alongside the session
 summary. If a session produced no trajectory-changing owner input, record that
 explicitly (`Session N — no entries this session.`) rather than leaving a gap
