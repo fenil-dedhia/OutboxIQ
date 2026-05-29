@@ -292,7 +292,7 @@ to `store-ready/`, then copied into `docs/assets/screenshots/`:
 **Copy sharpening (seventh round, text-only).** Three placements, no new section:
 (1) **hero subhead** expanded to name the *who/why* — "If you work across time
 zones and keep doing the mental math on when to hit send, this free Chrome
-extension does it for you…" — and to state the **smarter-not-replacement** point
+extension helps you schedule emails…" — and to state the **smarter-not-replacement** point
 ("It makes Gmail's own Schedule send smarter rather than replacing it"); H1 +
 eyebrow unchanged, no em dashes, lowercase "Schedule send". (2) **"The right
 local time" section** gained one concrete pain line at the top of the body — "No
