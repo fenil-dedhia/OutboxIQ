@@ -8,9 +8,9 @@ Fashionably Late **enhances** Gmail's own **Schedule Send** rather than replacin
 
 ## What it does
 
-- **Right local time, per recipient.** When you schedule an email, Fashionably Late reads the recipients from your compose window and offers to deliver at a research-backed morning or midday slot in *their* local timezone — so your message arrives during their working day, gets seen, and gets answered instead of buried. Pick a recipient's timezone once and it's remembered, so you never re-pick the same person.
+- **Right local time, per recipient.** When you schedule an email, Fashionably Late reads the recipients from your compose window and offers to deliver at a research-backed morning or midday slot in *their* local timezone — so your message arrives during their working day, gets seen, and gets answered instead of buried. Pick a recipient's timezone once and it's remembered, so you never re-pick the timezone for the same person.
+- - **A friendly timezone picker.** A searchable, plain-language timezone selector (search by city, country, abbreviation, or UTC offset) with a **Pinned** section for the zones you work across most often.
 - **A working-hours guard that stays out of your way.** We'll double-check before sending outside the hours you set. The gentle warning fires **only** on a regular Send that would go out past your working hours — with three clear choices: proceed anyway, snap to your working hours, or cancel. **Scheduling for later is always fine** and never warns — deliberately timing a message for a recipient's window is exactly what the product is for. Avoiding stray after-hours emails protects your professional brand; you stay in control either way.
-- **A friendly timezone picker.** A searchable, plain-language timezone selector (search by city, country, abbreviation, or UTC offset) with a **Pinned** section for the zones you work across most often.
 - **A full settings panel.** Manage your own timezone, pinned timezones, working hours, the locally-cached recipient timezones, and feature toggles — all editable after onboarding.
 
 ## Privacy & data
@@ -26,16 +26,7 @@ Fashionably Late is **local-first and privacy-first by design.** Everything runs
 
 ## Status
 
-Fashionably Late (Free) is **feature-complete and preparing for Chrome Web Store submission.** It is **not yet listed** on the Chrome Web Store.
-
-To run it locally, from the `extension/` directory:
-
-```bash
-npm install      # first-time setup
-npm run build    # type-check + production build to extension/dist/
-```
-
-Then load it in Chrome: go to `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, and select `extension/dist/`.
+Fashionably Late (Free) will be listed on the Chrome Web Store very soon.
 
 ## Repository layout
 
