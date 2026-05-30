@@ -442,12 +442,18 @@ body {
   line-height: 1.45;
 }
 
-/* Privacy & data */
-.fl-set-privacy-actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
+/* Privacy & data — each action (export / delete) is its own block: a
+   one-line scenario above its button, so the WHY reads before the WHAT. */
+.fl-set-privacy-action {
+  margin-bottom: 20px;
+}
+
+.fl-set-privacy-scenario {
+  font-size: 14px;
+  color: var(--fl-fg);
+  line-height: 1.5;
+  margin: 0 0 8px;
+  max-width: 56ch;
 }
 
 .fl-set-notice {

@@ -2854,6 +2854,41 @@ this one.
 
 ---
 
+## Entry 61 — Version 1.0.1 cut and STAGED: the Privacy & data settings redesign ships as a post-launch update, after 1.0.0 clears review
+
+- **Session:** 20 (2026-05-29 — same session as Entry 60; this is a small
+  extension-code change, the first since 1.0.0 was packaged for the Web Store).
+- **Moment:** A deliberate *release-sequencing* call by the owner. The 1.0.0 zip
+  is in Web Store review; rather than amend it (which would reset review) or hold
+  the improvement, the owner directed cutting a **1.0.1** that is **staged** — it
+  is built and verified now but uploaded only **after 1.0.0 clears**. So this is
+  a real version cut tied to a conscious "don't disturb the in-review build"
+  decision, not just a copy tweak.
+- **The change (1.0.1 only):** the Settings → **Privacy & data** page was
+  redesigned so each action *earns itself* with a one-line scenario above its
+  button — Export ("Switching to a new computer or Chrome profile? Take your
+  timezones and settings with you.") and Delete ("Moving off a shared or work
+  computer, or want a clean slate? Remove everything Fashionably Late has
+  saved."). **Copy + layout only.** The export/delete handlers, the
+  typed-"delete" confirmation modal, and its Session-14 focus-trap a11y are
+  byte-for-byte unchanged; Delete still confirms before wiping. No
+  permission/host change, `SCHEMA_VERSION` still 4, test count still 376.
+- **Why it merits an entry:** it's the project's first post-1.0.0 version and
+  establishes the staging discipline (build + verify a follow-up without touching
+  the artifact under review). Forward-binding: the owner uploads
+  `extension/release/fashionably-late-1.0.1.zip` after 1.0.0 approval; the 1.0.0
+  zip was left untouched.
+- **What Claude Code would have done without it:** likely shipped the redesign
+  straight into the in-review 1.0.0 (resetting review) — worse. The
+  cut-and-stage sequencing is the owner's contribution.
+- **Honest counterfactual cost:** ~zero, net-positive. A clearer privacy surface
+  with no logic risk, queued behind the live submission.
+- **(Numbering note:** the task brief suggested "Entry 59" but the log already
+  holds Entries through 60 — Entry 59 is the S19 no-recipient guard — so this is
+  correctly **Entry 61**.)
+
+---
+
 *New entries are appended at every session close-out, alongside the session
 summary. If a session produced no trajectory-changing owner input, record that
 explicitly (`Session N — no entries this session.`) rather than leaving a gap

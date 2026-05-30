@@ -319,3 +319,39 @@ The old `schedule-modal.jpg` (now unreferenced) and `schedule-optimize.png`
 (still used by the "right local time" feature block, deliberately unchanged)
 remain in place. Live GitHub Pages rebuild is the real proof (owner to confirm
 the page + that `/legal/{privacy,terms}` still render unchanged).
+
+## §o — Privacy & data settings redesign + 1.0.1 cut (STAGED post-launch update)
+
+First extension-code change since 1.0.0 was packaged for the Web Store. The 1.0.0
+zip is in review and was left untouched; this ships as a **staged 1.0.1** the
+owner uploads after 1.0.0 clears (rationale + the cut-and-stage discipline:
+**Entry 61**).
+
+**Privacy & data redesign (copy + layout only).** `PrivacyDataSection.tsx` was
+restructured so each action *earns itself* with a one-line scenario above its
+button: Export — "Switching to a new computer or Chrome profile? Take your
+timezones and settings with you." — and Delete — "Moving off a shared or work
+computer, or want a clean slate? Remove everything Fashionably Late has saved."
+The opening reassurance line and the Privacy Policy · Terms links are kept. Each
+scenario `<p>` is the button's accessible description (`aria-describedby`) and
+precedes it in DOM order, so reading + tab order is scenario→action (consistent
+with the S14 a11y work); scenario text uses `--fl-fg` on white (AA). New CSS:
+`.fl-set-privacy-action` (block) + `.fl-set-privacy-scenario`, replacing the old
+single `.fl-set-privacy-actions` flex-row. **No logic touched:** `handleExport`,
+`handleConfirmDelete`/`deleteAllData`, and the typed-"delete" `DeleteDataModal`
+(with its focus trap) are byte-for-byte unchanged — **Delete still confirms
+before wiping.** No other settings section or hot path touched; §11 invariants
+stand.
+
+**Version bump 1.0.0 → 1.0.1** in `manifest.config.ts` (source of truth) and
+`package.json` (kept in sync). About-page version is read dynamically from the
+manifest, so no section edit was needed. **`npm run package`** produced
+`extension/release/fashionably-late-1.0.1.zip` (108.9 KB, 27 entries) — all
+verifications passed: `key` stripped from the zipped manifest, `dist/manifest.json`
+still has its `key`, `manifest.json` at zip root, **permissions `["storage","scripting"]`
++ host `["https://mail.google.com/*"]` unchanged**, version 1.0.1. The
+`fashionably-late-1.0.0.zip` in `release/` is untouched.
+
+**Verify:** typecheck / lint / format:check / build all clean; **test count 376
+(no delta** — the existing PrivacyDataSection tests query by button name, dialog,
+and links, all preserved). `SCHEMA_VERSION` still 4.

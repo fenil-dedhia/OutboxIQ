@@ -222,17 +222,37 @@ export function PrivacyDataSection({ onDataDeleted }: PrivacyDataSectionProps) {
         or delete it at any time.
       </p>
 
-      <div className="fl-set-privacy-actions">
+      {/* Each action earns itself with a one-line scenario so it's clear WHY
+          local-only data still has export/delete. The scenario <p> is the
+          button's accessible description (aria-describedby), and sits before
+          the button in DOM order so the reading + tab order is scenario→action
+          (Session 14 a11y). Copy/layout only — the handlers below are
+          unchanged, and Delete still routes through the typed-confirmation
+          DeleteDataModal. */}
+      <div className="fl-set-privacy-action">
+        <p id="fl-set-export-scenario" className="fl-set-privacy-scenario">
+          Switching to a new computer or Chrome profile? Take your timezones and
+          settings with you.
+        </p>
         <button
           type="button"
           className="fl-set-btn"
+          aria-describedby="fl-set-export-scenario"
           onClick={() => void handleExport()}
         >
           Export my data
         </button>
+      </div>
+
+      <div className="fl-set-privacy-action">
+        <p id="fl-set-delete-scenario" className="fl-set-privacy-scenario">
+          Moving off a shared or work computer, or want a clean slate? Remove
+          everything Fashionably Late has saved.
+        </p>
         <button
           type="button"
           className="fl-set-btn fl-set-btn-danger"
+          aria-describedby="fl-set-delete-scenario"
           onClick={() => {
             setNotice(null);
             setShowDeleteModal(true);

@@ -16,8 +16,11 @@ export default defineManifest({
   manifest_version: 3,
   name: "Fashionably Late",
   // First public release (owner, Session 13). SemVer: 0.x.y was the pre-release
-  // dev placeholder; 1.0.0 marks the first stable/shipped version.
-  version: "1.0.0",
+  // dev placeholder; 1.0.0 marks the first stable/shipped version. 1.0.1 is a
+  // STAGED post-launch update (Session 20, Entry 61): the Privacy & data
+  // settings copy/layout redesign — uploaded after 1.0.0 clears Web Store
+  // review. No permission/host/SCHEMA_VERSION change vs 1.0.0.
+  version: "1.0.1",
   // Pins a STABLE unpacked-extension ID (dicnmcmhapcfceodecocnkaacjdpplnm).
   // Without this the dev ID changes every load, which would break the OAuth
   // redirect URI (https://<id>.chromiumapp.org/) on every reload (Session 7
