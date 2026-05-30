@@ -443,9 +443,17 @@ body {
 }
 
 /* Privacy & data — each action (export / delete) is its own block: a
-   one-line scenario above its button, so the WHY reads before the WHAT. */
+   one-line scenario above its button, so the WHY reads before the WHAT.
+   Vertical rhythm is a deliberate three-tier scale (existing 8/16/24 tokens):
+     24px after the intro  → it reads as its own group
+     16px between blocks   → equal Export↔Delete separation
+      8px scenario→button  → tightest, so each line+button reads as one pair. */
+.fl-set-privacy-intro {
+  margin-bottom: 24px;
+}
+
 .fl-set-privacy-action {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .fl-set-privacy-scenario {

@@ -217,7 +217,7 @@ export function PrivacyDataSection({ onDataDeleted }: PrivacyDataSectionProps) {
   return (
     <section className="fl-set-section" aria-labelledby="fl-set-privacy-h">
       <h2 id="fl-set-privacy-h">Privacy &amp; data</h2>
-      <p className="fl-set-help">
+      <p className="fl-set-help fl-set-privacy-intro">
         Everything Fashionably Late stores lives on this device. You can export
         or delete it at any time.
       </p>

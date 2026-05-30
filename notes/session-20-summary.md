@@ -355,3 +355,14 @@ still has its `key`, `manifest.json` at zip root, **permissions `["storage","scr
 **Verify:** typecheck / lint / format:check / build all clean; **test count 376
 (no delta** — the existing PrivacyDataSection tests query by button name, dialog,
 and links, all preserved). `SCHEMA_VERSION` still 4.
+
+**Spacing follow-up (same staged 1.0.1, copy/layout only).** The Privacy & data
+vertical rhythm was uneven (intro hugged the first scenario; the two blocks drifted
+apart by more than the intro gap). Restructured into a deliberate three-tier scale
+on the existing 8/16/24 tokens: **24px after the intro** (new `.fl-set-privacy-intro`
+modifier on the intro `<p>`, leaving the shared `.fl-set-help` untouched), **16px
+equal between the Export and Delete blocks** (`.fl-set-privacy-action` 20→16), and
+**8px scenario→button** within each block (unchanged) so each line+button reads as a
+pair; legal links stay spaced below Delete. No new arbitrary margins. The staged
+`fashionably-late-1.0.1.zip` was rebuilt to include it (still 1.0.1, not yet
+uploaded; verifications re-passed, permissions/host unchanged).
