@@ -395,3 +395,10 @@ and Data.jpg`, 1863×1082) showing the redesigned page; `height` attr corrected
 1090→1082, and the store-ready `Settings - Privacy and Data-1280x800.png` was
 regenerated via `make-store-ready.py` (immutable-originals rule held — source
 SHA-256 unchanged across the run).
+
+**Onboarding Welcome copy fix (in 1.0.0).** The "What you get in return" first
+bullet now reads "Send emails at the right moment for **your** recipient, learned
+once and remembered." (was "each recipient") — matching the product's
+optimize-for-one-chosen-recipient framing (Entry 40) and the landing page's
+"your recipient" wording. `Welcome.tsx`, copy-only; 1.0.0 zip regenerated and
+verified to contain it.

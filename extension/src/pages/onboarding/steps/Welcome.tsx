@@ -62,7 +62,7 @@ export function Welcome({
       <h2>What you get in return:</h2>
       <ul className="oq-bullets">
         <li>
-          Send emails at the right moment for each recipient, learned once and
+          Send emails at the right moment for your recipient, learned once and
           remembered.
         </li>
         <li>
