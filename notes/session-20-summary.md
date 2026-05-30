@@ -366,3 +366,15 @@ equal between the Export and Delete blocks** (`.fl-set-privacy-action` 20→16),
 pair; legal links stay spaced below Delete. No new arbitrary margins. The staged
 `fashionably-late-1.0.1.zip` was rebuilt to include it (still 1.0.1, not yet
 uploaded; verifications re-passed, permissions/host unchanged).
+
+**Policy-links separation (same staged 1.0.1, copy/layout only).** The Privacy
+Policy · Terms links read as a sub-action of Delete (too close beneath it). Added
+a thematic `<hr className="fl-set-privacy-divider">` between the Delete block and
+the links — a 0.5px hairline driven by the existing `var(--fl-border)` token (so
+it adapts if the page ever gains a dark theme; the page is light-only today),
+with **equal 24px above and below**. To keep one even rhythm down the whole
+section the inter-group gap was unified to **24px** (`.fl-set-privacy-action`
+16→24, matching the intro's 24), leaving the 8px scenario→button pair intact.
+Per owner instruction the optional "RESOURCES" label was **skipped** — the
+divider alone does the separating. Links unchanged. Zip rebuilt (1.0.1); bundle
+verified to contain the divider + 24px rhythm; permissions/host unchanged.

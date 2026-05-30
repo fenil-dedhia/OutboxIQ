@@ -444,16 +444,16 @@ body {
 
 /* Privacy & data — each action (export / delete) is its own block: a
    one-line scenario above its button, so the WHY reads before the WHAT.
-   Vertical rhythm is a deliberate three-tier scale (existing 8/16/24 tokens):
-     24px after the intro  → it reads as its own group
-     16px between blocks   → equal Export↔Delete separation
-      8px scenario→button  → tightest, so each line+button reads as one pair. */
+   Two-tier vertical rhythm on existing tokens:
+     24px between every group (intro · Export · Delete · the divided links)
+          → one even rhythm down the whole section
+      8px scenario→button → tightest, so each line+button reads as one pair. */
 .fl-set-privacy-intro {
   margin-bottom: 24px;
 }
 
 .fl-set-privacy-action {
-  margin-bottom: 16px;
+  margin-bottom: 24px;
 }
 
 .fl-set-privacy-scenario {
@@ -462,6 +462,17 @@ body {
   line-height: 1.5;
   margin: 0 0 8px;
   max-width: 56ch;
+}
+
+/* Hairline break between the Delete block and the policy links, with equal
+   24px above and below (same token as the group rhythm). Driven by the
+   existing --fl-border token, so it adapts if the page ever gains a dark
+   theme rather than being pinned to a light-mode color. */
+.fl-set-privacy-divider {
+  height: 0;
+  margin: 24px 0;
+  border: 0;
+  border-top: 0.5px solid var(--fl-border);
 }
 
 .fl-set-notice {

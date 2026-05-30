@@ -274,6 +274,10 @@ export function PrivacyDataSection({ onDataDeleted }: PrivacyDataSectionProps) {
         </p>
       )}
 
+      {/* Thematic break so the policy links read as page-level reference
+          material, not a sub-action of Delete directly above. */}
+      <hr className="fl-set-privacy-divider" />
+
       <p className="fl-set-legal-links">
         <a href={PRIVACY_POLICY_URL} target="_blank" rel="noopener noreferrer">
           Privacy Policy
