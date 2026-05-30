@@ -402,3 +402,46 @@ once and remembered." (was "each recipient") — matching the product's
 optimize-for-one-chosen-recipient framing (Entry 40) and the landing page's
 "your recipient" wording. `Welcome.tsx`, copy-only; 1.0.0 zip regenerated and
 verified to contain it.
+
+## §p — Landing-page copy/asset iteration + session close (2026-05-29 → 05-30)
+
+A long, owner-driven polish pass over `docs/index.html` (all website-only, no
+extension code, no §11/schema/permission impact) plus the screenshot refreshes
+above. Net final state of the page:
+
+- **Hero subhead** (heavily iterated; final): *"Fashionably late works for
+  parties. It works for email, too. If you work across time zones and keep doing
+  the mental math on when to hit send, this free Chrome extension helps you
+  schedule emails in Gmail at the right local time for your recipient,
+  automatically. Privacy-first by design."* H1 + eyebrow unchanged throughout; no
+  em dashes (owner constraint, held every round).
+- **"The right local time" section** — retitled "…for your recipient" (was "every
+  recipient"; accuracy, Entry 40), tz-math pain line added, value-prop hook
+  bolded.
+- **"Built into Gmail's own Schedule Send"** — header capitalized (deliberate
+  one-off vs the §l lowercase convention, owner's call); body rewritten around
+  works-WITH-Gmail / stays-in-Scheduled-folder.
+- **Highlights** — caption now "Thoughtfully small. Does its one job well.";
+  trimmed/curated to **six cards** (two clean rows of three): No time-zone math ·
+  Working-hours guard · Native Gmail feel · Stays in your Scheduled folder · Open
+  source · Accessible by design. The accessibility card uses the **honest** claim
+  only — "Built to WCAG AA standards, with full keyboard support" (no
+  "compliant"/"certified", no screen-reader claim — matches the S14 audit scope).
+  Removed "Time zone aware suggestions" (overlapped "No time-zone math") and
+  "Local-first, no tracking" (the privacy section owns it).
+- **Privacy section** retitled **"Local by default, private by design"** (pairs
+  the local/no-server claim with privacy); lede de-double-"first"-ed.
+- **GitHub links** (hero button, footer button, footer text link) now open in a
+  new tab (`target="_blank"` + `rel="noopener noreferrer"`); legal links stay
+  same-tab (same-site).
+- **"A closer look" screenshots** — onboarding + privacy-data tiles refreshed to
+  the owner's latest captures (store-ready PNGs regenerated; originals immutable,
+  SHA-256 verified unchanged).
+
+**Final extension state at close:** version **1.0.0**, single store zip
+`extension/release/fashionably-late-1.0.0.zip` (carries the Privacy & data
+redesign + the "your recipient" onboarding fix); **no 1.0.1** (reverted —
+Entry 61 amended). `SCHEMA_VERSION` **4**; tests **376**; permissions
+`storage`+`scripting`, host `mail.google.com` only. Delete still confirms before
+wiping. The owner cancels the in-window review and uploads this zip; the live
+landing page is the proof for the copy/asset work (GitHub Pages rebuild).
