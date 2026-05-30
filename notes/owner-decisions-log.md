@@ -2854,7 +2854,7 @@ this one.
 
 ---
 
-## Entry 61 — Version 1.0.1 cut and STAGED: the Privacy & data settings redesign ships as a post-launch update, after 1.0.0 clears review
+## Entry 61 — Privacy & data settings redesign: briefly cut as a staged 1.0.1, then REVERSED into a single 1.0.0 (review cancelled before it started)
 
 - **Session:** 20 (2026-05-29 — same session as Entry 60; this is a small
   extension-code change, the first since 1.0.0 was packaged for the Web Store).
@@ -2886,6 +2886,19 @@ this one.
 - **(Numbering note:** the task brief suggested "Entry 59" but the log already
   holds Entries through 60 — Entry 59 is the S19 no-recipient guard — so this is
   correctly **Entry 61**.)
+- **REVERSAL (same session, 2026-05-29 — Entry-4-style addendum, history kept
+  above intact).** The owner reconsidered the staging and decided the review
+  **had not actually started**, so cancelling and reuploading was free. Rather
+  than carry a separate post-launch 1.0.1, they **folded the redesign back into
+  1.0.0**: version reverted to `1.0.0` in `manifest.config.ts` + `package.json`,
+  the staged `fashionably-late-1.0.1.zip` deleted, and one clean
+  `fashionably-late-1.0.0.zip` regenerated carrying the redesign + spacing +
+  divider. **Net: there is no 1.0.1; everything ships in a single 1.0.0.** The
+  "staging discipline" framing above is therefore moot for this release — it was
+  the right call *only while* the review was believed to be in flight; once it
+  wasn't, consolidating to one version is simpler and avoids an immediate
+  follow-up upload. Delete still confirms before wiping; permissions/host +
+  `SCHEMA_VERSION` (4) + test count (376) unchanged throughout.
 
 ---
 

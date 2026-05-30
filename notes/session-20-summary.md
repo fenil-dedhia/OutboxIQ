@@ -320,12 +320,19 @@ The old `schedule-modal.jpg` (now unreferenced) and `schedule-optimize.png`
 remain in place. Live GitHub Pages rebuild is the real proof (owner to confirm
 the page + that `/legal/{privacy,terms}` still render unchanged).
 
-## §o — Privacy & data settings redesign + 1.0.1 cut (STAGED post-launch update)
+## §o — Privacy & data settings redesign (ships in 1.0.0)
 
-First extension-code change since 1.0.0 was packaged for the Web Store. The 1.0.0
-zip is in review and was left untouched; this ships as a **staged 1.0.1** the
-owner uploads after 1.0.0 clears (rationale + the cut-and-stage discipline:
-**Entry 61**).
+> **Correction (later in S20):** this redesign was briefly cut as a *staged
+> 1.0.1* to ride behind an in-review 1.0.0. The owner then **cancelled that
+> review before it started and folded everything back into a single 1.0.0**
+> (one clean store zip). The history below is left intact for the record, but the
+> net result is: **version is 1.0.0 everywhere; there is no 1.0.1.** See the
+> amended **Entry 61**. The Privacy & data redesign, spacing, and the
+> divider/links separation all ship in **1.0.0**.
+
+First extension-code change since 1.0.0 was first packaged. The redesign + its two
+follow-ups (spacing, divider) are all copy/layout-only and all ship in the single
+1.0.0 store zip.
 
 **Privacy & data redesign (copy + layout only).** `PrivacyDataSection.tsx` was
 restructured so each action *earns itself* with a one-line scenario above its
@@ -343,31 +350,32 @@ single `.fl-set-privacy-actions` flex-row. **No logic touched:** `handleExport`,
 before wiping.** No other settings section or hot path touched; §11 invariants
 stand.
 
-**Version bump 1.0.0 → 1.0.1** in `manifest.config.ts` (source of truth) and
-`package.json` (kept in sync). About-page version is read dynamically from the
-manifest, so no section edit was needed. **`npm run package`** produced
-`extension/release/fashionably-late-1.0.1.zip` (108.9 KB, 27 entries) — all
-verifications passed: `key` stripped from the zipped manifest, `dist/manifest.json`
-still has its `key`, `manifest.json` at zip root, **permissions `["storage","scripting"]`
-+ host `["https://mail.google.com/*"]` unchanged**, version 1.0.1. The
-`fashionably-late-1.0.0.zip` in `release/` is untouched.
+**Version (final state).** Briefly bumped 1.0.0 → 1.0.1, then **reverted to
+1.0.0** when the owner cancelled the review and reuploaded as a single 1.0.0
+(`manifest.config.ts` source of truth + `package.json` back to 1.0.0; the staged
+`fashionably-late-1.0.1.zip` was deleted). About-page version reads dynamically
+from the manifest, so no section edit was needed. **`npm run package`** produced
+`extension/release/fashionably-late-1.0.0.zip` — all verifications passed: `key`
+stripped from the zipped manifest, `dist/manifest.json` still has its `key`,
+`manifest.json` at zip root, **permissions `["storage","scripting"]` + host
+`["https://mail.google.com/*"]` unchanged**, version **1.0.0**. This single zip
+carries the redesign + spacing + divider.
 
 **Verify:** typecheck / lint / format:check / build all clean; **test count 376
 (no delta** — the existing PrivacyDataSection tests query by button name, dialog,
 and links, all preserved). `SCHEMA_VERSION` still 4.
 
-**Spacing follow-up (same staged 1.0.1, copy/layout only).** The Privacy & data
+**Spacing follow-up (copy/layout only).** The Privacy & data
 vertical rhythm was uneven (intro hugged the first scenario; the two blocks drifted
 apart by more than the intro gap). Restructured into a deliberate three-tier scale
 on the existing 8/16/24 tokens: **24px after the intro** (new `.fl-set-privacy-intro`
 modifier on the intro `<p>`, leaving the shared `.fl-set-help` untouched), **16px
 equal between the Export and Delete blocks** (`.fl-set-privacy-action` 20→16), and
 **8px scenario→button** within each block (unchanged) so each line+button reads as a
-pair; legal links stay spaced below Delete. No new arbitrary margins. The staged
-`fashionably-late-1.0.1.zip` was rebuilt to include it (still 1.0.1, not yet
-uploaded; verifications re-passed, permissions/host unchanged).
+pair; legal links stay spaced below Delete. No new arbitrary margins. (Folded
+into the final single 1.0.0 zip.)
 
-**Policy-links separation (same staged 1.0.1, copy/layout only).** The Privacy
+**Policy-links separation (copy/layout only).** The Privacy
 Policy · Terms links read as a sub-action of Delete (too close beneath it). Added
 a thematic `<hr className="fl-set-privacy-divider">` between the Delete block and
 the links — a 0.5px hairline driven by the existing `var(--fl-border)` token (so
@@ -376,5 +384,14 @@ with **equal 24px above and below**. To keep one even rhythm down the whole
 section the inter-group gap was unified to **24px** (`.fl-set-privacy-action`
 16→24, matching the intro's 24), leaving the 8px scenario→button pair intact.
 Per owner instruction the optional "RESOURCES" label was **skipped** — the
-divider alone does the separating. Links unchanged. Zip rebuilt (1.0.1); bundle
-verified to contain the divider + 24px rhythm; permissions/host unchanged.
+divider alone does the separating. Links unchanged. (Ships in the final 1.0.0
+zip; bundle verified to contain the divider + 24px rhythm; permissions/host
+unchanged.)
+
+**Landing-page screenshot refresh (website, not in the zip).** The "A closer
+look" privacy-data tile (`docs/assets/screenshots/privacy-data.jpg`) was updated
+to the owner's latest capture (`media/web-store/screenshots/Settings - Privacy
+and Data.jpg`, 1863×1082) showing the redesigned page; `height` attr corrected
+1090→1082, and the store-ready `Settings - Privacy and Data-1280x800.png` was
+regenerated via `make-store-ready.py` (immutable-originals rule held — source
+SHA-256 unchanged across the run).
